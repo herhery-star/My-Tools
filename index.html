@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MY TOOLS — Personal App Launcher</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f46e5" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">🧰</div>
+        <div>
+          <h1 class="brand-title">MY TOOLS</h1>
+          <p class="brand-subtitle">Personal HTML App Launcher</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-badge" id="networkStatus">
+          <span class="status-dot"></span>
+          <span class="status-text">Online</span>
+        </div>
+        <button class="btn btn-icon" id="themeToggleBtn" aria-label="Ganti Tema">🌙</button>
+        <button class="btn btn-primary" id="addAppBtn">+ Tambah Tool</button>
+      </div>
+    </header>
+
+    <section class="toolbar">
+      <div class="search-box">
+        <span class="search-icon">🔎</span>
+        <input type="text" id="searchInput" placeholder="Cari tools berdasarkan nama, deskripsi, atau kategori..." autocomplete="off" />
+        <button class="btn-clear" id="clearSearchBtn" hidden>✕</button>
+      </div>
+
+      <div class="category-bar" id="categoryBar">
+        </div>
+
+      <div class="toolbar-sub">
+        <div class="sort-container">
+          <label for="sortSelect">Urutkan:</label>
+          <select id="sortSelect" class="form-control-sm">
+            <option value="custom">Kustom (Urutan)</option>
+            <option value="name-asc">A – Z</option>
+            <option value="name-desc">Z – A</option>
+            <option value="category">Kategori</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <main class="main-content">
+      <section class="app-section" id="favoritesSection">
+        <h2 class="section-title">⭐ Favorit</h2>
+        <div class="app-grid" id="favoritesGrid"></div>
+      </section>
+
+      <section class="app-section">
+        <h2 class="section-title" id="allToolsTitle">🧰 Semua Tools</h2>
+        <div class="app-grid" id="allAppsGrid"></div>
+        <div class="empty-state" id="emptyState" hidden>
+          <div class="empty-icon">🧰</div>
+          <h3 class="empty-title">Your toolbox is empty</h3>
+          <p class="empty-desc">Tambahkan HTML tool pertama Anda untuk memulai.</p>
+          <button class="btn btn-primary" id="emptyAddBtn">+ Tambah Tool</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="appModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h3 id="modalTitle">Tambah Tool Baru</h3>
+        <button class="modal-close" id="closeModalBtn" aria-label="Tutup">&times;</button>
+      </div>
+      <form id="appForm">
+        <input type="hidden" id="appId" />
+        <div class="form-group">
+          <label for="appName">Nama Aplikasi *</label>
+          <input type="text" id="appName" required placeholder="Contoh: SPBU Daily" />
+        </div>
+        <div class="form-group">
+          <label for="appDesc">Deskripsi Ringkas</label>
+          <textarea id="appDesc" rows="2" placeholder="Input dan pengolahan data harian..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label for="appCategory">Kategori *</label>
+            <input type="text" id="appCategory" required list="categorySuggestions" placeholder="SPBU, Excel, PDF..." />
+            <datalist id="categorySuggestions"></datalist>
+          </div>
+          <div class="form-group col">
+            <label for="appIcon">Icon (Emoji) *</label>
+            <input type="text" id="appIcon" required placeholder="⛽, 📊, 📄..." maxlength="4" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="appOnlineUrl">URL Online (Web / GitHub Pages)</label>
+          <input type="url" id="appOnlineUrl" placeholder="https://username.github.io/my-tool/" />
+        </div>
+        <div class="form-group">
+          <label for="appLocalPath">Local Path / File Path (Metadata)</label>
+          <input type="text" id="appLocalPath" placeholder="D:\MyTools\SPBU-Daily\index.html atau file://..." />
+          <small class="form-help">🔒 Catatan Security: Browser membatasi pembukaan file lokal secara otomatis. Untuk akses penuh filesystem, gunakan launcher ini dalam wrapper Windows (.exe/Tauri).</small>
+        </div>
+        <div class="form-row">
+          <div class="form-group col">
+            <label for="appVersion">Versi</label>
+            <input type="text" id="appVersion" placeholder="1.0.0" />
+          </div>
+          <div class="form-group col flex-end">
+            <label class="checkbox-label">
+              <input type="checkbox" id="appFavorite" />
+              <span>Jadikan Favorit ⭐</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelModalBtn">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="deleteModal" aria-hidden="true">
+    <div class="modal modal-sm" role="dialog" aria-labelledby="deleteTitle">
+      <div class="modal-header">
+        <h3 id="deleteTitle">Konfirmasi Hapus</h3>
+        <button class="modal-close" id="closeDeleteModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteMessage">Apakah Anda yakin ingin menghapus aplikasi ini?</p>
+        <small class="text-muted">Aplikasi hanya dihapus dari launcher. File fisik aplikasi Anda aman dan tidak terhapus.</small>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="cancelDeleteBtn">Batal</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Hapus Tool</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
