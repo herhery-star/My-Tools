@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ekstraktor Mutasi Rekening Koran BRI CMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        
+        @media (min-width: 768px) and (max-width: 1199px) {
+            html { font-size: 14px; }
+            .data-table th { padding: 10px 14px !important; font-size: 11px !important; }
+            .data-table td { padding: 10px 14px !important; font-size: 12px !important; }
+            .data-table td input { font-size: 12px !important; }
+        }
+
+        @media (min-width: 1200px) {
+            html { font-size: 16px; }
+            .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; tracking-wider: 0.05em; }
+            .data-table td { padding: 6px 12px; line-height: 1.4; font-size: 11px; }
+        }
+
+        .theme-transition { transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+        .copied-flash { animation: flashGreen 0.4s ease-out; }
+        @keyframes flashGreen {
+            0% { background-color: rgba(34, 197, 94, 0.4); }
+            100% { background-color: transparent; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <header id="mainHeader" class="theme-transition bg-emerald-700 text-white shadow-md py-3 px-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <label for="titleSelect" class="font-bold text-[10px] md:text-xs tracking-widest uppercase opacity-75">Kategori Unit:</label>
+                <select id="titleSelect" class="bg-white/10 text-white font-extrabold text-xs md:text-sm px-2.5 py-1 rounded border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer transition-all">
+                    <option value="pangkajene" class="text-slate-900">SPBU Pangkajene</option>
+                    <option value="labakkang" class="text-slate-900">SPBU Labakkang</option>
+                    <option value="lpg" class="text-slate-900">LPG</option>
+                    <option value="tabungan" class="text-slate-900">TABUNGAN</option>
+                    <option value="mypertamina" class="text-slate-900">MY PERTAMINA</option>
+                </select>
+            </div>
+            <h1 id="displayTitle" class="text-lg md:text-xl font-black tracking-wider uppercase">SPBU Pangkajene</h1>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 space-y-4">
+        
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-3">
+                <input type="file" id="pdfInput" accept=".pdf,.zip" class="hidden" />
+                <label for="pdfInput" id="uploadBtnLabel" class="theme-transition bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2.5 rounded-lg font-bold text-xs md:text-sm cursor-pointer shadow-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    Pilih Dokumen PDF / ZIP
+                </label>
+                
+                <!-- Pilihan File Uploader / Selector jika file ZIP lebih dari satu -->
+                <div id="zipSelectorContainer" class="hidden flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                    <label for="zipFileSelect" class="text-xs font-bold text-amber-800">Pilih Berkas ZIP:</label>
+                    <select id="zipFileSelect" class="bg-white text-slate-800 text-xs font-semibold px-2 py-1 rounded border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                    </select>
+                </div>
+
+                <span id="fileName" class="text-xs text-slate-400 font-medium italic">Belum ada file yang diproses</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- Tombol Undo Ditambahkan di sini -->
+                <button id="btnUndo" disabled onclick="undoAction()" class="bg-slate-200 text-slate-400 font-bold text-xs md:text-sm px-3.5 py-2.5 rounded-lg cursor-not-allowed flex items-center gap-1.5 transition-all shadow-sm" title="Urungkan Perubahan Terakhir">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                    <span>Undo</span>
+                </button>
+                <button id="btnExcel" disabled class="bg-slate-200 text-slate-400 font-bold text-xs md:text-sm px-4 py-2.5 rounded-lg cursor-not-allowed flex items-center gap-2 transition-all shadow-sm">
+                    Simpan Excel
+                </button>
+                <button id="btnPdf" disabled class="bg-slate-200 text-slate-400 font-bold text-xs md:text-sm px-4 py-2.5 rounded-lg cursor-not-allowed flex items-center gap-2 transition-all shadow-sm">
+                    Cetak PDF Plain
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div class="space-y-1">
+                <label for="filterUraian" class="block text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-wider">Satukan Data yang serupa</label>
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="filterUraian" placeholder="Ketik kata kunci untuk mengelompokkan (misal: Pertamax, BI-FAST, Cash)..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white font-medium" />
+                        <button id="clearFilterBtn" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold">Clear</button>
+                    </div>
+                    <!-- Dropdown pilihan kata kunci yang terdeteksi dari rekening koran -->
+                    <select id="selectKeywordsDropdown" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-2.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 cursor-pointer transition-all max-w-[160px] md:max-w-[200px] truncate" title="Pilihan Kata Kunci Sering Muncul">
+                        <option value="">-- Sering Muncul --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex md:justify-end items-center gap-4 pt-2 md:pt-0">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="toggleColumnTanggal" checked class="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer" />
+                    <label for="toggleColumnTanggal" class="text-[10px] md:text-xs font-bold text-slate-600 uppercase tracking-wide cursor-pointer select-none">Tampilkan Kolom Tanggal</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+            <h2 id="sectionLargeTitle" class="text-2xl md:text-3xl font-black text-slate-900 tracking-wide uppercase">REKENING KORAN</h2>
+            <p id="sectionDateRange" class="text-xs font-semibold text-slate-500 mt-1 italic">Periode Tanggal: -</p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <div class="text-[9px] md:text-[10px] text-slate-400 uppercase font-black tracking-widest">Saldo Awal</div>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs font-bold text-slate-400">Rp</span>
+                    <input type="text" id="inputSaldoAwal" value="0,00" class="w-full text-xs md:text-sm font-black text-slate-900 focus:outline-none focus:border-b-2 focus:border-emerald-600 font-mono bg-transparent" />
+                    <button id="btnFetchOpeningBalance" disabled title="Ambil Saldo Awal otomatis dari berkas PDF" class="bg-slate-200 text-slate-400 p-1.5 rounded-md cursor-not-allowed transition-all shadow-sm flex items-center justify-center flex-shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17.5M12 8v4l3 3"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm bg-rose-50/20">
+                <div class="text-[9px] md:text-[10px] text-rose-600 uppercase font-black tracking-widest">Total Debet (-)</div>
+                <div class="text-xs md:text-sm font-black text-rose-700 mt-1 font-mono">Rp <span id="summaryDebet">0,00</span></div>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm bg-emerald-50/20">
+                <div class="text-[9px] md:text-[10px] text-emerald-600 uppercase font-black tracking-widest">Total Kredit (+)</div>
+                <div class="text-xs md:text-sm font-black text-emerald-700 mt-1 font-mono">Rp <span id="summaryKredit">0,00</span></div>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm bg-blue-50/20">
+                <div class="text-[9px] md:text-[10px] text-blue-600 uppercase font-black tracking-widest">Saldo Akhir</div>
+                <div class="text-xs md:text-sm font-black text-blue-700 mt-1 font-mono">Rp <span id="summaryAkhir">0,00</span></div>
+            </div>
+        </div>
+
+        <div id="mergeActionContainer" class="hidden flex items-center justify-between p-3 bg-slate-100 rounded-lg border border-slate-300">
+            <span class="text-xs font-bold text-slate-600"><span id="checkedCount">0</span> baris dipilih untuk digabungkan</span>
+            <button id="btnMergeRows" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-1.5 rounded transition-all shadow-sm">
+                Gabung Baris Terpilih
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full data-table border-collapse text-left">
+                    <thead>
+                        <tr class="bg-slate-100 border-b border-slate-300 text-slate-600 select-none">
+                            <th class="w-12 text-center">No</th>
+                            <th class="w-12 text-center">
+                                <input type="checkbox" id="selectAllCheckbox" class="rounded cursor-pointer" onclick="toggleSelectAll(this)" />
+                            </th>
+                            <th id="thTanggal" class="cursor-pointer hover:bg-slate-200 w-32 transition-colors" onclick="sortData(0)">
+                                Tanggal <span id="sortIcon0" class="font-mono text-slate-400">↕</span>
+                            </th>
+                            <th class="cursor-pointer hover:bg-slate-200 transition-colors" onclick="sortData(1)">
+                                Uraian Transaksi <span id="sortIcon1" class="font-mono text-slate-400">↕</span>
+                            </th>
+                            <th class="text-right w-40">Debet (-)</th>
+                            <th class="text-right w-40">Kredit (+)</th>
+                            <th class="text-right w-44 bg-slate-50 font-bold text-slate-700">Mutasi Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mutationTableBody" class="divide-y divide-slate-200">
+                        <tr>
+                            <td colspan="7" class="text-center py-12 text-slate-400 italic">Berkas belum dimasukkan. Silakan unggah dokumen PDF atau ZIP rekening koran Anda.</td>
+                        </tr>
+                    </tbody>
+                    <tfoot id="mutationTableFoot" class="bg-slate-100 border-t-2 border-slate-300 font-bold hidden">
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="pdfModal" class="fixed inset-0 bg-slate-900/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <div>
+                    <h3 class="font-black text-sm md:text-base tracking-wide">PRATINJAU DOKUMEN CETAK</h3>
+                    <p id="pdfModalFileName" class="text-[10px] text-slate-400 italic mt-0.5"></p>
+                </div>
+                <button onclick="closePdfModal()" class="text-slate-400 hover:text-white text-2xl font-bold transition-colors px-2">&times;</button>
+            </div>
+            <div class="flex-1 bg-slate-100 p-2 relative flex justify-center items-center">
+                <iframe id="pdfPreviewFrame" class="w-full h-full rounded border border-slate-300 bg-white" src=""></iframe>
+            </div>
+            <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-end gap-3">
+                <button onclick="closePdfModal()" class="px-5 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all shadow-sm">
+                    Batal
+                </button>
+                <button id="btnModalDownload" class="px-6 py-2.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1a3 3 0 00-3-3H7a3 3 0 00-3 3zM12 11V3m0 8l3-3m-3 3L9 8"></path></svg>
+                    Simpan Berkas PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sourcePdfModal" class="fixed inset-0 bg-slate-950/70 z-[110] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden">
+            <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-sm tracking-wide uppercase flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Lampiran File PDF Asli (Halaman Terakhir)
+                    </h3>
+                    <p id="sourcePdfModalInfo" class="text-[10px] text-slate-400 italic mt-0.5"></p>
+                </div>
+                <button onclick="closeSourcePdfModal()" class="text-slate-400 hover:text-white text-2xl font-bold transition-colors px-2">&times;</button>
+            </div>
+            <div class="flex-1 bg-slate-700 p-2 flex justify-center items-center">
+                <iframe id="sourcePdfPreviewFrame" class="w-full h-full rounded border border-slate-600 bg-white" src=""></iframe>
+            </div>
+            <div class="bg-slate-100 p-3 flex justify-end">
+                <button onclick="closeSourcePdfModal()" class="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-all shadow-sm">
+                    Tutup Pratinjau
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const themes = {
+            pangkajene: { name: 'SPBU Pangkajene', bg: 'bg-emerald-700', activeBtn: 'bg-emerald-700 hover:bg-emerald-800', filePrefix: 'spbu_pjene' },
+            labakkang: { name: 'SPBU Labakkang', bg: 'bg-blue-700', activeBtn: 'bg-blue-700 hover:bg-blue-800', filePrefix: 'spbu_lbk' },
+            lpg: { name: 'LPG', bg: 'bg-amber-800', activeBtn: 'bg-amber-800 hover:bg-amber-900', filePrefix: 'ajs_lpg' },
+            tabungan: { name: 'TABUNGAN', bg: 'bg-teal-700', activeBtn: 'bg-teal-700 hover:bg-teal-800', filePrefix: 'tabungan' },
+            mypertamina: { name: 'MY PERTAMINA', bg: 'bg-indigo-700', activeBtn: 'bg-indigo-700 hover:bg-indigo-800', filePrefix: 'my_pertamina' }
+        };
+
+        let currentTheme = 'pangkajene';
+        let cleanMutationRows = []; 
+        let historyStack = []; // Menyimpan riwayat perubahan state untuk fitur Undo
+        let sortState = { column: null, direction: 'asc' };
+        let showTanggalColumn = true;
+        let activeFilterKeyword = '';
+        let generatedPdfBlobUrl = null;
+        let generatedPdfName = '';
+        let detectedOpeningBalance = null;
+        
+        let uploadedPdfBlobUrl = null;
+        let totalOriginalPages = 1;
+        let zipFilesMap = {}; // Untuk menyimpan referensi berkas-berkas dalam ZIP
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // Perekaman kondisi data sebelum dilakukan manipulasi/perubahan
+        function saveStateToHistory() {
+            const currentSaldoAwal = document.getElementById('inputSaldoAwal').value;
+            historyStack.push({
+                rows: JSON.parse(JSON.stringify(cleanMutationRows)),
+                saldoAwal: currentSaldoAwal
+            });
+            updateUndoButtonState();
+        }
+
+        // Fungsi mengeksekusi Batal Perubahan (Undo)
+        function undoAction() {
+            if (historyStack.length === 0) return;
+            
+            const previousState = historyStack.pop();
+            cleanMutationRows = previousState.rows;
+            document.getElementById('inputSaldoAwal').value = previousState.saldoAwal;
+            
+            updateUndoButtonState();
+            detectFrequentKeywords();
+            renderTable();
+        }
+
+        function updateUndoButtonState() {
+            const btnUndo = document.getElementById('btnUndo');
+            if (historyStack.length > 0) {
+                btnUndo.disabled = false;
+                btnUndo.className = "bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs md:text-sm px-3.5 py-2.5 rounded-lg cursor-pointer flex items-center gap-1.5 transition-all shadow-sm";
+            } else {
+                btnUndo.disabled = true;
+                btnUndo.className = "bg-slate-200 text-slate-400 font-bold text-xs md:text-sm px-3.5 py-2.5 rounded-lg cursor-not-allowed flex items-center gap-1.5 transition-all shadow-sm";
+            }
+        }
+
+        function switchTheme(themeKey) {
+            const lastTheme = themes[currentTheme];
+            currentTheme = themeKey;
+            const newTheme = themes[currentTheme];
+            
+            const header = document.getElementById('mainHeader');
+            header.classList.remove(lastTheme.bg);
+            header.classList.add(newTheme.bg);
+            
+            document.getElementById('titleSelect').value = themeKey;
+            document.getElementById('displayTitle').innerText = newTheme.name;
+            updateUIStyles();
+            updateTitleSection();
+        }
+
+        document.getElementById('titleSelect').addEventListener('change', function(e) {
+            switchTheme(e.target.value);
+            renderTable();
+        });
+
+        function updateUIStyles() {
+            const currentStyle = themes[currentTheme];
+            document.getElementById('uploadBtnLabel').className = `theme-transition ${currentStyle.activeBtn} text-white px-5 py-2.5 rounded-lg font-bold text-xs md:text-sm cursor-pointer shadow-sm flex items-center gap-2`;
+            
+            const btnExcel = document.getElementById('btnExcel');
+            const btnPdf = document.getElementById('btnPdf');
+            if (cleanMutationRows.length > 0) {
+                btnExcel.className = `theme-transition ${currentStyle.activeBtn} text-white font-bold text-xs md:text-sm px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2`;
+                btnPdf.className = `theme-transition ${currentStyle.activeBtn} text-white font-bold text-xs md:text-sm px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2`;
+            }
+        }
+
+        function updateTitleSection() {
+            const documentTitle = themes[currentTheme].name;
+            document.getElementById('sectionLargeTitle').innerText = `REKENING KORAN - ${documentTitle.toUpperCase()}`;
+            
+            if (cleanMutationRows.length > 0) {
+                const semuaTanggal = cleanMutationRows.map(row => row.tanggal);
+                const uniqueTanggal = [...new Set(semuaTanggal)];
+
+                if (uniqueTanggal.length === 1) {
+                    document.getElementById('sectionDateRange').innerText = `Tanggal: ${uniqueTanggal[0]}`;
+                } else {
+                    const urutTanggal = [...uniqueTanggal].sort((a, b) => {
+                        let partsA = a.split('/');
+                        let partsB = b.split('/');
+                        let keyA = parseInt((partsA[2] || '') + (partsA[1] || '') + (partsA[0] || ''));
+                        let keyB = parseInt((partsB[2] || '') + (partsB[1] || '') + (partsB[0] || ''));
+                        return keyA - keyB;
+                    });
+                    const startDt = urutTanggal[0];
+                    const endDt = urutTanggal[urutTanggal.length - 1];
+                    document.getElementById('sectionDateRange').innerText = `Periode Tanggal: ${startDt} s.d. ${endDt}`;
+                }
+            } else {
+                document.getElementById('sectionDateRange').innerText = `Periode Tanggal: -`;
+            }
+        }
+
+        document.getElementById('pdfInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if(uploadedPdfBlobUrl) URL.revokeObjectURL(uploadedPdfBlobUrl);
+            uploadedPdfBlobUrl = URL.createObjectURL(file);
+
+            const fileNameLower = file.name.toLowerCase();
+            const isZip = fileNameLower.endsWith('.zip');
+
+            if (fileNameLower.includes("022301000221305")) {
+                switchTheme('lpg');
+            } else if (fileNameLower.includes("022301001155303")) {
+                switchTheme('labakkang');
+            } else if (fileNameLower.includes("022301001022568")) {
+                switchTheme('pangkajene');
+            } else if (fileNameLower.includes("022301001023564")) {
+                switchTheme('tabungan');
+            } else if (fileNameLower.includes("022301014854506")) {
+                switchTheme('mypertamina');
+            }
+
+            const zipContainer = document.getElementById('zipSelectorContainer');
+            const zipSelect = document.getElementById('zipFileSelect');
+
+            if (isZip) {
+                document.getElementById('fileName').innerText = "Mengekstrak ZIP...";
+                zipContainer.classList.add('hidden');
+                zipSelect.innerHTML = '';
+                zipFilesMap = {};
+
+                const fileReader = new FileReader();
+                fileReader.onload = function() {
+                    JSZip.loadAsync(this.result).then(async function(zip) {
+                        const pdfFiles = Object.keys(zip.files).filter(name => name.toLowerCase().endsWith('.pdf') && !zip.files[name].dir);
+                        
+                        if (pdfFiles.length === 0) {
+                            alert("Format tidak valid: Berkas .zip tidak mengandung dokumen .pdf di dalamnya.");
+                            document.getElementById('fileName').innerText = "Gagal memproses berkas.";
+                            return;
+                        }
+
+                        // Simpan semua file PDF dari ZIP ke map
+                        pdfFiles.forEach(pdfName => {
+                            zipFilesMap[pdfName] = zip.files[pdfName];
+                        });
+
+                        // Jika berkas PDF di dalam ZIP lebih dari satu, tampilkan Dropdown Pilihan File
+                        if (pdfFiles.length > 1) {
+                            pdfFiles.forEach(pdfName => {
+                                const option = document.createElement('option');
+                                option.value = pdfName;
+                                option.innerText = pdfName;
+                                zipSelect.appendChild(option);
+                            });
+                            zipContainer.classList.remove('hidden');
+                        } else {
+                            zipContainer.classList.add('hidden');
+                        }
+
+                        // Memuat PDF pertama secara default
+                        await loadSelectedZipFile(pdfFiles[0]);
+
+                    }).catch(function(err) {
+                        console.error(err);
+                        alert("Gagal mengekstrak berkas ZIP. Pastikan file arsip tidak rusak.");
+                        document.getElementById('fileName').innerText = "Gagal membaca ZIP.";
+                    });
+                };
+                fileReader.readAsArrayBuffer(file);
+            } else {
+                zipContainer.classList.add('hidden');
+                document.getElementById('fileName').innerText = file.name;
+                const fileReader = new FileReader();
+                fileReader.onload = async function() {
+                    const arrBuffer = new Uint8Array(this.result);
+                    await processPdfData(arrBuffer);
+                };
+                fileReader.readAsArrayBuffer(file);
+            }
+        });
+
+        // Event listener ketika pengguna memilih berkas PDF lain dari pilihan dropdown ZIP
+        document.getElementById('zipFileSelect').addEventListener('change', async function(e) {
+            const selectedFileName = e.target.value;
+            if (selectedFileName && zipFilesMap[selectedFileName]) {
+                await loadSelectedZipFile(selectedFileName);
+            }
+        });
+
+        async function loadSelectedZipFile(pdfFileName) {
+            const pdfData = await zipFilesMap[pdfFileName].async("uint8array");
+            
+            const zipBlob = new Blob([pdfData], { type: 'application/pdf' });
+            if(uploadedPdfBlobUrl) URL.revokeObjectURL(uploadedPdfBlobUrl);
+            uploadedPdfBlobUrl = URL.createObjectURL(zipBlob);
+
+            const zipInsideName = pdfFileName.toLowerCase();
+            if (zipInsideName.includes("022301000221305")) { switchTheme('lpg'); }
+            else if (zipInsideName.includes("022301001155303")) { switchTheme('labakkang'); }
+            else if (zipInsideName.includes("022301001022568")) { switchTheme('pangkajene'); }
+            else if (zipInsideName.includes("022301001023564")) { switchTheme('tabungan'); }
+            else if (zipInsideName.includes("022301014854506")) { switchTheme('mypertamina'); }
+
+            document.getElementById('fileName').innerText = `[ZIP] ${pdfFileName}`;
+            await processPdfData(pdfData);
+        }
+
+        async function processPdfData(arrBuffer) {
+            try {
+                detectedOpeningBalance = null;
+                const fetchBtn = document.getElementById('btnFetchOpeningBalance');
+                
+                fetchBtn.disabled = true;
+                fetchBtn.className = "bg-slate-200 text-slate-400 p-1.5 rounded-md cursor-not-allowed transition-all shadow-sm flex items-center justify-center flex-shrink-0";
+
+                const pdfDocument = await pdfjsLib.getDocument(arrBuffer).promise;
+                totalOriginalPages = pdfDocument.numPages;
+                
+                const firstPage = await pdfDocument.getPage(1);
+                const textContentFirst = await firstPage.getTextContent();
+                const rawFirstPageText = textContentFirst.items.map(t => t.str).join(" ");
+                
+                if (rawFirstPageText.includes("022301000221305")) { switchTheme('lpg'); }
+                else if (rawFirstPageText.includes("022301001155303")) { switchTheme('labakkang'); }
+                else if (rawFirstPageText.includes("022301001022568")) { switchTheme('pangkajene'); }
+                else if (rawFirstPageText.includes("022301001023564")) { switchTheme('tabungan'); }
+                else if (rawFirstPageText.includes("022301014854506")) { switchTheme('mypertamina'); }
+
+                historyStack = []; // Reset riwayat undo setiap memuat PDF baru
+                updateUndoButtonState();
+
+                cleanMutationRows = await parseBROMutationData(pdfDocument);
+                
+                if(cleanMutationRows.length > 0) {
+                    if (detectedOpeningBalance !== null) {
+                        fetchBtn.disabled = false;
+                        fetchBtn.className = "bg-slate-600 text-white p-1.5 rounded-md cursor-pointer hover:bg-slate-700 transition-all shadow-sm flex items-center justify-center flex-shrink-0";
+                    }
+
+                    document.getElementById('btnExcel').disabled = false;
+                    document.getElementById('btnPdf').disabled = false;
+                    document.getElementById('selectAllCheckbox').checked = false;
+                    updateUIStyles();
+                    updateTitleSection();
+                    detectFrequentKeywords(); // Deteksi otomatis kata kunci berulang
+                    renderTable();
+                } else {
+                    alert("Format Mutasi dalam PDF tidak terdeteksi secara valid.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Gagal membaca struktur internal berkas PDF.");
+            }
+        }
+
+        // Fungsi baru: Memindai uraian transaksi dan mendeteksi kata kunci yang berulang
+        function detectFrequentKeywords() {
+            const dropdown = document.getElementById('selectKeywordsDropdown');
+            dropdown.innerHTML = '<option value="">-- Sering Muncul --</option>';
+
+            if (!cleanMutationRows || cleanMutationRows.length === 0) return;
+
+            // Kata-kata umum/stop words yang diabaikan
+            const ignoreWords = new Set([
+                'ke', 'dari', 'dan', 'di', 'pada', 'untuk', 'dengan', 'via', 'no', 'ref', 'trf',
+                'pembayaran', 'transfer', 'bi-fast', 'bifast', 'kredit', 'debet', 'transaksi',
+                'pembelian', 'stiker', 'bri', 'cms', 'rekening', 'koran', 'spbu', 'pt', 'cv'
+            ]);
+
+            const frequencyMap = {};
+
+            cleanMutationRows.forEach(row => {
+                if (!row.uraian) return;
+                
+                // Ambil kata-kata alfanumerik panjang minimal 3 karakter
+                const words = row.uraian
+                    .replace(/[^a-zA-Z0-9\s]/g, ' ')
+                    .split(/\s+/);
+
+                const seenInRow = new Set();
+                words.forEach(word => {
+                    const cleanWord = word.trim();
+                    const lowerWord = cleanWord.toLowerCase();
+                    
+                    // Abaikan angka murni, kata pendek, atau kata sambung umum
+                    if (cleanWord.length >= 3 && !/^\d+$/.test(cleanWord) && !ignoreWords.has(lowerWord)) {
+                        seenInRow.add(cleanWord.toUpperCase());
+                    }
+                });
+
+                seenInRow.forEach(w => {
+                    frequencyMap[w] = (frequencyMap[w] || 0) + 1;
+                });
+            });
+
+            // Urutkan kata kunci berdasarkan jumlah kemunculan terbanyak
+            const sortedKeywords = Object.keys(frequencyMap)
+                .filter(word => frequencyMap[word] >= 2) // Minimal muncul 2 kali
+                .sort((a, b) => frequencyMap[b] - frequencyMap[a]);
+
+            sortedKeywords.forEach(word => {
+                const opt = document.createElement('option');
+                opt.value = word;
+                opt.innerText = `${word} (${frequencyMap[word]})`;
+                dropdown.appendChild(opt);
+            });
+        }
+
+        // Event listener saat memilih item dari dropdown kata kunci sering muncul
+        document.getElementById('selectKeywordsDropdown').addEventListener('change', function(e) {
+            const selectedVal = e.target.value;
+            const filterInput = document.getElementById('filterUraian');
+            const clearBtn = document.getElementById('clearFilterBtn');
+
+            filterInput.value = selectedVal;
+            activeFilterKeyword = selectedVal.trim();
+
+            if (activeFilterKeyword !== '') {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderTable();
+        });
+
+        document.getElementById('btnFetchOpeningBalance').addEventListener('click', function() {
+            if (detectedOpeningBalance !== null) {
+                saveStateToHistory(); // Rekam kondisi awal sebelum memperbarui saldo
+                document.getElementById('inputSaldoAwal').value = formatIdCurrency(detectedOpeningBalance);
+                renderTable(); 
+            }
+        });
+
+        async function parseBROMutationData(pdf) {
+            let tempAllLines = [];
+            
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const pageInstance = await pdf.getPage(pageNum);
+                const tokenTexts = await pageInstance.getTextContent();
+                
+                let yCoordinatesMap = {};
+                tokenTexts.items.forEach(item => {
+                    let yPos = Math.round(item.transform[5]);
+                    let baseKey = Object.keys(yCoordinatesMap).find(k => Math.abs(k - yPos) <= 3);
+                    if(baseKey) {
+                        yCoordinatesMap[baseKey].push(item);
+                    } else {
+                        yCoordinatesMap[yPos] = [item];
+                    }
+                });
+
+                let sortedLinesY = Object.keys(yCoordinatesMap).sort((a, b) => b - a);
+
+                sortedLinesY.forEach(y => {
+                    let horizontalLine = yCoordinatesMap[y].sort((a, b) => a.transform[4] - b.transform[4]);
+                    let rawLineString = horizontalLine.map(t => t.str.trim()).join(" ").trim();
+                    
+                    if (rawLineString.length < 5) return;
+                    const cleanString = rawLineString.toLowerCase();
+
+                    const isRealOpeningBalanceSummary = (cleanString.includes('opening balance') || cleanString.includes('saldo awal')) && 
+                                                        (cleanString.includes('total transaksi') || cleanString.includes('total debit') || cleanString.includes('total credit') || cleanString.includes('closing balance') || cleanString.includes('saldo akhir'));
+
+                    if (isRealOpeningBalanceSummary) {
+                        let numericMatches = rawLineString.match(/[\d\.,-]+/g) || [];
+                        let valuesList = numericMatches.filter(n => (n.includes('.') || n.includes(',')) && n.replace(/[^0-9]/g, '').length > 3);
+
+                        if (valuesList.length > 0) {
+                            let rawOpeningBalance = valuesList[0];
+                            detectedOpeningBalance = convertToFloat(rawOpeningBalance);
+                        } else {
+                            for (let lookAhead = 1; lookAhead <= 10; lookAhead++) {
+                                const nextIndex = sortedLinesY.indexOf(String(y)) + lookAhead;
+                                if (nextIndex < 0 || nextIndex >= sortedLinesY.length) break;
+                                const nextY = sortedLinesY[nextIndex];
+                                const nextLine = yCoordinatesMap[nextY]
+                                    .sort((a, b) => a.transform[4] - b.transform[4])
+                                    .map(t => t.str.trim())
+                                    .join(" ")
+                                    .trim();
+                                const matches = nextLine.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g);
+                                if (matches && matches.length > 0) {
+                                    detectedOpeningBalance = convertToFloat(matches[0]);
+                                    break;
+                                }
+                            }
+                        }
+                        return; 
+                    }
+                    
+                    if (cleanString.includes('halaman') || cleanString.includes('page') || 
+                        cleanString.includes('laporan transaksi') || cleanString.includes('statement of') ||
+                        cleanString.includes('total transaksi') || cleanString.includes('created by cash') ||
+                        cleanString.includes('melayani dengan') || cleanString.includes('terbilang')) {
+                        return;
+                    }
+                    tempAllLines.push(rawLineString);
+                });
+            }
+
+            let parsedItems = [];
+            
+            for(let i = 0; i < tempAllLines.length; i++) {
+                let currentLine = tempAllLines[i];
+                
+                if (/^\d{2}\/\d{2}\/\d{2}/.test(currentLine)) {
+                    let numericMatches = currentLine.match(/[\d\.,]+/g) || [];
+                    let valuesList = numericMatches.filter(n => (n.includes('.') || n.includes(',')) && n.length > 3);
+
+                    if (valuesList.length >= 3) {
+                        let rawSaldo = valuesList[valuesList.length - 1];
+                        let rawKredit = valuesList[valuesList.length - 2];
+                        let rawDebet = valuesList[valuesList.length - 3];
+
+                        let floatDebet = convertToFloat(rawDebet);
+                        let floatKredit = convertToFloat(rawKredit);
+                        let cleanDate = currentLine.split(" ")[0];
+
+                        let cleanUraian = currentLine.substring(cleanDate.length).trim();
+                        if (cleanUraian.startsWith(currentLine.match(/^\d{2}:\d{2}:\d{2}/)?.[0] || '')) {
+                            cleanUraian = cleanUraian.replace(/^\d{2}:\d{2}:\d{2}/, '').trim();
+                        }
+                        
+                        let idxDebet = cleanUraian.lastIndexOf(rawDebet);
+                        if(idxDebet !== -1) cleanUraian = cleanUraian.substring(0, idxDebet).trim();
+
+                        while (i + 1 < tempAllLines.length && !/^\d{2}\/\d{2}\/\d{2}/.test(tempAllLines[i + 1])) {
+                            let nextLine = tempAllLines[i + 1];
+                            if(/\s+\d{7}$/.test(nextLine)) nextLine = nextLine.replace(/\s+\d{7}$/, '');
+                            cleanUraian += " " + nextLine.trim();
+                            i++; 
+                        }
+
+                        cleanUraian = cleanUraian.replace(/\s+\d{7}$/, '').trim();
+                        cleanUraian = cleanUraian.replace(/,$/, '').trim();
+
+                        parsedItems.push({
+                            tanggal: cleanDate,
+                            uraian: cleanUraian,
+                            debet: floatDebet,
+                            kredit: floatKredit
+                        });
+                    }
+                }
+            }
+            return parsedItems;
+        }
+
+        function convertToFloat(stringNum) {
+            if(!stringNum || stringNum === '0.00' || stringNum === '0,00' || stringNum === '-') return 0;
+            let cleanStr = stringNum.trim();
+            if (/,/g.test(cleanStr) && !/\./g.test(cleanStr)) {
+                cleanStr = cleanStr.replace(',', '.');
+            } else if (/\./g.test(cleanStr) && /,/g.test(cleanStr)) {
+                if (cleanStr.lastIndexOf('.') > cleanStr.lastIndexOf(',')) {
+                    cleanStr = cleanStr.replace(/,/g, '');
+                } else {
+                    cleanStr = cleanStr.replace(/\./g, '').replace(',', '.');
+                }
+            } else if (/\./g.test(cleanStr) && !/,/g.test(cleanStr)) {
+                let parts = cleanStr.split('.');
+                if (parts[parts.length - 1].length !== 2) {
+                    cleanStr = cleanStr.replace(/\./g, '');
+                }
+            }
+            return parseFloat(cleanStr) || 0;
+        }
+
+        function formatIdCurrency(numberVal) {
+            const isNegative = numberVal < 0;
+            const absoluteValue = Math.abs(numberVal);
+            const formatted = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(absoluteValue);
+            return isNegative ? `-${formatted}` : formatted;
+        }
+
+        function parseInputToFloat(inputString) {
+            let clean = inputString.replace(/[^\d,-]/g, '').replace(',', '.');
+            return parseFloat(clean) || 0;
+        }
+
+        function getFormattedTimestamp() {
+            const d = new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = String(d.getFullYear()).slice(-2);
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const seconds = String(d.getSeconds()).padStart(2, '0');
+            return `${day}${month}${year}_${hours}${minutes}${seconds}`;
+        }
+
+        function openLastPageOfSourcePdf() {
+            if(!uploadedPdfBlobUrl) {
+                alert("Unggah file PDF terlebih dahulu.");
+                return;
+            }
+            const modal = document.getElementById('sourcePdfModal');
+            const iframe = document.getElementById('sourcePdfPreviewFrame');
+            const infoText = document.getElementById('sourcePdfModalInfo');
+            
+            iframe.src = `${uploadedPdfBlobUrl}#page=${totalOriginalPages}&view=FitH`;
+            infoText.innerText = `Menampilkan Halaman ${totalOriginalPages} dari ${totalOriginalPages} total halaman berkas asli.`;
+            modal.classList.remove('hidden');
+        }
+
+        function closeSourcePdfModal() {
+            document.getElementById('sourcePdfModal').classList.add('hidden');
+            document.getElementById('sourcePdfPreviewFrame').src = "";
+        }
+
+        function copyValueToClipboard(element, plainTextValue) {
+            if (plainTextValue === '-') return;
+            
+            const cleanNumericValue = plainTextValue.replace(/\./g, '').replace('.', ',');
+            
+            navigator.clipboard.writeText(cleanNumericValue).then(() => {
+                element.classList.add('copied-flash');
+                setTimeout(() => {
+                    element.classList.remove('copied-flash');
+                }, 400);
+            }).catch(err => {
+                console.error('Gagal menyalin teks: ', err);
+            });
+        }
+
+        function renderTable() {
+            const tableBody = document.getElementById('mutationTableBody');
+            const tableFoot = document.getElementById('mutationTableFoot');
+            tableBody.innerHTML = '';
+
+            const thTanggal = document.getElementById('thTanggal');
+            if (showTanggalColumn) {
+                thTanggal.classList.remove('hidden');
+            } else {
+                thTanggal.classList.add('hidden');
+            }
+
+            let runBalance = parseInputToFloat(document.getElementById('inputSaldoAwal').value);
+            let accumulatedDebet = 0;
+            let accumulatedKredit = 0;
+
+            if(cleanMutationRows.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400 italic text-xs">Berkas belum dimasukkan. Silakan unggah dokumen PDF atau ZIP rekening koran Anda.</td></tr>`;
+                tableFoot.classList.add('hidden');
+                document.getElementById('mergeActionContainer').classList.add('hidden');
+                return;
+            }
+
+            let displayIndex = 1;
+
+            cleanMutationRows.forEach((row, rowIndex) => {
+                runBalance = runBalance + row.kredit - row.debet;
+                
+                accumulatedDebet += row.debet;
+                accumulatedKredit += row.kredit;
+
+                if (activeFilterKeyword !== '') {
+                    const kataKunci = activeFilterKeyword.toLowerCase();
+                    if (!row.uraian.toLowerCase().includes(kataKunci)) {
+                        return; 
+                    }
+                }
+
+                const balanceColorClass = runBalance < 0 ? 'text-rose-600 font-bold' : 'text-slate-900 font-normal';
+
+                const trElement = document.createElement('tr');
+                trElement.className = "hover:bg-slate-50/80 text-slate-700 transition-colors font-normal text-xs md:text-sm";
+                
+                const debetText = row.debet !== 0 ? formatIdCurrency(row.debet) : '-';
+                const kreditText = row.kredit > 0 ? formatIdCurrency(row.kredit) : '-';
+                const balanceText = formatIdCurrency(runBalance);
+
+                trElement.innerHTML = `
+                    <td class="text-center p-2 font-normal text-slate-400 select-none">${displayIndex}</td>
+                    <td class="text-center p-2">
+                        <input type="checkbox" class="row-checkbox rounded cursor-pointer w-4 h-4" data-index="${rowIndex}" onchange="handleCheckboxChange()" />
+                    </td>
+                    <td class="font-normal font-mono text-slate-500 ${showTanggalColumn ? '' : 'hidden'}">${row.tanggal}</td>
+                    <td>
+                        <input type="text" value="${row.uraian}" 
+                            class="w-full bg-transparent hover:bg-amber-50/70 focus:bg-white focus:ring-2 focus:ring-blue-400 rounded-md px-2 py-1 border-none outline-none transition-all font-normal text-slate-900 text-xs md:text-sm"
+                            onchange="updateUraianValue(${rowIndex}, this.value)"
+                            onkeydown="if(event.key === 'Enter') this.blur();" />
+                    </td>
+                    <td class="text-right font-mono text-rose-600 font-normal cursor-pointer select-all" title="Klik 2x untuk menyalin angka murni" ondblclick="copyValueToClipboard(this, '${debetText}')">${debetText}</td>
+                    <td class="text-right font-mono text-emerald-600 font-normal cursor-pointer select-all" title="Klik 2x untuk menyalin angka murni" ondblclick="copyValueToClipboard(this, '${kreditText}')">${kreditText}</td>
+                    <td class="text-right font-mono bg-slate-50/50 ${balanceColorClass} cursor-pointer select-all" title="Klik 2x untuk menyalin angka murni" ondblclick="copyValueToClipboard(this, '${balanceText}')">${balanceText}</td>
+                `;
+                tableBody.appendChild(trElement);
+                displayIndex++;
+            });
+
+            document.getElementById('summaryDebet').innerText = formatIdCurrency(accumulatedDebet);
+            document.getElementById('summaryKredit').innerText = formatIdCurrency(accumulatedKredit);
+            document.getElementById('summaryAkhir').innerText = formatIdCurrency(runBalance);
+
+            tableFoot.classList.remove('hidden');
+            const footBalanceColorClass = runBalance < 0 ? 'text-rose-600' : 'text-slate-900';
+            
+            tableFoot.innerHTML = `
+                <tr class="text-slate-900 bg-slate-100 border-b border-slate-300 font-bold text-xs md:text-sm">
+                    <td class="text-center py-3">#</td>
+                    <td class="text-center py-3"></td>
+                    ${showTanggalColumn ? '<td class="py-3"></td>' : ''}
+                    <td class="text-left py-3 tracking-wide text-[10px] md:text-xs uppercase font-black">TOTAL</td>
+                    <td class="text-right font-mono text-rose-600 font-black cursor-pointer select-all" title="Klik 2x untuk menyalin" ondblclick="copyValueToClipboard(this, '${formatIdCurrency(accumulatedDebet)}')">${formatIdCurrency(accumulatedDebet)}</td>
+                    <td class="text-right font-mono text-emerald-700 font-black cursor-pointer select-all" title="Klik 2x untuk menyalin" ondblclick="copyValueToClipboard(this, '${formatIdCurrency(accumulatedKredit)}')">${formatIdCurrency(accumulatedKredit)}</td>
+                    <td class="text-right font-mono font-black bg-amber-50/60 ${footBalanceColorClass} cursor-pointer hover:bg-amber-100 hover:text-blue-700 select-none border-l-2 border-amber-400 transition-all group p-2 relative" 
+                        onclick="openLastPageOfSourcePdf()" 
+                        title="Klik untuk melihat lampiran halaman terakhir dokumen PDF asli">
+                        <span class="flex items-center justify-end gap-1.5">
+                            ${formatIdCurrency(runBalance)}
+                            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 inline transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </span>
+                    </td>
+                </tr>
+            `;
+
+            handleCheckboxChange();
+        }
+
+        document.getElementById('inputSaldoAwal').addEventListener('focus', function(e) {
+            this.dataset.previousValue = this.value;
+        });
+        document.getElementById('inputSaldoAwal').addEventListener('blur', function(e) {
+            let currentVal = parseInputToFloat(e.target.value);
+            let formattedVal = formatIdCurrency(currentVal);
+            if (this.dataset.previousValue !== formattedVal) {
+                saveStateToHistory(); // Simpan riwayat jika Saldo Awal diubah secara manual
+            }
+            e.target.value = formattedVal;
+            renderTable();
+        });
+        document.getElementById('inputSaldoAwal').addEventListener('keydown', function(e) {
+            if(e.key === 'Enter') {
+                this.blur();
+            }
+        });
+
+        function updateUraianValue(idx, updatedValue) {
+            if (cleanMutationRows[idx].uraian !== updatedValue) {
+                saveStateToHistory(); // Simpan riwayat jika Uraian diubah
+                cleanMutationRows[idx].uraian = updatedValue;
+                detectFrequentKeywords(); // Perbarui deteksi kata kunci jika uraian diubah secara manual
+                renderTable();
+            }
+        }
+
+        function toggleSelectAll(master) {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            handleCheckboxChange();
+        }
+
+        function handleCheckboxChange() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            const container = document.getElementById('mergeActionContainer');
+            const countSpan = document.getElementById('checkedCount');
+            
+            countSpan.innerText = checkedBoxes.length;
+            if (checkedBoxes.length >= 2) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('filterUraian').addEventListener('input', function(e) {
+            activeFilterKeyword = e.target.value.trim();
+            const clearBtn = document.getElementById('clearFilterBtn');
+            if (activeFilterKeyword !== '') {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            document.getElementById('selectKeywordsDropdown').value = activeFilterKeyword.toUpperCase();
+            renderTable();
+        });
+
+        document.getElementById('clearFilterBtn').addEventListener('click', function() {
+            document.getElementById('filterUraian').value = '';
+            document.getElementById('selectKeywordsDropdown').value = '';
+            activeFilterKeyword = '';
+            this.classList.add('hidden');
+            renderTable();
+        });
+
+        document.getElementById('toggleColumnTanggal').addEventListener('change', function(e) {
+            showTanggalColumn = e.target.checked;
+            renderTable();
+        });
+
+        document.getElementById('btnMergeRows').addEventListener('click', function() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            if (checkedBoxes.length < 2) return;
+
+            saveStateToHistory(); // Simpan riwayat sebelum melakukan Penggabungan Baris
+
+            let targetIndices = Array.from(checkedBoxes).map(cb => parseInt(cb.getAttribute('data-index')));
+            targetIndices.sort((a, b) => a - b);
+
+            const baseIndex = targetIndices[0];
+            let mergedRow = { ...cleanMutationRows[baseIndex] };
+
+            for (let i = 1; i < targetIndices.length; i++) {
+                const nextRow = cleanMutationRows[targetIndices[i]];
+                mergedRow.uraian += " " + nextRow.uraian;
+                mergedRow.debet += nextRow.debet;
+                mergedRow.kredit += nextRow.kredit;
+            }
+
+            cleanMutationRows[baseIndex] = mergedRow;
+
+            for (let i = targetIndices.length - 1; i > 0; i--) {
+                cleanMutationRows.splice(targetIndices[i], 1);
+            }
+
+            document.getElementById('selectAllCheckbox').checked = false;
+            updateTitleSection();
+            detectFrequentKeywords(); // Perbarui deteksi kata kunci setelah penggabungan baris
+            renderTable();
+        });
+
+        function sortData(colIdx) {
+            if (cleanMutationRows.length === 0) return;
+            
+            saveStateToHistory(); // Simpan riwayat sebelum pengurutan/sorting baris
+
+            let direction = 'asc';
+            if (sortState.column === colIdx && sortState.direction === 'asc') {
+                direction = 'desc';
+            }
+            sortState = { column: colIdx, direction: direction };
+
+            document.getElementById('sortIcon0').innerText = '↕';
+            document.getElementById('sortIcon1').innerText = '↕';
+            document.getElementById(`sortIcon${colIdx}`).innerText = direction === 'asc' ? '↑' : '↓';
+
+            cleanMutationRows.sort((a, b) => {
+                let keyA = colIdx === 0 ? a.tanggal : a.uraian.toLowerCase();
+                let keyB = colIdx === 0 ? b.tanggal : b.uraian.toLowerCase();
+
+                if (colIdx === 0) {
+                    let partsA = keyA.split('/');
+                    let partsB = keyB.split('/');
+                    keyA = parseInt((partsA[2] || '') + (partsA[1] || '') + (partsA[0] || ''));
+                    keyB = parseInt((partsB[2] || '') + (partsB[1] || '') + (partsB[0] || ''));
+                }
+
+                if (keyA < keyB) return direction === 'asc' ? -1 : 1;
+                if (keyA > keyB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderTable();
+        }
+
+        document.getElementById('btnExcel').addEventListener('click', function() {
+            if (cleanMutationRows.length === 0) return;
+            const themeConfig = themes[currentTheme];
+            let excelRunBalance = parseInputToFloat(document.getElementById('inputSaldoAwal').value);
+
+            let headerKolom = ["No", "Uraian Transaksi", "Debet (-)", "Kredit (+)", "Mutasi Saldo"];
+            if (showTanggalColumn) {
+                headerKolom.splice(1, 0, "Tanggal");
+            }
+
+            let outputMatrix = [
+                ["UNIT / KATEGORI DOKUMEN", themeConfig.name.toUpperCase()],
+                ["PERIODE DOKUMEN", document.getElementById('sectionDateRange').innerText],
+                ["SALDO AWAL", excelRunBalance],
+                [], 
+                headerKolom
+            ];
+
+            let displayIdx = 1;
+            let totalD = 0;
+            let totalK = 0;
+
+            cleanMutationRows.forEach(row => {
+                if (activeFilterKeyword !== '' && !row.uraian.toLowerCase().includes(activeFilterKeyword.toLowerCase())) {
+                    return;
+                }
+
+                excelRunBalance = excelRunBalance + row.kredit - row.debet;
+                totalD += row.debet;
+                totalK += row.kredit;
+
+                let barisData = [
+                    displayIdx,
+                    row.uraian,
+                    row.debet !== 0 ? row.debet : 0,
+                    row.kredit !== 0 ? row.kredit : 0,
+                    excelRunBalance
+                ];
+
+                if (showTanggalColumn) {
+                    barisData.splice(1, 0, row.tanggal);
+                }
+
+                outputMatrix.push(barisData);
+                displayIdx++;
+            });
+
+            let barisTotal = ["", "TOTAL PENJUMLAHAN", totalD, totalK, excelRunBalance];
+            if (showTanggalColumn) {
+                barisTotal.splice(1, 0, "");
+            }
+            outputMatrix.push([]);
+            outputMatrix.push(barisTotal);
+
+            const workBook = XLSX.utils.book_new();
+            const workSheet = XLSX.utils.aoa_to_sheet(outputMatrix);
+            XLSX.utils.book_append_sheet(workBook, workSheet, "Laporan Mutasi");
+            
+            const customFileName = `${themeConfig.filePrefix}_${getFormattedTimestamp()}.xlsx`;
+            XLSX.writeFile(workBook, customFileName);
+        });
+
+        function closePdfModal() {
+            document.getElementById('pdfModal').classList.add('hidden');
+            if (generatedPdfBlobUrl) {
+                URL.revokeObjectURL(generatedPdfBlobUrl);
+                generatedPdfBlobUrl = null;
+            }
+            document.getElementById('pdfPreviewFrame').src = "";
+        }
+
+        document.getElementById('btnModalDownload').addEventListener('click', function() {
+            if (generatedPdfBlobUrl && generatedPdfName) {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = generatedPdfBlobUrl;
+                downloadLink.download = generatedPdfName;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                closePdfModal();
+            }
+        });
+
+        document.getElementById('btnPdf').addEventListener('click', function() {
+            if (cleanMutationRows.length === 0) return;
+            const { jsPDF } = window.jspdf;
+            const pdfDoc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            
+            const themeConfig = themes[currentTheme];
+            const periodeTxt = document.getElementById('sectionDateRange').innerText;
+            let pdfRunBalance = parseInputToFloat(document.getElementById('inputSaldoAwal').value);
+
+            pdfDoc.setFont("Helvetica", "bold");
+            pdfDoc.setFontSize(11); 
+            pdfDoc.setTextColor(30, 41, 59); 
+            pdfDoc.text(`LAPORAN MUTASI REKENING KORAN`, 14, 15);
+            
+            pdfDoc.setFontSize(8); 
+            pdfDoc.text(themeConfig.name.toUpperCase(), 14, 21);
+            
+            pdfDoc.setFontSize(6.5); 
+            pdfDoc.setFont("Helvetica", "normal");
+            pdfDoc.setTextColor(100, 116, 139); 
+            pdfDoc.text(`${periodeTxt.toUpperCase()}`, 14, 26);
+            pdfDoc.text(`SALDO AWAL: RP ${formatIdCurrency(pdfRunBalance)}`, 14, 31);
+
+            pdfDoc.setDrawColor(226, 232, 240);
+            pdfDoc.setLineWidth(0.4);
+            pdfDoc.line(14, 34, 196, 34);
+
+            let headerKolom = ['No', 'Uraian Transaksi', 'Debet (-)', 'Kredit (+)', 'Mutasi Saldo'];
+            if (showTanggalColumn) {
+                headerKolom.splice(1, 0, 'Tanggal');
+            }
+
+            let tablePayload = [];
+            let displayIdx = 1;
+            let totalD = 0;
+            let totalK = 0;
+
+            cleanMutationRows.forEach(row => {
+                if (activeFilterKeyword !== '' && !row.uraian.toLowerCase().includes(activeFilterKeyword.toLowerCase())) {
+                    return;
+                }
+
+                pdfRunBalance = pdfRunBalance + row.kredit - row.debet;
+                totalD += row.debet;
+                totalK += row.kredit;
+
+                let barisData = [
+                    displayIdx,
+                    row.uraian,
+                    row.debet !== 0 ? formatIdCurrency(row.debet) : '-',
+                    row.kredit > 0 ? formatIdCurrency(row.kredit) : '-',
+                    formatIdCurrency(pdfRunBalance)
+                ];
+
+                if (showTanggalColumn) {
+                    barisData.splice(1, 0, 'Tanggal');
+                    barisData[1] = row.tanggal;
+                }
+
+                tablePayload.push(barisData);
+                displayIdx++;
+            });
+
+            let barisTotalPayload = ["", "TOTAL PENJUMLAHAN", formatIdCurrency(totalD), formatIdCurrency(totalK), formatIdCurrency(pdfRunBalance)];
+            if (showTanggalColumn) {
+                barisTotalPayload.splice(1, 0, "");
+            }
+            tablePayload.push(barisTotalPayload);
+
+            let colStylesConfig = {};
+            if (showTanggalColumn) {
+                colStylesConfig = {
+                    0: { halign: 'center', width: 8 },
+                    1: { halign: 'center', width: 20 },
+                    2: { halign: 'left' },
+                    3: { halign: 'right', width: 28 }, 
+                    4: { halign: 'right', width: 28 }, 
+                    5: { halign: 'right', width: 32 } 
+                };
+            } else {
+                colStylesConfig = {
+                    0: { halign: 'center', width: 8 },
+                    1: { halign: 'left' },
+                    2: { halign: 'right', width: 32 }, 
+                    3: { halign: 'right', width: 32 }, 
+                    4: { halign: 'right', width: 36 }
+                };
+            }
+
+            pdfDoc.autoTable({
+                startY: 38,
+                head: [headerKolom],
+                body: tablePayload,
+                theme: 'striped', 
+                styles: { fontSize: 6, cellPadding: 2, font: 'Helvetica', fontStyle: 'normal', textColor: '#334155' }, 
+                headStyles: { 
+                    fillColor: '#cbd5e1', 
+                    fontStyle: 'bold', 
+                    textColor: '#0f172a', 
+                    fontSize: 6.5, 
+                    borderBottom: '1.5px solid #94a3b8' 
+                },
+                columnStyles: colStylesConfig,
+                didParseCell: function(data) {
+                    if (data.row.index === tablePayload.length - 1) {
+                        data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.fillColor = '#94a3b8'; 
+                        data.cell.styles.textColor = '#0f172a';
+                        
+                        if (typeof data.cell.text[0] === 'string') {
+                            data.cell.text[0] = data.cell.text[0].toUpperCase();
+                        }
+                        
+                        if(data.column.index === (showTanggalColumn ? 3 : 2)) {
+                            data.cell.styles.textColor = '#7f1d1d'; 
+                        }
+                        if(data.column.index === (showTanggalColumn ? 4 : 3)) {
+                            data.cell.styles.textColor = '#14532d'; 
+                        }
+                    } else {
+                        data.cell.styles.fontStyle = 'normal';
+                        if (data.column.index === (showTanggalColumn ? 3 : 2) && data.cell.text[0] !== '-') {
+                            data.cell.styles.textColor = '#dc2626';
+                        }
+                        if (data.column.index === (showTanggalColumn ? 4 : 3) && data.cell.text[0] !== '-') {
+                            data.cell.styles.textColor = '#16a34a';
+                        }
+                        if (data.column.index === (showTanggalColumn ? 5 : 4) && data.cell.text[0].startsWith('-')) {
+                            data.cell.styles.textColor = '#dc2626';
+                        }
+                    }
+                }
+            });
+
+            const pdfBlob = pdfDoc.output('blob');
+            generatedPdfBlobUrl = URL.createObjectURL(pdfBlob);
+            generatedPdfName = `${themeConfig.filePrefix}_${getFormattedTimestamp()}.pdf`;
+
+            document.getElementById('pdfModalFileName').innerText = generatedPdfName;
+            document.getElementById('pdfPreviewFrame').src = generatedPdfBlobUrl;
+            document.getElementById('pdfModal').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

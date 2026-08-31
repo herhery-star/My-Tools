@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Rekonsiliasi Excel - Perencanaan vs Penyaluran</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Optimasi interaksi sentuhan pada perangkat seluler */
+        label, button, input {
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-6">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 backdrop-blur-md bg-white/90">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-indigo-600 rounded-xl text-white shadow-md shadow-indigo-200 shrink-0">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug">ReconExcel Pro</h1>
+                        <p class="text-[11px] sm:text-xs text-slate-500 line-clamp-1">Komparator LPG 3 Kg - PT ABAD JAYA SEJAHTERA</p>
+                    </div>
+                </div>
+                
+                <div id="statusBadge" class="hidden text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 flex items-center space-x-1.5 animate-pulse shrink-0">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Memproses...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+        
+        <div id="uploaderWrapper" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 transition-all duration-500 ease-in-out">
+            
+            <div id="cardPlan" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-300 transition-all duration-300 group">
+                <div class="flex items-center justify-between mb-3" id="headPlan">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300 shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="font-semibold text-slate-900 text-sm truncate">Data Perencanaan</h3>
+                            <p class="text-[11px] text-slate-400">File Excel (.xlsx)</p>
+                        </div>
+                    </div>
+                    <span id="badgePlan" class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 bg-slate-100 text-slate-500 rounded-md border border-slate-200 shrink-0">Kosong</span>
+                </div>
+                
+                <label id="dropzonePlan" class="flex flex-col items-center justify-center w-full min-h-[96px] sm:h-28 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-emerald-50/20 hover:border-emerald-300 transition-all duration-200 active:scale-[0.99]">
+                    <div class="flex flex-col items-center justify-center text-center px-4 py-3">
+                        <p class="text-xs text-slate-600 font-medium" id="lblPlan">Pilih File Excel Perencanaan</p>
+                        <p class="text-[10px] text-slate-400 font-mono mt-1" id="subPlan">Unggah berkas .xlsx</p>
+                    </div>
+                    <input type="file" id="filePlan" accept=".xlsx, .xls" class="hidden" />
+                </label>
+            </div>
+
+            <div id="cardReal" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all duration-300 group">
+                <div class="flex items-center justify-between mb-3" id="headReal">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="font-semibold text-slate-900 text-sm truncate">Data Penyaluran</h3>
+                            <p class="text-[11px] text-slate-400">File Excel (.xlsx)</p>
+                        </div>
+                    </div>
+                    <span id="badgeReal" class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 bg-slate-100 text-slate-500 rounded-md border border-slate-200 shrink-0">Kosong</span>
+                </div>
+                
+                <label id="dropzoneReal" class="flex flex-col items-center justify-center w-full min-h-[96px] sm:h-28 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-blue-50/20 hover:border-blue-300 transition-all duration-200 active:scale-[0.99]">
+                    <div class="flex flex-col items-center justify-center text-center px-4 py-3">
+                        <p class="text-xs text-slate-600 font-medium" id="lblReal">Pilih File Excel Penyaluran</p>
+                        <p class="text-[10px] text-slate-400 font-mono mt-1" id="subReal">Unggah berkas .xlsx</p>
+                    </div>
+                    <input type="file" id="fileReal" accept=".xlsx, .xls" class="hidden" />
+                </label>
+            </div>
+        </div>
+
+        <div id="filterWrapper" class="hidden bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div class="flex items-center space-x-2 text-slate-900 font-semibold text-xs sm:text-sm">
+                    <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    <span>Filter Tanggal</span>
+                </div>
+                <div class="flex space-x-3 text-xs">
+                    <button onclick="toggleAllDates(true)" class="text-indigo-600 hover:underline font-medium py-1 px-1.5 active:bg-indigo-50 rounded">Pilih Semua</button>
+                    <button onclick="toggleAllDates(false)" class="text-slate-500 hover:underline font-medium py-1 px-1.5 active:bg-slate-100 rounded">Kosongkan</button>
+                </div>
+            </div>
+            <div id="dateCheckboxContainer" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 max-h-40 sm:max-h-32 overflow-y-auto p-0.5 text-xs"></div>
+        </div>
+
+        <div id="resultsWrapper" class="hidden space-y-4">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm">
+                <span class="inline-flex items-center justify-center px-3 py-1.5 rounded-md text-[11px] sm:text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100 text-center">
+                    Menampilkan Data Berselisih (&ne; 0)
+                </span>
+                <button onclick="exportToCSV()" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-4 py-2.5 sm:py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-medium rounded-xl shadow-sm transition-all duration-150">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Ekspor Hasil (.csv)</span>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto w-full max-h-[60vh] sm:max-h-[550px] touch-pan-x">
+                    <table class="w-full text-left border-collapse text-xs" id="resultTable">
+                        <thead class="bg-slate-900 text-slate-200 uppercase tracking-wider sticky top-0 z-10 text-[10px]">
+                            <tr id="tableHeader"></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 bg-white" id="tableBody"></tbody>
+                        <tfoot class="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-300 sticky bottom-0 z-10 text-[10px]" id="tableFooter"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let rawPlanData = [];
+        let rawRealData = [];
+        let allDateColumns = [];
+        let activeDateColumns = [];
+        let filteredDiscrepancies = [];
+        let globalTotals = {};
+
+        // Listener unggah berkas excel
+        document.getElementById('filePlan').addEventListener('change', (e) => handleExcel(e, 'plan', 'lblPlan', 'subPlan', 'badgePlan', 'bg-emerald-50 text-emerald-700 border-emerald-200'));
+        document.getElementById('fileReal').addEventListener('change', (e) => handleExcel(e, 'real', 'lblReal', 'subReal', 'badgeReal', 'bg-blue-50 text-blue-700 border-blue-200'));
+
+        function handleExcel(event, type, labelId, subId, badgeId, badgeClass) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById(labelId).innerText = file.name;
+            document.getElementById(subId).innerText = `${(file.size / 1024).toFixed(1)} KB`;
+            const badge = document.getElementById(badgeId);
+            badge.className = `text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border ${badgeClass}`;
+            badge.innerText = "Ready";
+
+            document.getElementById('statusBadge').classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: 0 });
+
+                if (type === 'plan') rawPlanData = jsonData;
+                else rawRealData = jsonData;
+
+                // PERUBAHAN UTAMA: Hanya jalankan penyusutan layout JIKA KEDUA FILE sudah lengkap ter-upload
+                if (rawPlanData.length > 0 && rawRealData.length > 0) {
+                    adjustUploaderLayout();
+                    initDateColumns();
+                } else {
+                    document.getElementById('statusBadge').classList.add('hidden');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Fungsi transformator layout uploader menjadi pita horizontal slim selebar max-7xl judul
+        function adjustUploaderLayout() {
+            const wrapper = document.getElementById('uploaderWrapper');
+            const cardPlan = document.getElementById('cardPlan');
+            const cardReal = document.getElementById('cardReal');
+            const dropPlan = document.getElementById('dropzonePlan');
+            const dropReal = document.getElementById('dropzoneReal');
+            const headPlan = document.getElementById('headPlan');
+            const headReal = document.getElementById('headReal');
+
+            // Ubah struktur grid menjadi baris horizontal flex seirama lebar pita judul utama
+            wrapper.className = "flex flex-col sm:flex-row gap-2 sm:gap-4 w-full transition-all duration-500 ease-in-out";
+            
+            cardPlan.className = "flex-1 bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between transition-all duration-300";
+            cardReal.className = "flex-1 bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between transition-all duration-300";
+            
+            // Sembunyikan area dropzone vertikal besar untuk memaksimalkan area pandang tabel
+            dropPlan.className = "hidden";
+            dropReal.className = "hidden";
+
+            headPlan.className = "flex items-center justify-between w-full m-0";
+            headReal.className = "flex items-center justify-between w-full m-0";
+        }
+
+        function initDateColumns() {
+            const firstRow = rawPlanData[0];
+            
+            allDateColumns = Object.keys(firstRow).filter(key => {
+                return /^\d{4}-\d{2}-\d{2}$/.test(key.trim());
+            }).sort();
+
+            if (allDateColumns.length === 0) {
+                const exclude = ['Id Registrasi', 'Nama Pangkalan', 'Nama Provinsi', 'Kota', 'Kecamatan', 'Kelurahan', 'Alamat', 'Alokasi', 'Total Normal', 'Total Fakultatif', 'Sisa Alokasi', 'Grand Total'];
+                allDateColumns = Object.keys(firstRow).filter(key => !exclude.includes(key)).sort();
+            }
+
+            activeDateColumns = [...allDateColumns];
+
+            renderFilterCheckboxes();
+            processReconciliation();
+        }
+
+        function renderFilterCheckboxes() {
+            const container = document.getElementById('dateCheckboxContainer');
+            container.innerHTML = '';
+            
+            allDateColumns.forEach(date => {
+                const isChecked = activeDateColumns.includes(date) ? 'checked' : '';
+                const div = document.createElement('div');
+                div.className = "flex items-center space-x-2 p-2 sm:p-1.5 bg-slate-50 rounded border border-slate-200 hover:bg-slate-100 transition-colors";
+                div.innerHTML = `
+                    <input type="checkbox" id="chk-${date}" value="${date}" ${isChecked} onchange="onDateFilterChange()" class="w-4 h-4 sm:w-3.5 sm:h-3.5 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                    <label for="chk-${date}" class="cursor-pointer text-slate-700 font-medium select-none w-full text-xs">${date}</label>
+                `;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('filterWrapper').classList.remove('hidden');
+        }
+
+        function toggleAllDates(selectAll) {
+            allDateColumns.forEach(date => {
+                document.getElementById(`chk-${date}`).checked = selectAll;
+            });
+            onDateFilterChange();
+        }
+
+        function onDateFilterChange() {
+            activeDateColumns = [];
+            allDateColumns.forEach(date => {
+                if (document.getElementById(`chk-${date}`).checked) {
+                    activeDateColumns.push(date);
+                }
+            });
+            processReconciliation();
+        }
+
+        function processReconciliation() {
+            const realMap = new Map();
+            rawRealData.forEach(row => {
+                if (row['Id Registrasi']) {
+                    realMap.set(String(row['Id Registrasi']).trim(), row);
+                }
+            });
+
+            filteredDiscrepancies = [];
+            globalTotals = { plan: {}, real: {}, diff: {} };
+            
+            activeDateColumns.forEach(date => {
+                globalTotals.plan[date] = 0;
+                globalTotals.real[date] = 0;
+                globalTotals.diff[date] = 0;
+            });
+
+            rawPlanData.forEach(pRow => {
+                const idReg = String(pRow['Id Registrasi']).trim();
+                const rRow = realMap.get(idReg) || {};
+                
+                let hasActiveDifference = false;
+                let rowDiffData = {
+                    id: idReg,
+                    name: pRow['Nama Pangkalan'] || rRow['Nama Pangkalan'] || 'Tidak Diketahui',
+                    dates: {}
+                };
+
+                activeDateColumns.forEach(date => {
+                    const valPlan = Number(pRow[date]) || 0;
+                    const valReal = Number(rRow[date]) || 0;
+                    const diff = valReal - valPlan;
+
+                    globalTotals.plan[date] += valPlan;
+                    globalTotals.real[date] += valReal;
+                    globalTotals.diff[date] += diff;
+
+                    if (diff !== 0) {
+                        hasActiveDifference = true;
+                    }
+
+                    rowDiffData.dates[date] = { plan: valPlan, real: valReal, diff: diff };
+                });
+
+                if (hasActiveDifference) {
+                    filteredDiscrepancies.push(rowDiffData);
+                }
+            });
+
+            renderTable();
+            document.getElementById('statusBadge').classList.add('hidden');
+            document.getElementById('resultsWrapper').classList.remove('hidden');
+        }
+
+        function renderTable() {
+            const headerTr = document.getElementById('tableHeader');
+            const bodyTbody = document.getElementById('tableBody');
+            const footerTfoot = document.getElementById('tableFooter');
+
+            if (activeDateColumns.length === 0) {
+                headerTr.innerHTML = '<th class="p-4 text-center text-slate-400">Silakan pilih minimal satu tanggal pada filter di atas</th>';
+                bodyTbody.innerHTML = '';
+                footerTfoot.innerHTML = '';
+                return;
+            }
+
+            let headerHtml = `
+                <th class="p-3 sm:p-4 border-b border-slate-700 bg-slate-900 sticky left-0 z-20 shadow-[2px_0_5px_rgba(0,0,0,0.1)] w-20 sm:w-24">ID REG</th>
+                <th class="p-3 sm:p-4 border-b border-slate-700 bg-slate-900 sticky left-20 sm:left-24 z-20 shadow-[2px_0_5px_rgba(0,0,0,0.1)] w-36 sm:w-48 border-r border-slate-700">PANGKALAN</th>
+            `;
+            activeDateColumns.forEach(date => {
+                headerHtml += `
+                    <th class="p-2.5 text-center border-b border-slate-700 min-w-[125px] sm:min-w-[135px] border-r border-slate-800">
+                        <div class="font-bold text-slate-100">${date}</div>
+                        <div class="grid grid-cols-3 text-[9px] text-slate-400 mt-1 font-normal tracking-wide">
+                            <span>Plan</span><span>Real</span><span class="font-medium text-slate-300">Selisih</span>
+                        </div>
+                    </th>
+                `;
+            });
+            headerTr.innerHTML = headerHtml;
+
+            let bodyHtml = '';
+            filteredDiscrepancies.forEach(row => {
+                bodyHtml += `<tr class="hover:bg-slate-50/80 transition-colors duration-150">`;
+                bodyHtml += `<td class="p-2 sm:p-2.5 font-medium text-slate-600 bg-white sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)] text-[11px] sm:text-xs">${row.id}</td>`;
+                bodyHtml += `<td class="p-2 sm:p-2.5 font-semibold text-slate-900 bg-white sticky left-20 sm:left-24 z-10 border-r border-slate-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)] truncate max-w-[140px] sm:max-w-[192px] text-[11px] sm:text-xs" title="${row.name}">${row.name}</td>`;
+                
+                activeDateColumns.forEach(date => {
+                    const d = row.dates[date];
+                    const bgDiff = d.diff > 0 ? 'bg-blue-50 text-blue-700' : d.diff < 0 ? 'bg-rose-50 text-rose-700' : 'text-slate-400';
+                    const diffSign = d.diff > 0 ? `+${d.diff}` : d.diff;
+
+                    bodyHtml += `
+                        <td class="p-2 border-r border-slate-100 text-center">
+                            <div class="grid grid-cols-3 gap-0.5 font-mono items-center text-[10px] sm:text-xs">
+                                <span class="text-slate-500">${d.plan}</span>
+                                <span class="text-slate-700">${d.real}</span>
+                                <span class="font-semibold px-1 py-0.5 rounded text-[10px] sm:text-[11px] ${bgDiff}">${d.diff === 0 ? '-' : diffSign}</span>
+                            </div>
+                        </td>
+                    `;
+                });
+                bodyHtml += `</tr>`;
+            });
+            bodyTbody.innerHTML = bodyHtml;
+
+            let footerHtml = `
+                <tr>
+                    <td class="p-3 sm:p-3.5 bg-slate-100 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">TOTAL</td>
+                    <td class="p-3 sm:p-3.5 bg-slate-100 sticky left-20 sm:left-24 z-10 border-r border-slate-300 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">TOTAL FILTERED</td>
+            `;
+            activeDateColumns.forEach(date => {
+                const pTot = globalTotals.plan[date];
+                const rTot = globalTotals.real[date];
+                const dTot = globalTotals.diff[date];
+                const bgFooterDiff = dTot > 0 ? 'bg-blue-100 text-blue-800' : dTot < 0 ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-600';
+                const totalSign = dTot > 0 ? `+${dTot}` : dTot;
+
+                footerHtml += `
+                    <td class="p-2.5 text-center border-r border-slate-200">
+                        <div class="grid grid-cols-3 gap-0.5 font-mono text-[10px] sm:text-xs">
+                            <span class="text-slate-600">${pTot.toLocaleString('id-ID')}</span>
+                            <span class="text-slate-800">${rTot.toLocaleString('id-ID')}</span>
+                            <span class="px-1 py-0.5 rounded font-bold ${bgFooterDiff}">${dTot === 0 ? '0' : totalSign.toLocaleString('id-ID')}</span>
+                        </div>
+                    </td>
+                `;
+            });
+            footerHtml += `</tr>`;
+            footerTfoot.innerHTML = footerHtml;
+        }
+
+        function exportToCSV() {
+            if (activeDateColumns.length === 0) return;
+            
+            let csvContent = [];
+            let rowHeader = ['Id Registrasi', 'Nama Pangkalan'];
+            activeDateColumns.forEach(date => {
+                rowHeader.push(`${date} (Plan)`, `${date} (Real)`, `${date} (Selisih)`);
+            });
+            csvContent.push(rowHeader.join(','));
+
+            filteredDiscrepancies.forEach(row => {
+                let rowData = [row.id, `"${row.name.replace(/"/g, '""')}"`];
+                activeDateColumns.forEach(date => {
+                    rowData.push(row.dates[date].plan, row.dates[date].real, row.dates[date].diff);
+                });
+                csvContent.push(rowData.join(','));
+            });
+
+            let rowFooter = ['TOTAL', 'GRAND TOTAL HARIAN'];
+            activeDateColumns.forEach(date => {
+                rowFooter.push(globalTotals.plan[date], globalTotals.real[date], globalTotals.diff[date]);
+            });
+            csvContent.push(rowFooter.join(','));
+
+            const blob = new Blob([csvContent.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Rekonsiliasi_Filtered_Pangkep_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
