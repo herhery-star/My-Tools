@@ -15,7 +15,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;ma
 .section-head{display:flex;justify-content:space-between;align-items:center;margin:10px 0 12px}.section-title{font-size:14px;margin:0}.page-indicator{font-size:11px;color:var(--muted)}
 .launcher{overflow:hidden;touch-action:pan-y}.pages{display:flex;transition:transform .25s ease}.page{min-width:100%;display:grid;grid-template-columns:repeat(6,minmax(70px,1fr));gap:var(--grid-row) var(--grid-col);padding:8px 8px 24px;align-content:start}
 .app-item{text-align:center;min-width:0;user-select:none}.app-icon{width:var(--icon-size);height:var(--icon-size);margin:auto;border-radius:21px;display:grid;place-items:center;font-size:var(--icon-font);box-shadow:0 9px 18px rgba(25,35,65,.12);transition:.16s;overflow:hidden}.app-item:hover .app-icon{transform:translateY(-3px) scale(1.035)}.app-name{font-size:11px;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}.app-cat{font-size:9px;color:var(--muted);margin-top:2px}.dragging{opacity:.35}.drop-target .app-icon{outline:3px solid #4f46e566;transform:scale(1.06)}.app-icon svg{width:42px;height:42px}.fresh-icon{border:0!important;color:#fff!important;box-shadow:0 10px 20px rgba(40,50,80,.16),inset 0 1px 0 rgba(255,255,255,.35)}.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:45px 10px}.section-tools{display:flex;align-items:center;gap:7px;position:relative}.view-btn{width:28px;height:28px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:9px;font-size:18px;line-height:1;cursor:pointer}.view-btn:hover{border-color:var(--accent);color:var(--accent)}
-.view-popover{position:absolute;right:28px;margin-top:6px;z-index:20;width:min(330px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow);display:none}.view-popover.show{display:block}.view-pop-title{font-size:11px;font-weight:700;margin-bottom:9px}.view-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px}.view-row>span{font-size:10px;color:var(--muted);min-width:58px}.seg{display:flex;gap:4px;flex:1}.seg button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:8px;padding:7px 6px;font-size:10px;cursor:pointer}.seg button.active{background:var(--accent);border-color:var(--accent);color:#fff}.density-compact{--grid-row:16px;--grid-col:8px}.density-normal{--grid-row:25px;--grid-col:16px}.density-spacious{--grid-row:34px;--grid-col:25px}
+.view-popover{position:absolute;right:0;top:calc(100% + 8px);margin-top:0;z-index:20;width:min(330px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow);display:none}.view-popover.show{display:block}.view-pop-title{font-size:11px;font-weight:700;margin-bottom:9px}.view-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px}.view-row>span{font-size:10px;color:var(--muted);min-width:58px}.seg{display:flex;gap:4px;flex:1}.seg button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:8px;padding:7px 6px;font-size:10px;cursor:pointer}.seg button.active{background:var(--accent);border-color:var(--accent);color:#fff}.density-compact{--grid-row:16px;--grid-col:8px}.density-normal{--grid-row:25px;--grid-col:16px}.density-spacious{--grid-row:34px;--grid-col:25px}
 .size-small{--icon-size:54px;--icon-font:25px}.size-normal{--icon-size:70px;--icon-font:31px}.size-large{--icon-size:84px;--icon-font:37px}
 .dots{display:flex;justify-content:center;gap:6px;margin:0 0 17px}.dot{width:7px;height:7px;border-radius:9px;background:#c7ccd7}.dot.active{width:20px;background:var(--accent)}
 .hint{text-align:center;color:var(--muted);font-size:10px;margin-top:4px}.cloud-status{margin-top:12px;padding:11px;border-radius:11px;background:var(--surface2);font-size:11px;color:var(--muted);line-height:1.5}.cloud-status.ok{color:#15803d}.cloud-status.err{color:#b91c1c}.sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#94a3b8;margin-right:5px}.sync-dot.ok{background:#16a34a}.sync-dot.busy{background:#f59e0b}
@@ -40,12 +40,12 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;ma
 
 <div class="search"><span>🔎</span><input id="search" placeholder="Cari aplikasi..."></div>
 <div class="toolbar"><div class="categories" id="categories"></div></div>
-<div class="section-head"><h2 class="section-title">Aplikasi</h2><div class="section-tools"><span class="page-indicator" id="pageText"></span><button type="button" class="view-btn" id="viewBtn" title="Atur tampilan">⋯</button></div></div>
+<div class="section-head"><h2 class="section-title">Aplikasi</h2><div class="section-tools"><span class="page-indicator" id="pageText"></span><button type="button" class="view-btn" id="viewBtn" title="Atur tampilan">⋯</button>
 <div class="view-popover" id="viewPopover">
   <div class="view-pop-title">Tampilan Icon</div>
-  <div class="view-row"><span>Ukuran</span><div class="seg" id="sizeSeg"><button data-size="small">Kecil</button><button data-size="normal">Normal</button><button data-size="large">Besar</button></div></div>
-  <div class="view-row"><span>Kerapatan</span><div class="seg" id="densitySeg"><button data-density="compact">Rapat</button><button data-density="normal">Normal</button><button data-density="spacious">Lega</button></div></div>
-</div>
+  <div class="view-row"><span>Ukuran</span><div class="seg" id="sizeSeg"><button type="button" data-size="small">Kecil</button><button type="button" data-size="normal">Normal</button><button type="button" data-size="large">Besar</button></div></div>
+  <div class="view-row"><span>Kerapatan</span><div class="seg" id="densitySeg"><button type="button" data-density="compact">Rapat</button><button type="button" data-density="normal">Normal</button><button type="button" data-density="spacious">Lega</button></div></div>
+</div></div></div>
 <div class="launcher" id="launcher"><div class="pages" id="pages"></div></div>
 <div class="dots" id="dots"></div>
 <div class="hint">Geser kiri/kanan • Tarik icon untuk memindahkan • Tarik icon ke icon lain untuk membuat folder</div>
@@ -379,6 +379,60 @@ document.getElementById('themeBtn').onclick=()=>{state.theme=state.theme==='dark
 document.getElementById('search').oninput=()=>{state.page=0;render()};
 document.getElementById('categories').onclick=e=>{const c=e.target.dataset.cat;if(c){state.selectedCat=c;state.page=0;render()}};
 document.getElementById('dots').onclick=e=>{if(e.target.dataset.page){state.page=+e.target.dataset.page;render()}};
+
+/* =========================================================
+   Tampilan launcher: ukuran icon + kerapatan
+   Panel hanya muncul saat diminta; tidak memenuhi header.
+   ========================================================= */
+(function bindViewControls(){
+  const btn=document.getElementById('viewBtn');
+  const pop=document.getElementById('viewPopover');
+  const sizeSeg=document.getElementById('sizeSeg');
+  const densitySeg=document.getElementById('densitySeg');
+  if(!btn||!pop||!sizeSeg||!densitySeg)return;
+
+  function refreshViewButtons(){
+    sizeSeg.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.size===state.view.size));
+    densitySeg.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.density===state.view.density));
+  }
+
+  btn.onclick=e=>{
+    e.stopPropagation();
+    refreshViewButtons();
+    pop.classList.toggle('show');
+  };
+
+  sizeSeg.onclick=e=>{
+    const b=e.target.closest('button[data-size]');
+    if(!b)return;
+    state.view=state.view||{};
+    state.view.size=b.dataset.size;
+    state.page=0;
+    save();
+    render();
+    refreshViewButtons();
+  };
+
+  densitySeg.onclick=e=>{
+    const b=e.target.closest('button[data-density]');
+    if(!b)return;
+    state.view=state.view||{};
+    state.view.density=b.dataset.density;
+    save();
+    render();
+    refreshViewButtons();
+  };
+
+  document.addEventListener('click',e=>{
+    if(!pop.contains(e.target)&&e.target!==btn)pop.classList.remove('show');
+  });
+
+  window.addEventListener('resize',()=>{
+    if(pop.classList.contains('show'))refreshViewButtons();
+  });
+
+  refreshViewButtons();
+})();
 
 document.getElementById('iconColor').oninput=e=>document.getElementById('iconColorText').textContent=e.target.value.toUpperCase();
 document.getElementById('iconKey').onchange=()=>{document.getElementById('iconKey').dataset.emoji='';document.getElementById('uploadPreview').innerHTML='🖼️';document.getElementById('iconFile').value='';};
