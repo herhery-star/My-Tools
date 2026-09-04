@@ -16,7 +16,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;ma
 .launcher{overflow:hidden;touch-action:pan-y}.pages{display:flex;transition:transform .25s ease}.page{min-width:100%;display:grid;grid-template-columns:repeat(6,minmax(80px,1fr));gap:25px 16px;padding:8px 8px 24px;align-content:start}
 .app-item{text-align:center;min-width:0;user-select:none}.app-icon{width:70px;height:70px;margin:auto;border-radius:21px;display:grid;place-items:center;font-size:31px;box-shadow:0 9px 18px rgba(25,35,65,.12);transition:.16s;overflow:hidden}.app-item:hover .app-icon{transform:translateY(-3px) scale(1.035)}.app-name{font-size:11px;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}.app-cat{font-size:9px;color:var(--muted);margin-top:2px}.dragging{opacity:.35}.drop-target .app-icon{outline:3px solid #4f46e566;transform:scale(1.06)}.app-icon svg{width:42px;height:42px}.fresh-icon{border:0!important;color:#fff!important;box-shadow:0 10px 20px rgba(40,50,80,.16),inset 0 1px 0 rgba(255,255,255,.35)}.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:45px 10px}.dots{display:flex;justify-content:center;gap:6px;margin:0 0 17px}.dot{width:7px;height:7px;border-radius:9px;background:#c7ccd7}.dot.active{width:20px;background:var(--accent)}
 .hint{text-align:center;color:var(--muted);font-size:10px;margin-top:4px}.cloud-status{margin-top:12px;padding:11px;border-radius:11px;background:var(--surface2);font-size:11px;color:var(--muted);line-height:1.5}.cloud-status.ok{color:#15803d}.cloud-status.err{color:#b91c1c}.sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#94a3b8;margin-right:5px}.sync-dot.ok{background:#16a34a}.sync-dot.busy{background:#f59e0b}
-.modal-bg{position:fixed;inset:0;background:#07102288;backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal-bg.show{display:flex}.modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow)}.modal h3{margin:0}.modal-note{font-size:11px;color:var(--muted);margin:7px 0 15px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:11px;color:var(--muted)}.field input,.field textarea,.field select{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:10px;outline:0}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.modal-bg{position:fixed;inset:0;background:#07102288;backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal-bg.show{display:flex}.modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow)}.modal h3{margin:0}.modal-note{font-size:11px;color:var(--muted);margin:7px 0 15px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:11px;color:var(--muted)}.field input,.field textarea,.field select{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:10px;outline:0}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.local-picker-row{display:grid;grid-template-columns:1fr auto;gap:8px}.local-picker-row .btn{white-space:nowrap}.local-file-info{font-size:10px;color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pack-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pack-card{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:11px;text-align:center;color:var(--text)}.pack-card.active{border-color:var(--accent);background:var(--surface2)}.pack-preview{width:52px;height:52px;margin:0 auto 7px;border-radius:16px;display:grid;place-items:center}.pack-card strong{font-size:11px}.pack-card small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
 .upload-row{display:flex;align-items:center;gap:10px;margin-top:10px}.upload-preview{width:58px;height:58px;border-radius:15px;border:1px dashed var(--line);display:grid;place-items:center;overflow:hidden;background:var(--bg)}.upload-preview img{width:100%;height:100%;object-fit:contain}
 
@@ -52,7 +52,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;ma
 <div class="field full"><label>Deskripsi</label><textarea id="desc" rows="2"></textarea></div>
 <div class="field"><label>Versi</label><input id="version" placeholder="1.0.0"></div>
 <div class="field"><label>URL Online</label><input id="url" type="url" placeholder="https://..."></div>
-<div class="field full"><label>Local Path / File Path</label><input id="path" placeholder="D:\MyTools\tool\index.html"></div>
+<div class="field full"><label>Local Application</label><div class="local-picker-row"><input id="path" placeholder="Pilih file HTML dari drive lokal…"><button type="button" class="btn" id="browseLocalBtn">📁 Cari File</button></div><div id="localFileInfo" class="local-file-info">Belum ada file lokal yang dipilih.</div><div class="modal-note" style="margin:6px 0 0">File Picker bekerja langsung dari drive lokal. Browser tidak mengizinkan launcher membaca full path asli; referensi file disimpan lokal pada perangkat ini dan tidak dikirim ke GAS.</div></div>
 <div class="field full"><label>Icon</label><select id="iconKey"></select>
 <div class="upload-row"><div class="upload-preview" id="uploadPreview">🖼️</div><button type="button" class="btn" id="uploadBtn">📤 Upload Icon</button><input type="file" id="iconFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>
 <div style="display:flex;align-items:center;gap:9px;margin-top:9px"><label style="font-size:11px;color:var(--muted);margin:0">Warna custom</label><input type="color" id="iconColor" value="#4f46e5" style="width:42px;height:34px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--surface)"><span id="iconColorText" style="font-size:11px;color:var(--muted)">#4F46E5</span></div></div>
@@ -220,10 +220,24 @@ function itemHTML(x){
  <div class="app-icon ${state.pack==='fresh'?'fresh-icon':''}" style="${state.pack==='fresh'?freshStyle(x):iconStyle()}">${iconMarkup(x)}</div>
  <div class="app-name">${esc(x.name)}</div><div class="app-cat">${esc(x.cat||'')}</div></div>`;
 }
-function openApp(x){
+async function openApp(x){
+ const localHandle=await localFileDB.get(x.id).catch(()=>null);
+ if(localHandle){
+   try{
+     let permission=await localHandle.queryPermission({mode:'read'});
+     if(permission!=='granted') permission=await localHandle.requestPermission({mode:'read'});
+     if(permission==='granted'){
+       const file=await localHandle.getFile();
+       const blobUrl=URL.createObjectURL(file);
+       const w=window.open('about:blank','_blank');
+       if(w){w.location.href=blobUrl;setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);return;}
+       URL.revokeObjectURL(blobUrl);
+     }
+   }catch(err){ console.warn('Local file tidak dapat dibuka:',err); }
+ }
  if(x.url)window.open(x.url,'_blank');
- else if(x.path)alert('Path tersimpan sebagai metadata:\\n'+x.path+'\\n\\nBrowser membatasi pembukaan file lokal secara otomatis.');
- else alert(x.name+'\\n\\nBelum ada URL aplikasi. Gunakan Edit untuk menambahkannya.');
+ else if(x.path)alert('File lokal: '+x.path+'\n\nBrowser tidak memberikan full path asli kepada halaman HTML. Gunakan 📁 Cari File untuk menghubungkan file lokal pada perangkat ini.');
+ else alert(x.name+'\n\nBelum ada URL atau file lokal. Gunakan Edit untuk menambahkannya.');
 }
 function fillIconSelect(selected){
  const el=document.getElementById('iconKey');
@@ -668,6 +682,96 @@ render();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
+</script>
+<script>
+/* =========================================================
+   MY TOOLS V4 — Local File Picker
+   Chrome/Edge File System Access API + IndexedDB handle storage
+   Full local path is intentionally hidden by browser security.
+   ========================================================= */
+const localFileDB=(()=>{
+ const DB='mytools_local_files_v1', STORE='handles';
+ function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+ async function put(id,handle){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(handle,id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
+ async function get(id){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly');const r=tx.objectStore(STORE).get(id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)})}
+ async function del(id){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
+ return {put,get,del};
+})();
+
+let pendingLocalHandle=null;
+let pendingLocalFileName='';
+
+async function browseLocalFile(){
+ if(!window.showOpenFilePicker){
+   alert('File Picker modern tidak tersedia di browser ini. Gunakan Chrome atau Edge versi terbaru.');
+   return;
+ }
+ try{
+   const [handle]=await window.showOpenFilePicker({
+     multiple:false,
+     types:[{description:'HTML Application',accept:{'text/html':['.html','.htm']}}]
+   });
+   const file=await handle.getFile();
+   pendingLocalHandle=handle;
+   pendingLocalFileName=file.name;
+   const path=document.getElementById('path');
+   const info=document.getElementById('localFileInfo');
+   if(path)path.value=file.name;
+   if(info)info.textContent='📄 '+file.name+' • File lokal terhubung pada perangkat ini';
+ }catch(err){
+   if(err&&err.name!=='AbortError') alert('File tidak dapat dipilih: '+(err.message||err));
+ }
+}
+
+async function loadLocalFileForEdit(id){
+ pendingLocalHandle=null;pendingLocalFileName='';
+ if(!id)return;
+ try{
+   const h=await localFileDB.get(id);
+   if(h){
+     pendingLocalHandle=h;
+     const info=document.getElementById('localFileInfo');
+     if(info)info.textContent='📄 '+(h.name||'File lokal')+' • Referensi tersimpan di perangkat ini';
+   }
+ }catch(e){}
+}
+
+(function bindLocalPicker(){
+ function bind(){
+   const b=document.getElementById('browseLocalBtn');
+   if(b)b.onclick=browseLocalFile;
+   const form=document.getElementById('form');
+   if(form){
+     const originalSubmit=form.onsubmit;
+     form.onsubmit=async function(e){
+       e.preventDefault();
+       const id=document.getElementById('editId').value;
+       const old=id?state.items.find(i=>i.id===id):null;
+       const preview=document.querySelector('#uploadPreview img');
+       const newId=id||crypto.randomUUID();
+       const x={id:newId,name:document.getElementById('name').value.trim(),cat:document.getElementById('cat').value.trim(),desc:document.getElementById('desc').value.trim(),version:document.getElementById('version').value.trim(),url:document.getElementById('url').value.trim(),path:document.getElementById('path').value.trim(),iconKey:document.getElementById('iconKey').value,customIcon:preview?preview.src:(old?.customIcon||''),emojiIcon:preview?'':(document.getElementById('iconKey').dataset.emoji||old?.emojiIcon||''),customColor:document.getElementById('iconColor').value,favorite:old?.favorite||false};
+       if(!x.name)return;
+       if(id)state.items=state.items.map(i=>i.id===id?x:i);else state.items.push(x);
+       if(pendingLocalHandle){
+         try{await localFileDB.put(newId,pendingLocalHandle);x.path=pendingLocalFileName||x.path;}catch(err){console.warn('Gagal menyimpan referensi file lokal',err)}
+       }
+       save();closeModal();render();
+       pendingLocalHandle=null;pendingLocalFileName='';
+     };
+   }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+
+/* Re-open modal loader so an existing local handle is reflected in the UI. */
+const _openModalOriginal=openModal;
+openModal=function(x=null){
+ pendingLocalHandle=null;pendingLocalFileName='';
+ _openModalOriginal(x);
+ const info=document.getElementById('localFileInfo');
+ if(info)info.textContent=x?.path?('📄 '+x.path+' • Referensi lokal mungkin tersimpan di perangkat ini'):'Belum ada file lokal yang dipilih.';
+ if(x?.id)loadLocalFileForEdit(x.id);
+};
 </script>
 </body>
 </html>
