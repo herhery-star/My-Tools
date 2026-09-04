@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>MY TOOLS — Personal App Launcher</title>
+<title>MY TOOLS V6 — Personal App Launcher</title>
 <style>
 :root{--bg:#f3f5f9;--surface:#fff;--surface2:#eef1f6;--text:#182033;--muted:#7d8799;--line:#e1e5ed;--accent:#4f46e5;--danger:#dc2626;--shadow:0 14px 40px rgba(20,30,60,.12)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -93,7 +93,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;ma
 
 <div class="modal-bg" id="cloudBg"><div class="modal" style="width:min(620px,100%)">
 <h3>☁ Cloud Registry</h3>
-<div class="modal-note">Google Apps Script menjadi registry pusat. Launcher tetap menyimpan cache lokal agar tetap bisa dibuka saat offline.</div>
+<div class="modal-note">Google Apps Script adalah <b>single source of truth</b>. Device baru selalu melakukan PULL terlebih dahulu sehingga tidak membuat aplikasi duplikat. Cache lokal tetap dipakai saat offline.</div>
 <div class="field full"><label>Web App URL Google Apps Script</label><input id="registryUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
 <div class="cloud-status" id="cloudStatus"></div>
 <div class="modal-actions"><button class="btn" id="closeCloud">Tutup</button><button class="btn" id="testCloud">Test Koneksi</button><button class="btn primary" id="syncCloud">☁ Sync Sekarang</button></div>
@@ -102,7 +102,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;ma
 <div class="context" id="context"></div>
 
 <script>
-const KEY='mytools_launcher_v3';
+const KEY='mytools_launcher_v6';
 const icons={
  gas:'⛽', chart:'📊', file:'📄', calc:'🧮', bank:'🏦', box:'📦', print:'🖨️', tools:'🛠️', folder:'📁', link:'🔗', globe:'🌐', code:'💻', image:'🖼️', settings:'⚙️', star:'⭐', note:'📝'
 };
@@ -128,19 +128,12 @@ const svgPaths={
 const emojiGallery=[{"id":"e0_0","type":"emoji","key":"💼","name":"💼","cat":"Bisnis"},{"id":"e1_1","type":"emoji","key":"📈","name":"📈","cat":"Bisnis"},{"id":"e2_2","type":"emoji","key":"📉","name":"📉","cat":"Bisnis"},{"id":"e3_3","type":"emoji","key":"💰","name":"💰","cat":"Bisnis"},{"id":"e4_4","type":"emoji","key":"💳","name":"💳","cat":"Bisnis"},{"id":"e5_5","type":"emoji","key":"💵","name":"💵","cat":"Bisnis"},{"id":"e6_6","type":"emoji","key":"🧾","name":"🧾","cat":"Bisnis"},{"id":"e7_7","type":"emoji","key":"🧮","name":"🧮","cat":"Bisnis"},{"id":"e8_8","type":"emoji","key":"🏦","name":"🏦","cat":"Bisnis"},{"id":"e9_9","type":"emoji","key":"🏢","name":"🏢","cat":"Bisnis"},{"id":"e10_10","type":"emoji","key":"🏪","name":"🏪","cat":"Bisnis"},{"id":"e11_11","type":"emoji","key":"🏭","name":"🏭","cat":"Bisnis"},{"id":"e12_12","type":"emoji","key":"🤝","name":"🤝","cat":"Bisnis"},{"id":"e13_13","type":"emoji","key":"📋","name":"📋","cat":"Bisnis"},{"id":"e14_14","type":"emoji","key":"📌","name":"📌","cat":"Bisnis"},{"id":"e15_15","type":"emoji","key":"📎","name":"📎","cat":"Bisnis"},{"id":"e16_16","type":"emoji","key":"🗂️","name":"🗂️","cat":"Bisnis"},{"id":"e17_17","type":"emoji","key":"📊","name":"📊","cat":"Bisnis"},{"id":"e0_18","type":"emoji","key":"📄","name":"📄","cat":"Dokumen"},{"id":"e1_19","type":"emoji","key":"📃","name":"📃","cat":"Dokumen"},{"id":"e2_20","type":"emoji","key":"📑","name":"📑","cat":"Dokumen"},{"id":"e3_21","type":"emoji","key":"📜","name":"📜","cat":"Dokumen"},{"id":"e4_22","type":"emoji","key":"📝","name":"📝","cat":"Dokumen"},{"id":"e5_23","type":"emoji","key":"✏️","name":"✏️","cat":"Dokumen"},{"id":"e6_24","type":"emoji","key":"🖊️","name":"🖊️","cat":"Dokumen"},{"id":"e7_25","type":"emoji","key":"📚","name":"📚","cat":"Dokumen"},{"id":"e8_26","type":"emoji","key":"📖","name":"📖","cat":"Dokumen"},{"id":"e9_27","type":"emoji","key":"🗒️","name":"🗒️","cat":"Dokumen"},{"id":"e10_28","type":"emoji","key":"🗃️","name":"🗃️","cat":"Dokumen"},{"id":"e11_29","type":"emoji","key":"📁","name":"📁","cat":"Dokumen"},{"id":"e12_30","type":"emoji","key":"📂","name":"📂","cat":"Dokumen"},{"id":"e13_31","type":"emoji","key":"🗄️","name":"🗄️","cat":"Dokumen"},{"id":"e14_32","type":"emoji","key":"🔖","name":"🔖","cat":"Dokumen"},{"id":"e15_33","type":"emoji","key":"📐","name":"📐","cat":"Dokumen"},{"id":"e0_34","type":"emoji","key":"💻","name":"💻","cat":"Teknologi"},{"id":"e1_35","type":"emoji","key":"🖥️","name":"🖥️","cat":"Teknologi"},{"id":"e2_36","type":"emoji","key":"⌨️","name":"⌨️","cat":"Teknologi"},{"id":"e3_37","type":"emoji","key":"🖱️","name":"🖱️","cat":"Teknologi"},{"id":"e4_38","type":"emoji","key":"📱","name":"📱","cat":"Teknologi"},{"id":"e5_39","type":"emoji","key":"📲","name":"📲","cat":"Teknologi"},{"id":"e6_40","type":"emoji","key":"⚙️","name":"⚙️","cat":"Teknologi"},{"id":"e7_41","type":"emoji","key":"🔧","name":"🔧","cat":"Teknologi"},{"id":"e8_42","type":"emoji","key":"🛠️","name":"🛠️","cat":"Teknologi"},{"id":"e9_43","type":"emoji","key":"🔌","name":"🔌","cat":"Teknologi"},{"id":"e10_44","type":"emoji","key":"💾","name":"💾","cat":"Teknologi"},{"id":"e11_45","type":"emoji","key":"💿","name":"💿","cat":"Teknologi"},{"id":"e12_46","type":"emoji","key":"🖨️","name":"🖨️","cat":"Teknologi"},{"id":"e13_47","type":"emoji","key":"📡","name":"📡","cat":"Teknologi"},{"id":"e14_48","type":"emoji","key":"🌐","name":"🌐","cat":"Teknologi"},{"id":"e15_49","type":"emoji","key":"🔗","name":"🔗","cat":"Teknologi"},{"id":"e16_50","type":"emoji","key":"🧩","name":"🧩","cat":"Teknologi"},{"id":"e17_51","type":"emoji","key":"🧑‍💻","name":"🧑‍💻","cat":"Teknologi"},{"id":"e0_52","type":"emoji","key":"📊","name":"📊","cat":"Data"},{"id":"e1_53","type":"emoji","key":"📈","name":"📈","cat":"Data"},{"id":"e2_54","type":"emoji","key":"📉","name":"📉","cat":"Data"},{"id":"e3_55","type":"emoji","key":"🔢","name":"🔢","cat":"Data"},{"id":"e4_56","type":"emoji","key":"🔍","name":"🔍","cat":"Data"},{"id":"e5_57","type":"emoji","key":"🔎","name":"🔎","cat":"Data"},{"id":"e6_58","type":"emoji","key":"🗃️","name":"🗃️","cat":"Data"},{"id":"e7_59","type":"emoji","key":"🗄️","name":"🗄️","cat":"Data"},{"id":"e8_60","type":"emoji","key":"📦","name":"📦","cat":"Data"},{"id":"e9_61","type":"emoji","key":"🧮","name":"🧮","cat":"Data"},{"id":"e10_62","type":"emoji","key":"🧠","name":"🧠","cat":"Data"},{"id":"e11_63","type":"emoji","key":"🎯","name":"🎯","cat":"Data"},{"id":"e12_64","type":"emoji","key":"📌","name":"📌","cat":"Data"},{"id":"e13_65","type":"emoji","key":"🧾","name":"🧾","cat":"Data"},{"id":"e14_66","type":"emoji","key":"🧷","name":"🧷","cat":"Data"},{"id":"e15_67","type":"emoji","key":"📐","name":"📐","cat":"Data"},{"id":"e0_68","type":"emoji","key":"⛽","name":"⛽","cat":"SPBU & Logistik"},{"id":"e1_69","type":"emoji","key":"🚗","name":"🚗","cat":"SPBU & Logistik"},{"id":"e2_70","type":"emoji","key":"🚕","name":"🚕","cat":"SPBU & Logistik"},{"id":"e3_71","type":"emoji","key":"🚚","name":"🚚","cat":"SPBU & Logistik"},{"id":"e4_72","type":"emoji","key":"🚛","name":"🚛","cat":"SPBU & Logistik"},{"id":"e5_73","type":"emoji","key":"🏪","name":"🏪","cat":"SPBU & Logistik"},{"id":"e6_74","type":"emoji","key":"🛢️","name":"🛢️","cat":"SPBU & Logistik"},{"id":"e7_75","type":"emoji","key":"📦","name":"📦","cat":"SPBU & Logistik"},{"id":"e8_76","type":"emoji","key":"🚢","name":"🚢","cat":"SPBU & Logistik"},{"id":"e9_77","type":"emoji","key":"✈️","name":"✈️","cat":"SPBU & Logistik"},{"id":"e10_78","type":"emoji","key":"🛵","name":"🛵","cat":"SPBU & Logistik"},{"id":"e11_79","type":"emoji","key":"🚲","name":"🚲","cat":"SPBU & Logistik"},{"id":"e12_80","type":"emoji","key":"🗺️","name":"🗺️","cat":"SPBU & Logistik"},{"id":"e13_81","type":"emoji","key":"📍","name":"📍","cat":"SPBU & Logistik"},{"id":"e14_82","type":"emoji","key":"🧭","name":"🧭","cat":"SPBU & Logistik"},{"id":"e15_83","type":"emoji","key":"🔋","name":"🔋","cat":"SPBU & Logistik"},{"id":"e0_84","type":"emoji","key":"✉️","name":"✉️","cat":"Komunikasi"},{"id":"e1_85","type":"emoji","key":"📧","name":"📧","cat":"Komunikasi"},{"id":"e2_86","type":"emoji","key":"📨","name":"📨","cat":"Komunikasi"},{"id":"e3_87","type":"emoji","key":"📩","name":"📩","cat":"Komunikasi"},{"id":"e4_88","type":"emoji","key":"📤","name":"📤","cat":"Komunikasi"},{"id":"e5_89","type":"emoji","key":"📥","name":"📥","cat":"Komunikasi"},{"id":"e6_90","type":"emoji","key":"💬","name":"💬","cat":"Komunikasi"},{"id":"e7_91","type":"emoji","key":"🗨️","name":"🗨️","cat":"Komunikasi"},{"id":"e8_92","type":"emoji","key":"📞","name":"📞","cat":"Komunikasi"},{"id":"e9_93","type":"emoji","key":"☎️","name":"☎️","cat":"Komunikasi"},{"id":"e10_94","type":"emoji","key":"📲","name":"📲","cat":"Komunikasi"},{"id":"e11_95","type":"emoji","key":"📢","name":"📢","cat":"Komunikasi"},{"id":"e12_96","type":"emoji","key":"📣","name":"📣","cat":"Komunikasi"},{"id":"e13_97","type":"emoji","key":"🔔","name":"🔔","cat":"Komunikasi"},{"id":"e14_98","type":"emoji","key":"🔕","name":"🔕","cat":"Komunikasi"},{"id":"e15_99","type":"emoji","key":"💡","name":"💡","cat":"Komunikasi"},{"id":"e0_100","type":"emoji","key":"🎨","name":"🎨","cat":"Media"},{"id":"e1_101","type":"emoji","key":"🖼️","name":"🖼️","cat":"Media"},{"id":"e2_102","type":"emoji","key":"📷","name":"📷","cat":"Media"},{"id":"e3_103","type":"emoji","key":"📹","name":"📹","cat":"Media"},{"id":"e4_104","type":"emoji","key":"🎬","name":"🎬","cat":"Media"},{"id":"e5_105","type":"emoji","key":"🎵","name":"🎵","cat":"Media"},{"id":"e6_106","type":"emoji","key":"🎧","name":"🎧","cat":"Media"},{"id":"e7_107","type":"emoji","key":"🎤","name":"🎤","cat":"Media"},{"id":"e8_108","type":"emoji","key":"🎙️","name":"🎙️","cat":"Media"},{"id":"e9_109","type":"emoji","key":"📻","name":"📻","cat":"Media"},{"id":"e10_110","type":"emoji","key":"🎮","name":"🎮","cat":"Media"},{"id":"e11_111","type":"emoji","key":"🕹️","name":"🕹️","cat":"Media"},{"id":"e12_112","type":"emoji","key":"▶️","name":"▶️","cat":"Media"},{"id":"e13_113","type":"emoji","key":"⏯️","name":"⏯️","cat":"Media"},{"id":"e14_114","type":"emoji","key":"🎞️","name":"🎞️","cat":"Media"},{"id":"e15_115","type":"emoji","key":"🎭","name":"🎭","cat":"Media"},{"id":"e0_116","type":"emoji","key":"🛠️","name":"🛠️","cat":"Utilitas"},{"id":"e1_117","type":"emoji","key":"🔧","name":"🔧","cat":"Utilitas"},{"id":"e2_118","type":"emoji","key":"🔨","name":"🔨","cat":"Utilitas"},{"id":"e3_119","type":"emoji","key":"🔩","name":"🔩","cat":"Utilitas"},{"id":"e4_120","type":"emoji","key":"✂️","name":"✂️","cat":"Utilitas"},{"id":"e5_121","type":"emoji","key":"🧰","name":"🧰","cat":"Utilitas"},{"id":"e6_122","type":"emoji","key":"🧹","name":"🧹","cat":"Utilitas"},{"id":"e7_123","type":"emoji","key":"🧪","name":"🧪","cat":"Utilitas"},{"id":"e8_124","type":"emoji","key":"🧯","name":"🧯","cat":"Utilitas"},{"id":"e9_125","type":"emoji","key":"🔒","name":"🔒","cat":"Utilitas"},{"id":"e10_126","type":"emoji","key":"🔓","name":"🔓","cat":"Utilitas"},{"id":"e11_127","type":"emoji","key":"🔑","name":"🔑","cat":"Utilitas"},{"id":"e12_128","type":"emoji","key":"🛡️","name":"🛡️","cat":"Utilitas"},{"id":"e13_129","type":"emoji","key":"⚡","name":"⚡","cat":"Utilitas"},{"id":"e14_130","type":"emoji","key":"🔥","name":"🔥","cat":"Utilitas"},{"id":"e15_131","type":"emoji","key":"💧","name":"💧","cat":"Utilitas"},{"id":"e16_132","type":"emoji","key":"☁️","name":"☁️","cat":"Utilitas"},{"id":"e17_133","type":"emoji","key":"🌙","name":"🌙","cat":"Utilitas"},{"id":"e0_134","type":"emoji","key":"⭐","name":"⭐","cat":"Favorit & Umum"},{"id":"e1_135","type":"emoji","key":"❤️","name":"❤️","cat":"Favorit & Umum"},{"id":"e2_136","type":"emoji","key":"🔥","name":"🔥","cat":"Favorit & Umum"},{"id":"e3_137","type":"emoji","key":"🚀","name":"🚀","cat":"Favorit & Umum"},{"id":"e4_138","type":"emoji","key":"🏠","name":"🏠","cat":"Favorit & Umum"},{"id":"e5_139","type":"emoji","key":"📅","name":"📅","cat":"Favorit & Umum"},{"id":"e6_140","type":"emoji","key":"⏰","name":"⏰","cat":"Favorit & Umum"},{"id":"e7_141","type":"emoji","key":"✅","name":"✅","cat":"Favorit & Umum"},{"id":"e8_142","type":"emoji","key":"❌","name":"❌","cat":"Favorit & Umum"},{"id":"e9_143","type":"emoji","key":"⚠️","name":"⚠️","cat":"Favorit & Umum"},{"id":"e10_144","type":"emoji","key":"❗","name":"❗","cat":"Favorit & Umum"},{"id":"e11_145","type":"emoji","key":"❓","name":"❓","cat":"Favorit & Umum"},{"id":"e12_146","type":"emoji","key":"💡","name":"💡","cat":"Favorit & Umum"},{"id":"e13_147","type":"emoji","key":"🎯","name":"🎯","cat":"Favorit & Umum"},{"id":"e14_148","type":"emoji","key":"🏆","name":"🏆","cat":"Favorit & Umum"},{"id":"e15_149","type":"emoji","key":"🔴","name":"🔴","cat":"Favorit & Umum"},{"id":"e16_150","type":"emoji","key":"🟢","name":"🟢","cat":"Favorit & Umum"},{"id":"e17_151","type":"emoji","key":"🟡","name":"🟡","cat":"Favorit & Umum"}];
 let state=JSON.parse(localStorage.getItem(KEY)||'null');
 if(!state){
- state={theme:'light',page:0,selectedCat:'Semua',pack:'material',items:[],folders:[]};
- const samples=[
-  ['SPBU Daily','gas','SPBU','Input dan pengolahan data harian'],
-  ['Excel Tools','chart','Excel','Pengolahan data Excel'],
-  ['PDF Tools','file','PDF','Pengolahan dokumen PDF'],
-  ['Finance','calc','Finance','Perhitungan keuangan'],
-  ['Bank Tools','bank','Bank','Tool perbankan'],
-  ['Inventory','box','Inventory','Pengelolaan inventory'],
-  ['Print Tools','print','Utilitas','Tool cetak'],
-  ['Utilities','tools','Utilitas','Tool umum']
- ];
- samples.forEach(a=>state.items.push({id:crypto.randomUUID(),name:a[0],iconKey:a[1],customIcon:'',cat:a[2],desc:a[3],url:'',path:'',version:'1.0.0',favorite:false,customColor:'',emojiIcon:''}));
+ state={theme:'light',page:0,selectedCat:'Semua',pack:'material',items:[],folders:[],initialized:false};
  save();
+}else{
+ state.items=Array.isArray(state.items)?state.items:[];
+ state.folders=Array.isArray(state.folders)?state.folders:[];
+ if(typeof state.initialized!=='boolean')state.initialized=false;
 }
 
 function save(){
@@ -149,7 +142,7 @@ function save(){
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function allCats(){return ['Semua',...new Set(state.items.map(x=>x.cat).filter(Boolean))]}
-function visibleItems(){const q=document.getElementById('search').value.toLowerCase().trim();return state.items.filter(x=>!x.categoryOnly&&(state.selectedCat==='Semua'||x.cat===state.selectedCat)&&(!q||`${x.name} ${x.desc||''} ${x.cat}`.toLowerCase().includes(q)))}
+function visibleItems(){const q=document.getElementById('search').value.toLowerCase().trim();return state.items.filter(x=>!x.categoryOnly&&!x.folderId&&(state.selectedCat==='Semua'||x.cat===state.selectedCat)&&(!q||`${x.name} ${x.desc||''} ${x.cat}`.toLowerCase().includes(q)))}
 
 const vectorGallery=[{"id":"gas","type":"vector","key":"gas","name":"Fuel / SPBU","cat":"Vector"},{"id":"chart","type":"vector","key":"chart","name":"Chart","cat":"Vector"},{"id":"file","type":"vector","key":"file","name":"File","cat":"Vector"},{"id":"calc","type":"vector","key":"calc","name":"Calculator","cat":"Vector"},{"id":"bank","type":"vector","key":"bank","name":"Bank","cat":"Vector"},{"id":"box","type":"vector","key":"box","name":"Inventory","cat":"Vector"},{"id":"print","type":"vector","key":"print","name":"Printer","cat":"Vector"},{"id":"tools","type":"vector","key":"tools","name":"Tools","cat":"Vector"},{"id":"folder","type":"vector","key":"folder","name":"Folder","cat":"Vector"},{"id":"link","type":"vector","key":"link","name":"Link","cat":"Vector"},{"id":"globe","type":"vector","key":"globe","name":"Web","cat":"Vector"},{"id":"code","type":"vector","key":"code","name":"Code","cat":"Vector"},{"id":"image","type":"vector","key":"image","name":"Image","cat":"Vector"},{"id":"settings","type":"vector","key":"settings","name":"Settings","cat":"Vector"},{"id":"star","type":"vector","key":"star","name":"Favorite","cat":"Vector"},{"id":"note","type":"vector","key":"note","name":"Note","cat":"Vector"}];
 function packList(){
@@ -388,7 +381,7 @@ document.getElementById('form').onsubmit=e=>{
  const id=document.getElementById('editId').value;
  const old=id?state.items.find(i=>i.id===id):null;
  const preview=document.querySelector('#uploadPreview img');
- const x={id:id||crypto.randomUUID(),name:document.getElementById('name').value.trim(),cat:document.getElementById('cat').value.trim(),desc:document.getElementById('desc').value.trim(),version:document.getElementById('version').value.trim(),url:document.getElementById('url').value.trim(),path:document.getElementById('path').value.trim(),iconKey:document.getElementById('iconKey').value,customIcon:preview?preview.src:(old?.customIcon||''),emojiIcon:preview?'':(document.getElementById('iconKey').dataset.emoji||old?.emojiIcon||''),customColor:document.getElementById('iconColor').value,favorite:old?.favorite||false};
+ const x={id:id||crypto.randomUUID(),name:document.getElementById('name').value.trim(),cat:document.getElementById('cat').value.trim(),desc:document.getElementById('desc').value.trim(),version:document.getElementById('version').value.trim(),url:document.getElementById('url').value.trim(),path:document.getElementById('path').value.trim(),iconKey:document.getElementById('iconKey').value,customIcon:preview?preview.src:(old?.customIcon||''),emojiIcon:preview?'':(document.getElementById('iconKey').dataset.emoji||old?.emojiIcon||''),customColor:document.getElementById('iconColor').value,favorite:old?.favorite||false,folderId:old?.folderId||'',page:old?.page||0};
  if(!x.name)return;
  if(id)state.items=state.items.map(i=>i.id===id?x:i);else state.items.push(x);
  save();closeModal();render();
@@ -405,8 +398,8 @@ document.getElementById('pages').addEventListener('drop',e=>{
  e.preventDefault();const target=e.target.closest('.app-item');if(!target||!dragId||target.dataset.id===dragId)return;
  const a=state.items.find(i=>i.id===dragId),b=state.items.find(i=>i.id===target.dataset.id);if(!a||!b)return;
  if(confirm(`Gabungkan "${a.name}" ke dalam folder "${b.name}"?`)){
-  let f=state.folders.find(f=>f.name===b.name);if(!f){f={id:crypto.randomUUID(),name:b.name,items:[b.id]};state.folders.push(f)}if(!f.items.includes(a.id))f.items.push(a.id);
-  state.items=state.items.filter(i=>i.id!==a.id);save();render();
+  let f=state.folders.find(f=>f.id===b.folderId)||state.folders.find(f=>f.name===b.name);if(!f){f={id:crypto.randomUUID(),name:b.name,items:[b.id]};state.folders.push(f)}if(!f.items.includes(a.id))f.items.push(a.id);
+  a.folderId=f.id;save();render();
  }
 });
 
@@ -465,222 +458,50 @@ render();
 
 <script>
 /* =========================================================
-   MY TOOLS V4 — Google Apps Script Registry Sync
-   Local-first cache + change detection + shared layout sync
+   MY TOOLS V6 — Google Apps Script Registry Sync
+   GAS = single source of truth
+   FIRST SYNC = PULL ONLY. No automatic CREATE on a new device.
    ========================================================= */
 (function(){
-  const REGKEY='mytools_registry_url_v4';
-  const SNAPKEY='mytools_registry_snapshot_v4';
-  const METAKEY='mytools_registry_meta_v4';
-  const LAYOUTKEY='mytools_registry_layout_snapshot_v4';
-
-  function el(id){return document.getElementById(id)}
-  function getUrl(){return (localStorage.getItem(REGKEY)||'').trim()}
-  function setUrl(v){localStorage.setItem(REGKEY,(v||'').trim())}
-  function nonCategoryItems(){return state.items.filter(x=>!x.categoryOnly)}
-  function cloudShape(x,index){
-    return {
-      id:x.id,name:x.name,description:x.desc||'',category:x.cat||'',
-      icon:x.iconKey||'tools',
-      iconType:x.customIcon?'custom':(x.emojiIcon?'emoji':'vector'),
-      emojiIcon:x.emojiIcon||'',
-      customIconUrl:(x.customIcon||'').startsWith('data:')?'':(x.customIcon||''),
-      customColor:x.customColor||'',
-      onlineUrl:x.url||'',version:x.version||'',
-      favorite:!!x.favorite,order:index,folderId:x.folderId||'',page:Number(x.page)||0
-    };
-  }
-  function snapshot(){
-    return nonCategoryItems().map((x,i)=>cloudShape(x,i));
-  }
-  function snapMap(arr){const m={};(arr||[]).forEach(x=>m[x.id]=x);return m}
-  function changed(a,b){return JSON.stringify(a)!==JSON.stringify(b)}
-  function localChanges(){
-    let old=[];
-    try{old=JSON.parse(localStorage.getItem(SNAPKEY)||'[]')}catch(e){}
-    const A=snapMap(old), B=snapMap(snapshot()), out=[];
-    Object.keys(B).forEach(id=>{
-      if(!A[id] || changed(A[id],B[id])){
-        out.push({
-          action:A[id]?'UPDATE':'CREATE',
-          data:B[id],recordId:id,clientChangeId:'chg-'+id+'-'+Date.now()
-        });
-      }
-    });
-    Object.keys(A).forEach(id=>{
-      if(!B[id]) out.push({
-        action:'DELETE',recordId:id,clientChangeId:'chg-del-'+id+'-'+Date.now()
-      });
-    });
-    return out;
-  }
-  function categoryList(){
-    return [...new Set(state.items.map(x=>x.cat).filter(Boolean))]
-      .map((name,i)=>({id:'cat-'+btoa(unescape(encodeURIComponent(name))).replace(/=/g,''),name,order:i}));
-  }
-  function setStatus(text,kind){
-    const s=el('cloudStatus');if(!s)return;
-    s.className='cloud-status '+(kind||'');
-    s.innerHTML='<span class="sync-dot '+(kind||'')+'"></span>'+text;
-  }
-  function saveMeta(o){localStorage.setItem(METAKEY,JSON.stringify(o||{}))}
-  function loadMeta(){try{return JSON.parse(localStorage.getItem(METAKEY)||'{}')}catch(e){return {}}}
-  function cloudButton(text){const b=el('cloudBtn');if(b)b.textContent=text}
-
-  async function api(url,options){
-    const r=await fetch(url,options||{method:'GET',cache:'no-store'});
-    const t=await r.text();
-    let data;try{data=JSON.parse(t)}catch(e){
-      throw new Error('Respons registry bukan JSON. Periksa URL Web App GAS dan deployment.');
-    }
-    if(!r.ok || data.success===false)throw new Error(data.error||('HTTP '+r.status));
-    return data;
-  }
-
-  function applyRemoteState(data){
-    const current=nonCategoryItems();
-    const byId=snapMap(current);
-    const apps=(data.apps||[]).map(a=>{
-      const old=byId[a.id]||{};
-      return {
-        id:a.id,name:a.name,desc:a.description||'',cat:a.category||'',url:a.onlineUrl||'',
-        path:old.path||'',version:a.version||'',iconKey:a.icon||'tools',
-        emojiIcon:a.emojiIcon||'',customIcon:a.customIconUrl||old.customIcon||'',
-        customColor:a.customColor||old.customColor||'#4f46e5',
-        favorite:!!a.favorite,order:Number(a.order)||0,folderId:a.folderId||'',
-        page:Number(a.page)||0,categoryOnly:false,_cloudKnown:true
-      };
-    });
-    apps.sort((a,b)=>(a.order||0)-(b.order||0));
-
-    const names=new Set((data.categories||[]).map(c=>String(c.name||'')).filter(Boolean));
-    const categoryOnly=(data.categories||[]).filter(c=>c.name).map(c=>({
-      id:'cat-'+c.id,name:'',iconKey:'tools',customIcon:'',cat:String(c.name),
-      desc:'',url:'',path:'',version:'',favorite:false,categoryOnly:true
-    }));
-    // Preserve local-only apps that have never been synced.
-    const cloudIds=new Set(apps.map(a=>a.id));
-    const unsynced=current.filter(x=>!cloudIds.has(x.id)&&!x._cloudKnown);
-    state.items=[...apps,...categoryOnly,...unsynced];
-
-    if(data.layout && data.layout.launcher){
-      const L=data.layout.launcher;
-      if(L.theme)state.theme=L.theme;
-      if(L.pack)state.pack=L.pack;
-      if(Array.isArray(L.folders))state.folders=L.folders;
-    }
-
-    save();
-    render();
-    localStorage.setItem(SNAPKEY,JSON.stringify(snapshot()));
-    localStorage.setItem(LAYOUTKEY,JSON.stringify({
-      categories:categoryList(),folders:state.folders||[],theme:state.theme,pack:state.pack
-    }));
-    return apps.length;
-  }
-
-  async function testConnection(){
-    const url=getUrl();
-    if(!url){setStatus('Masukkan URL Web App Google Apps Script terlebih dahulu.','err');return false}
-    setStatus('Menghubungi registry…','busy');cloudButton('☁ Testing…');
-    try{
-      const data=await api(url+'?action=GET');
-      const apps=Array.isArray(data.apps)?data.apps:[];
-      setStatus('Koneksi OK • '+apps.length+' aplikasi di registry.','ok');
-      cloudButton('☁ Sync');return true;
-    }catch(err){
-      setStatus('Koneksi gagal: '+err.message,'err');cloudButton('☁ Sync');return false;
-    }
-  }
-
-  async function sync(){
-    const url=getUrl();
-    if(!url){openCloud();setStatus('URL registry belum diisi.','err');return}
-    setStatus('Membaca perubahan lokal…','busy');cloudButton('☁ Sync…');
-    try{
-      const changes=localChanges();
-      const data=await api(url,{
-        method:'POST',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'BATCH_SYNC',payload:{pendingChanges:changes}})
-      });
-
-      const appsCount=applyRemoteState(data);
-
-      // Shared layout/category data is intentionally separate from Apps rows.
-      await api(url,{
-        method:'POST',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({
-          action:'SAVE_LAYOUT',
-          payload:{
-            theme:state.theme,pack:state.pack,folders:state.folders||[],
-            categories:categoryList(),updatedBy:'Browser Device'
-          }
-        })
-      });
-
-      // Pull once more so every device receives the server's final state.
-      const finalState=await api(url+'?action=GET');
-      const finalCount=applyRemoteState(finalState);
-
-      saveMeta({
-        lastSync:new Date().toISOString(),count:finalCount,
-        sent:changes.length,failed:data.failedChanges||[]
-      });
-
-      if((data.failedChanges||[]).length){
-        setStatus('Sync selesai sebagian • '+data.failedChanges.length+' perubahan gagal.','err');
-      }else{
-        setStatus('Sync berhasil • '+finalCount+' aplikasi • '+new Date().toLocaleTimeString('id-ID'),'ok');
-      }
-      cloudButton('☁ Sync');closeCloud();
-    }catch(err){
-      setStatus('Sync gagal: '+err.message,'err');cloudButton('☁ Sync');
-    }
-  }
-
-  function openCloud(){
-    el('registryUrl').value=getUrl();
-    const m=loadMeta();
-    if(getUrl()){
-      setStatus(m.lastSync
-        ? 'Terakhir sync: '+new Date(m.lastSync).toLocaleString('id-ID')
-        : 'URL registry sudah tersimpan.','');
-    }else setStatus('Belum terhubung ke registry.','');
-    el('cloudBg').classList.add('show');
-  }
-  function closeCloud(){el('cloudBg').classList.remove('show')}
-
-  window.myToolsCloud={sync,testConnection,openCloud};
-
-  function bind(){
-    el('cloudBtn').onclick=openCloud;
-    el('closeCloud').onclick=closeCloud;
-    el('cloudBg').onclick=e=>{if(e.target.id==='cloudBg')closeCloud()};
-    el('registryUrl').onchange=e=>setUrl(e.target.value);
-    el('testCloud').onclick=async()=>{setUrl(el('registryUrl').value);await testConnection()};
-    el('syncCloud').onclick=async()=>{setUrl(el('registryUrl').value);await sync()};
-
-    // Automatic pull only when there are no local changes waiting.
-    if(getUrl()){
-      setTimeout(async()=>{
-        try{
-          const pending=localChanges();
-          if(pending.length) {
-            setStatus('Ada '+pending.length+' perubahan lokal • tekan Sync untuk mengirim.','busy');
-            return;
-          }
-          const data=await api(getUrl()+'?action=GET');
-          applyRemoteState(data);
-          setStatus('Cloud terhubung • '+(data.apps||[]).length+' aplikasi','ok');
-        }catch(e){
-          // Offline startup is allowed; cached launcher remains usable.
-        }
-      },700);
-    }
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+ const REGKEY='mytools_registry_url_v6', SNAPKEY='mytools_registry_snapshot_v6', METAKEY='mytools_registry_meta_v6', INITKEY='mytools_registry_initialized_v6', OLDREGKEY='mytools_registry_url_v4';
+ const el=id=>document.getElementById(id), getUrl=()=> (localStorage.getItem(REGKEY)||localStorage.getItem(OLDREGKEY)||'').trim();
+ const setUrl=v=>localStorage.setItem(REGKEY,(v||'').trim());
+ const appsLocal=()=>state.items.filter(x=>!x.categoryOnly);
+ const cloudShape=(x,i)=>({id:x.id,name:x.name,description:x.desc||'',category:x.cat||'',icon:x.iconKey||'tools',iconType:x.customIcon?'custom':(x.emojiIcon?'emoji':'vector'),emojiIcon:x.emojiIcon||'',customIconUrl:(x.customIcon||'').startsWith('data:')?'':(x.customIcon||''),customColor:x.customColor||'',onlineUrl:x.url||'',version:x.version||'',favorite:!!x.favorite,order:i,folderId:x.folderId||'',page:Number(x.page)||0});
+ const snapshot=()=>appsLocal().map(cloudShape);
+ const map=a=>{const m={};(a||[]).forEach(x=>m[x.id]=x);return m};
+ const diff=(a,b)=>JSON.stringify(a)!==JSON.stringify(b);
+ function changes(){let old=[];try{old=JSON.parse(localStorage.getItem(SNAPKEY)||'[]')}catch(e){}const A=map(old),B=map(snapshot()),out=[];Object.keys(B).forEach(id=>{if(!A[id]||diff(A[id],B[id]))out.push({action:A[id]?'UPDATE':'CREATE',data:B[id],recordId:id,clientChangeId:'chg-'+id+'-'+Date.now()})});Object.keys(A).forEach(id=>{if(!B[id])out.push({action:'DELETE',recordId:id,clientChangeId:'chg-del-'+id+'-'+Date.now()})});return out;}
+ function cats(){return [...new Set(state.items.map(x=>x.cat).filter(Boolean))].map((name,i)=>({id:'cat-'+btoa(unescape(encodeURIComponent(name))).replace(/=/g,''),name,order:i}));}
+ function status(t,k){const s=el('cloudStatus');if(s){s.className='cloud-status '+(k||'');s.innerHTML='<span class="sync-dot '+(k||'')+'"></span>'+t;}}
+ function meta(o){localStorage.setItem(METAKEY,JSON.stringify(o||{}))} function readMeta(){try{return JSON.parse(localStorage.getItem(METAKEY)||'{}')}catch(e){return {}}}
+ function cloudBtn(t){const b=el('cloudBtn');if(b)b.textContent=t;}
+ async function api(url,opt){const r=await fetch(url,opt||{method:'GET',cache:'no-store'});const t=await r.text();let d;try{d=JSON.parse(t)}catch(e){throw new Error('Respons registry bukan JSON. Periksa URL Web App GAS dan deployment.')}if(!r.ok||d.success===false)throw new Error(d.error||('HTTP '+r.status));return d;}
+ function apply(data){const current=appsLocal(), by=map(current);const apps=(data.apps||[]).map(a=>{const old=by[a.id]||{};return {id:a.id,name:a.name,desc:a.description||'',cat:a.category||'',url:a.onlineUrl||'',path:old.path||'',version:a.version||'',iconKey:a.icon||'tools',emojiIcon:a.emojiIcon||'',customIcon:a.customIconUrl||old.customIcon||'',customColor:a.customColor||old.customColor||'',favorite:!!a.favorite,order:Number(a.order)||0,folderId:a.folderId||'',page:Number(a.page)||0,categoryOnly:false,_cloudKnown:true};});apps.sort((a,b)=>(a.order||0)-(b.order||0));const catsOnly=(data.categories||[]).filter(c=>c.name).map(c=>({id:'cat-'+c.id,name:'',iconKey:'tools',customIcon:'',cat:String(c.name),desc:'',url:'',path:'',version:'',favorite:false,categoryOnly:true}));const ids=new Set(apps.map(a=>a.id));const localOnly=current.filter(x=>!ids.has(x.id)&&!x._cloudKnown);state.items=[...apps,...catsOnly,...localOnly];if(data.layout&&data.layout.launcher){const L=data.layout.launcher;if(L.theme)state.theme=L.theme;if(L.pack)state.pack=L.pack;if(Array.isArray(L.folders))state.folders=L.folders;}state.initialized=true;save();render();localStorage.setItem(SNAPKEY,JSON.stringify(snapshot()));localStorage.setItem(INITKEY,'1');return apps.length;}
+ async function test(){const u=getUrl();if(!u){status('Masukkan URL Web App Google Apps Script terlebih dahulu.','err');return false}status('Menghubungi registry…','busy');cloudBtn('☁ Testing…');try{const d=await api(u+'?action=GET');status('Koneksi OK • '+(d.apps||[]).length+' aplikasi di registry.','ok');cloudBtn('☁ Sync');return true}catch(e){status('Koneksi gagal: '+e.message,'err');cloudBtn('☁ Sync');return false}}
+ async function sync(){const u=getUrl();if(!u){open();status('URL registry belum diisi.','err');return}status('Memeriksa registry cloud…','busy');cloudBtn('☁ Sync…');try{
+   const remote=await api(u+'?action=GET');
+   const initialized=localStorage.getItem(INITKEY)==='1'||state.initialized===true;
+   const count=appsLocal().length;
+   if(!initialized){
+     if(count===0){const n=apply(remote);meta({lastSync:new Date().toISOString(),count:n,sent:0,mode:'INITIAL_PULL'});status('Setup awal selesai • '+n+' aplikasi diambil dari registry.','ok');cloudBtn('☁ Sync');close();return;}
+     const ok=confirm('Perangkat ini memiliki '+count+' aplikasi lokal, sedangkan registry cloud memiliki '+(remote.apps||[]).length+'.\n\nUntuk mencegah duplikasi, Sync pertama akan MENJADIKAN REGISTRY CLOUD sebagai sumber utama dan mengganti daftar lokal dengan registry cloud.\n\nLanjutkan?');
+     if(!ok){status('Sync pertama dibatalkan. Tidak ada data yang dikirim.','');cloudBtn('☁ Sync');return}
+     const n=apply(remote);meta({lastSync:new Date().toISOString(),count:n,sent:0,mode:'INITIAL_PULL_REPLACE'});status('Setup awal selesai • '+n+' aplikasi dari registry.','ok');cloudBtn('☁ Sync');close();return;
+   }
+   const ch=changes();
+   if(!ch.length){const n=apply(remote);meta({lastSync:new Date().toISOString(),count:n,sent:0,mode:'PULL_ONLY'});status('Sudah sinkron • '+n+' aplikasi.','ok');cloudBtn('☁ Sync');close();return;}
+   status('Mengirim '+ch.length+' perubahan…','busy');const d=await api(u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'BATCH_SYNC',payload:{pendingChanges:ch}})});apply(d);
+   await api(u,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'SAVE_LAYOUT',payload:{theme:state.theme,pack:state.pack,folders:state.folders||[],categories:cats(),updatedBy:'Browser Device'}})});
+   const fin=await api(u+'?action=GET');const n=apply(fin);meta({lastSync:new Date().toISOString(),count:n,sent:ch.length,failed:d.failedChanges||[]});status((d.failedChanges||[]).length?'Sync selesai sebagian • '+d.failedChanges.length+' perubahan gagal.':'Sync berhasil • '+n+' aplikasi • '+new Date().toLocaleTimeString('id-ID'),(d.failedChanges||[]).length?'err':'ok');cloudBtn('☁ Sync');close();
+ }catch(e){status('Sync gagal: '+e.message,'err');cloudBtn('☁ Sync');}}
+ function open(){el('registryUrl').value=getUrl();const m=readMeta();status(getUrl()?(m.lastSync?'Terakhir sync: '+new Date(m.lastSync).toLocaleString('id-ID'):'URL registry sudah tersimpan.'):'Belum terhubung ke registry.','');el('cloudBg').classList.add('show');}
+ function close(){el('cloudBg').classList.remove('show')}
+ window.myToolsCloud={sync,testConnection:test,openCloud:open};
+ function bind(){el('cloudBtn').onclick=open;el('closeCloud').onclick=close;el('cloudBg').onclick=e=>{if(e.target.id==='cloudBg')close()};el('registryUrl').onchange=e=>setUrl(e.target.value);el('testCloud').onclick=async()=>{setUrl(el('registryUrl').value);await test()};el('syncCloud').onclick=async()=>{setUrl(el('registryUrl').value);await sync()};
+   if(getUrl())setTimeout(async()=>{try{const init=localStorage.getItem(INITKEY)==='1'||state.initialized===true;if(!init&&appsLocal().length===0){const d=await api(getUrl()+'?action=GET');apply(d);status('Cloud terhubung • '+(d.apps||[]).length+' aplikasi','ok')}}catch(e){}},700);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
 </script>
 <script>
@@ -749,7 +570,7 @@ async function loadLocalFileForEdit(id){
        const old=id?state.items.find(i=>i.id===id):null;
        const preview=document.querySelector('#uploadPreview img');
        const newId=id||crypto.randomUUID();
-       const x={id:newId,name:document.getElementById('name').value.trim(),cat:document.getElementById('cat').value.trim(),desc:document.getElementById('desc').value.trim(),version:document.getElementById('version').value.trim(),url:document.getElementById('url').value.trim(),path:document.getElementById('path').value.trim(),iconKey:document.getElementById('iconKey').value,customIcon:preview?preview.src:(old?.customIcon||''),emojiIcon:preview?'':(document.getElementById('iconKey').dataset.emoji||old?.emojiIcon||''),customColor:document.getElementById('iconColor').value,favorite:old?.favorite||false};
+       const x={id:newId,name:document.getElementById('name').value.trim(),cat:document.getElementById('cat').value.trim(),desc:document.getElementById('desc').value.trim(),version:document.getElementById('version').value.trim(),url:document.getElementById('url').value.trim(),path:document.getElementById('path').value.trim(),iconKey:document.getElementById('iconKey').value,customIcon:preview?preview.src:(old?.customIcon||''),emojiIcon:preview?'':(document.getElementById('iconKey').dataset.emoji||old?.emojiIcon||''),customColor:document.getElementById('iconColor').value,favorite:old?.favorite||false,folderId:old?.folderId||'',page:old?.page||0};
        if(!x.name)return;
        if(id)state.items=state.items.map(i=>i.id===id?x:i);else state.items.push(x);
        if(pendingLocalHandle){
