@@ -1,199 +1,673 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MY TOOLS V2 — Personal App Launcher</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#4f46e5" />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MY TOOLS — Personal App Launcher</title>
+<style>
+:root{--bg:#f3f5f9;--surface:#fff;--surface2:#eef1f6;--text:#182033;--muted:#7d8799;--line:#e1e5ed;--accent:#4f46e5;--danger:#dc2626;--shadow:0 14px 40px rgba(20,30,60,.12)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body.dark{--bg:#0e1118;--surface:#171b24;--surface2:#202632;--text:#f4f6fb;--muted:#9ba5b7;--line:#2a3140;--shadow:0 16px 45px rgba(0,0,0,.4)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.app{max-width:1180px;margin:auto;padding:22px 26px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.brand{display:flex;align-items:center;gap:12px}.brand-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--accent);color:#fff;font-size:24px;box-shadow:0 8px 20px #4f46e544}.brand-title{margin:0;font-size:21px}.brand-subtitle{margin:2px 0 0;color:var(--muted);font-size:12px}.actions{display:flex;gap:8px}.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:9px 13px;border-radius:11px}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.icon{width:40px;height:40px;padding:0}
+.search{height:48px;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:0 14px;box-shadow:0 4px 15px rgba(20,30,60,.04)}.search input{border:0;outline:0;background:transparent;color:var(--text);width:100%;font-size:14px}
+.toolbar{display:flex;gap:8px;align-items:center;margin:12px 0 20px}.categories{display:flex;gap:7px;overflow:auto;scrollbar-width:none;flex:1}.categories::-webkit-scrollbar{display:none}.chip{white-space:nowrap;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:8px 12px;border-radius:999px;font-size:12px}.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:10px 0 12px}.section-title{font-size:14px;margin:0}.page-indicator{font-size:11px;color:var(--muted)}
+.launcher{overflow:hidden;touch-action:pan-y}.pages{display:flex;transition:transform .25s ease}.page{min-width:100%;display:grid;grid-template-columns:repeat(6,minmax(80px,1fr));gap:25px 16px;padding:8px 8px 24px;align-content:start}
+.app-item{text-align:center;min-width:0;user-select:none}.app-icon{width:70px;height:70px;margin:auto;border-radius:21px;display:grid;place-items:center;font-size:31px;box-shadow:0 9px 18px rgba(25,35,65,.12);transition:.16s;overflow:hidden}.app-item:hover .app-icon{transform:translateY(-3px) scale(1.035)}.app-name{font-size:11px;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}.app-cat{font-size:9px;color:var(--muted);margin-top:2px}.dragging{opacity:.35}.drop-target .app-icon{outline:3px solid #4f46e566;transform:scale(1.06)}.app-icon svg{width:42px;height:42px}.fresh-icon{border:0!important;color:#fff!important;box-shadow:0 10px 20px rgba(40,50,80,.16),inset 0 1px 0 rgba(255,255,255,.35)}.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:45px 10px}.dots{display:flex;justify-content:center;gap:6px;margin:0 0 17px}.dot{width:7px;height:7px;border-radius:9px;background:#c7ccd7}.dot.active{width:20px;background:var(--accent)}
+.hint{text-align:center;color:var(--muted);font-size:10px;margin-top:4px}.cloud-status{margin-top:12px;padding:11px;border-radius:11px;background:var(--surface2);font-size:11px;color:var(--muted);line-height:1.5}.cloud-status.ok{color:#15803d}.cloud-status.err{color:#b91c1c}.sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#94a3b8;margin-right:5px}.sync-dot.ok{background:#16a34a}.sync-dot.busy{background:#f59e0b}
+.modal-bg{position:fixed;inset:0;background:#07102288;backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal-bg.show{display:flex}.modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow)}.modal h3{margin:0}.modal-note{font-size:11px;color:var(--muted);margin:7px 0 15px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:11px;color:var(--muted)}.field input,.field textarea,.field select{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:10px;outline:0}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.pack-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pack-card{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:11px;text-align:center;color:var(--text)}.pack-card.active{border-color:var(--accent);background:var(--surface2)}.pack-preview{width:52px;height:52px;margin:0 auto 7px;border-radius:16px;display:grid;place-items:center}.pack-card strong{font-size:11px}.pack-card small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.upload-row{display:flex;align-items:center;gap:10px;margin-top:10px}.upload-preview{width:58px;height:58px;border-radius:15px;border:1px dashed var(--line);display:grid;place-items:center;overflow:hidden;background:var(--bg)}.upload-preview img{width:100%;height:100%;object-fit:contain}
+
+.gallery-window{width:min(760px,100%)}.gallery-tools{display:grid;grid-template-columns:1fr 130px;gap:8px;margin-bottom:10px}.gallery-tools input,.gallery-tools select{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:10px;outline:0}.gallery-tabs{display:flex;gap:6px;overflow:auto;margin-bottom:10px;scrollbar-width:none}.gallery-tabs::-webkit-scrollbar{display:none}.gallery-tab{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:7px 10px;font-size:10px;white-space:nowrap}.gallery-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}.gallery-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;max-height:48vh;overflow:auto;padding:3px}.gallery-item{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:13px;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}.gallery-item:hover{border-color:var(--accent);transform:translateY(-1px)}.gallery-item .gicon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:24px}.gallery-item svg{width:26px;height:26px}.gallery-item small{font-size:8px;color:var(--muted);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gallery-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:10px;color:var(--muted)}
+.cat-row{display:flex;gap:7px;margin-bottom:8px}.cat-row input{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:9px;padding:9px}.cat-row button{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:9px;padding:8px 10px}.cat-row .danger{color:var(--danger)}
+.folder-apps{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:18px}.folder-window{width:min(620px,100%)}
+.context{position:fixed;display:none;z-index:80;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:12px;padding:6px;min-width:175px}.context.show{display:block}.context button{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:9px;border-radius:8px}.context button:hover{background:var(--bg)}
+@media(max-width:800px){.app{padding:18px 14px}.page{grid-template-columns:repeat(5,1fr);gap:23px 8px}.app-icon{width:64px;height:64px}.pack-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){header{align-items:flex-start}.brand-subtitle{display:none}.actions .label{display:none}.toolbar{align-items:stretch}.page{grid-template-columns:repeat(4,1fr);gap:22px 4px}.app-icon{width:60px;height:60px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+</style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="brand">
-        <div class="brand-icon">🧰</div>
-        <div>
-          <h1 class="brand-title">MY TOOLS <span class="v-tag">V2</span></h1>
-          <p class="brand-subtitle">Personal Multi-Device App Launcher</p>
-        </div>
-      </div>
-      <div class="header-actions">
-        <!-- Status Sync UI -->
-        <div class="status-badge" id="syncStatusBadge" title="Klik untuk informasi sync">
-          <span class="status-dot" id="syncDot"></span>
-          <span class="status-text" id="syncText">Memuat...</span>
-        </div>
-        <button class="btn btn-icon" id="settingsBtn" aria-label="Pengaturan" title="Pengaturan">⚙️</button>
-        <button class="btn btn-icon" id="themeToggleBtn" aria-label="Ganti Tema">🌙</button>
-        <button class="btn btn-primary" id="addAppBtn">+ Tambah Tool</button>
-      </div>
-    </header>
+<div class="app">
+<header>
+  <div class="brand"><div class="brand-icon">🧰</div><div><h1 class="brand-title">MY TOOLS</h1><p class="brand-subtitle">Personal App Launcher</p></div></div>
+  <div class="actions"><button class="btn icon" id="themeBtn">🌙</button><button class="btn" id="packsBtn">🎨 Icon Pack</button><button type="button" class="btn" id="galleryBtn">🧩 Icon Gallery</button><button class="btn" id="catsBtn">⚙ Kategori</button><button class="btn" id="cloudBtn">☁ Sync</button><button class="btn primary" id="addBtn">＋ <span class="label">Tambah Tool</span></button></div>
+</header>
 
-    <!-- Banner Update PWA (Hidden default) -->
-    <div id="pwaUpdateBanner" class="update-banner" hidden>
-      <span>✨ Versi baru aplikasi Launcher telah tersedia!</span>
-      <button id="pwaReloadBtn" class="btn btn-sm btn-primary">Update Sekarang</button>
-    </div>
+<div class="search"><span>🔎</span><input id="search" placeholder="Cari aplikasi..."></div>
+<div class="toolbar"><div class="categories" id="categories"></div></div>
+<div class="section-head"><h2 class="section-title">Aplikasi</h2><span class="page-indicator" id="pageText"></span></div>
+<div class="launcher" id="launcher"><div class="pages" id="pages"></div></div>
+<div class="dots" id="dots"></div>
+<div class="hint">Geser kiri/kanan • Tarik icon untuk memindahkan • Tarik icon ke icon lain untuk membuat folder</div>
+</div>
 
-    <!-- Toolbar: Search, Category, & Sorting -->
-    <section class="toolbar">
-      <div class="search-box">
-        <span class="search-icon">🔎</span>
-        <input type="text" id="searchInput" placeholder="Cari tools berdasarkan nama, deskripsi, atau kategori..." autocomplete="off" />
-        <button class="btn-clear" id="clearSearchBtn" hidden>✕</button>
-      </div>
+<div class="modal-bg" id="appBg"><div class="modal">
+<h3 id="modalTitle">Tambah Tool Baru</h3><p class="modal-note">Icon bisa dipilih dari Icon Pack atau diganti dengan gambar sendiri.</p>
+<form id="form"><input type="hidden" id="editId">
+<div class="form-grid">
+<div class="field"><label>Nama Aplikasi *</label><input id="name" required></div>
+<div class="field"><label>Kategori *</label><input id="cat" list="catList" required></div>
+<div class="field full"><label>Deskripsi</label><textarea id="desc" rows="2"></textarea></div>
+<div class="field"><label>Versi</label><input id="version" placeholder="1.0.0"></div>
+<div class="field"><label>URL Online</label><input id="url" type="url" placeholder="https://..."></div>
+<div class="field full"><label>Local Path / File Path</label><input id="path" placeholder="D:\MyTools\tool\index.html"></div>
+<div class="field full"><label>Icon</label><select id="iconKey"></select>
+<div class="upload-row"><div class="upload-preview" id="uploadPreview">🖼️</div><button type="button" class="btn" id="uploadBtn">📤 Upload Icon</button><input type="file" id="iconFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>
+<div style="display:flex;align-items:center;gap:9px;margin-top:9px"><label style="font-size:11px;color:var(--muted);margin:0">Warna custom</label><input type="color" id="iconColor" value="#4f46e5" style="width:42px;height:34px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--surface)"><span id="iconColorText" style="font-size:11px;color:var(--muted)">#4F46E5</span></div></div>
+</div>
+<div class="modal-actions"><button type="button" class="btn" id="cancel">Batal</button><button class="btn primary">Simpan</button></div>
+</form></div></div>
 
-      <div class="category-bar" id="categoryBar">
-        <!-- Generasi Dinamis via JS -->
-      </div>
+<div class="modal-bg" id="packBg"><div class="modal">
+<h3>🎨 Icon Pack</h3><p class="modal-note">Pilih gaya icon untuk seluruh launcher. Icon custom milik aplikasi tetap dipertahankan.</p>
+<div class="pack-grid" id="packGrid"></div>
+<div class="modal-actions"><button class="btn" id="closePack">Tutup</button></div>
+</div></div>
 
-      <div class="toolbar-sub">
-        <div class="sort-container">
-          <label for="sortSelect">Urutkan:</label>
-          <select id="sortSelect" class="form-control-sm">
-            <option value="custom">Kustom (Urutan)</option>
-            <option value="name-asc">A – Z</option>
-            <option value="name-desc">Z – A</option>
-            <option value="category">Kategori</option>
-          </select>
-        </div>
-      </div>
-    </section>
 
-    <!-- Content Sections -->
-    <main class="main-content">
-      <!-- Section: Favorites -->
-      <section class="app-section" id="favoritesSection">
-        <h2 class="section-title">⭐ Favorit</h2>
-        <div class="app-grid" id="favoritesGrid"></div>
-      </section>
+<div class="modal-bg" id="galleryBg"><div class="modal gallery-window">
+<h3>🧩 Icon Gallery</h3>
+<p class="modal-note">Pilih icon secara visual. Gunakan pencarian atau kategori. Library ini bisa diperluas kapan saja dan icon custom tetap tersedia.</p>
+<div class="gallery-tools">
+<input id="gallerySearch" placeholder="🔎 Cari icon: bank, file, fuel, music...">
+<select id="galleryType"><option value="all">Semua</option><option value="vector">Vector</option><option value="emoji">Emoji</option></select>
+</div>
+<div class="gallery-tabs" id="galleryTabs"></div>
+<div class="gallery-grid" id="galleryGrid"></div>
+<div class="gallery-footer"><span id="galleryCount"></span><button class="btn" id="galleryUpload">📤 Tambah Icon Custom</button><input type="file" id="galleryFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>
+<div class="modal-actions"><button class="btn" id="closeGallery">Tutup</button></div>
+</div></div>
 
-      <!-- Section: All Tools -->
-      <section class="app-section">
-        <h2 class="section-title" id="allToolsTitle">🧰 Semua Tools</h2>
-        <div class="app-grid" id="allAppsGrid"></div>
-        <div class="empty-state" id="emptyState" hidden>
-          <div class="empty-icon">🧰</div>
-          <h3 class="empty-title">Your toolbox is empty</h3>
-          <p class="empty-desc">Tambahkan HTML tool pertama Anda untuk memulai.</p>
-          <button class="btn btn-primary" id="emptyAddBtn">+ Tambah Tool</button>
-        </div>
-      </section>
-    </main>
-  </div>
+<div class="modal-bg" id="catBg"><div class="modal">
+<h3>⚙ Kelola Kategori</h3><p class="modal-note">Kategori dapat ditambah, diubah namanya, atau dihapus tanpa menghapus aplikasi.</p>
+<div id="catManager"></div>
+<div class="modal-actions"><button class="btn" id="closeCat">Tutup</button><button class="btn primary" id="addCat">＋ Tambah Kategori</button></div>
+</div></div>
 
-  <!-- Modal Form App (Add / Edit) -->
-  <div class="modal-overlay" id="appModal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-labelledby="modalTitle">
-      <div class="modal-header">
-        <h3 id="modalTitle">Tambah Tool Baru</h3>
-        <button class="modal-close" id="closeModalBtn" aria-label="Tutup">&times;</button>
-      </div>
-      <form id="appForm">
-        <input type="hidden" id="appId" />
-        <div class="form-group">
-          <label for="appName">Nama Aplikasi *</label>
-          <input type="text" id="appName" required placeholder="Contoh: SPBU Daily" />
-        </div>
-        <div class="form-group">
-          <label for="appDesc">Deskripsi Ringkas</label>
-          <textarea id="appDesc" rows="2" placeholder="Input dan pengolahan data harian..."></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group col">
-            <label for="appCategory">Kategori *</label>
-            <input type="text" id="appCategory" required list="categorySuggestions" placeholder="SPBU, Excel, PDF..." />
-            <datalist id="categorySuggestions"></datalist>
-          </div>
-          <div class="form-group col">
-            <label for="appIcon">Icon (Emoji) *</label>
-            <input type="text" id="appIcon" required placeholder="⛽, 📊, 📄..." maxlength="4" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="appOnlineUrl">URL Online (Web / GitHub Pages)</label>
-          <input type="url" id="appOnlineUrl" placeholder="https://username.github.io/my-tools/apps/spbu-daily/" />
-        </div>
-        <div class="form-group">
-          <label for="appLocalPath">Local Path Spesifik Perangkat Ini</label>
-          <input type="text" id="appLocalPath" placeholder="D:\MyTools\SPBU-Daily\index.html atau file://..." />
-          <small class="form-help">🔒 Tersimpan khusus di perangkat ini (tidak di-sync ke cloud).</small>
-        </div>
-        <div class="form-row">
-          <div class="form-group col">
-            <label for="appVersion">Versi</label>
-            <input type="text" id="appVersion" placeholder="1.0.0" />
-          </div>
-          <div class="form-group col flex-end">
-            <label class="checkbox-label">
-              <input type="checkbox" id="appFavorite" />
-              <span>Jadikan Favorit ⭐</span>
-            </label>
-          </div>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" id="cancelModalBtn">Batal</button>
-          <button type="submit" class="btn btn-primary">Simpan Application</button>
-        </div>
-      </form>
-    </div>
-  </div>
+<div class="modal-bg" id="folderBg"><div class="modal folder-window">
+<h3 id="folderTitle">Folder</h3><div class="folder-apps" id="folderApps"></div>
+<div class="modal-actions"><button class="btn" id="renameFolder">Rename Folder</button><button class="btn" id="closeFolder">Tutup</button></div>
+</div></div>
 
-  <!-- Modal Konfirmasi Hapus -->
-  <div class="modal-overlay" id="deleteModal" aria-hidden="true">
-    <div class="modal modal-sm" role="dialog" aria-labelledby="deleteTitle">
-      <div class="modal-header">
-        <h3 id="deleteTitle">Konfirmasi Hapus</h3>
-        <button class="modal-close" id="closeDeleteModalBtn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p id="deleteMessage">Apakah Anda yakin ingin menghapus aplikasi ini dari Launcher?</p>
-        <small class="text-muted">Aplikasi hanya dihapus dari registry. File asli Anda tidak akan terhapus.</small>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" id="cancelDeleteBtn">Batal</button>
-        <button class="btn btn-danger" id="confirmDeleteBtn">Hapus Tool</button>
-      </div>
-    </div>
-  </div>
+<div class="modal-bg" id="cloudBg"><div class="modal" style="width:min(620px,100%)">
+<h3>☁ Cloud Registry</h3>
+<div class="modal-note">Google Apps Script menjadi registry pusat. Launcher tetap menyimpan cache lokal agar tetap bisa dibuka saat offline.</div>
+<div class="field full"><label>Web App URL Google Apps Script</label><input id="registryUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
+<div class="cloud-status" id="cloudStatus"></div>
+<div class="modal-actions"><button class="btn" id="closeCloud">Tutup</button><button class="btn" id="testCloud">Test Koneksi</button><button class="btn primary" id="syncCloud">☁ Sync Sekarang</button></div>
+</div></div>
+<datalist id="catList"></datalist>
+<div class="context" id="context"></div>
 
-  <!-- Modal Settings V2 -->
-  <div class="modal-overlay" id="settingsModal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-labelledby="settingsTitle">
-      <div class="modal-header">
-        <h3 id="settingsTitle">Pengaturan Launcher V2</h3>
-        <button class="modal-close" id="closeSettingsModalBtn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="settingApiUrl">Google Apps Script Web App URL</label>
-          <input type="url" id="settingApiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
-          <small class="form-help">URL Web App hasil deployment Google Apps Script.</small>
-        </div>
-        <div class="form-group">
-          <label for="settingDeviceName">Nama Perangkat Ini</label>
-          <input type="text" id="settingDeviceName" placeholder="Contoh: PC Utama, Laptop Kerja, Tablet..." />
-          <small class="form-help">Digunakan untuk melacak jejak perubahan (updatedBy).</small>
-        </div>
-        <div class="settings-info-box">
-          <div><strong>Device ID:</strong> <span id="infoDeviceId" class="code-span">-</span></div>
-          <div><strong>Status Sync:</strong> <span id="infoSyncStatus">-</span></div>
-          <div><strong>Last Sync:</strong> <span id="infoLastSync">-</span></div>
-          <div><strong>Pending Changes:</strong> <span id="infoPendingCount">0 items</span></div>
-        </div>
-      </div>
-      <div class="modal-actions-spaced">
-        <button class="btn btn-danger-soft" id="resetCacheBtn">Reset Local Cache</button>
-        <div class="right-actions">
-          <button class="btn btn-secondary" id="testConnBtn">Test Connection</button>
-          <button class="btn btn-primary" id="saveSettingsBtn">Simpan & Sync</button>
-        </div>
-      </div>
-    </div>
-  </div>
+<script>
+const KEY='mytools_launcher_v3';
+const icons={
+ gas:'⛽', chart:'📊', file:'📄', calc:'🧮', bank:'🏦', box:'📦', print:'🖨️', tools:'🛠️', folder:'📁', link:'🔗', globe:'🌐', code:'💻', image:'🖼️', settings:'⚙️', star:'⭐', note:'📝'
+};
+const svgPaths={
+ gas:'<path d="M7 20V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v15M5 20h14M10 7h4M17 7l2 2v8a2 2 0 0 0 2 2"/><path d="M7 11h10"/>',
+ chart:'<path d="M5 19V9M12 19V5M19 19v-8"/><path d="M3 19h18"/>',
+ file:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+ calc:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M9 12h2m2 0h2M9 16h2m2 0h2"/>',
+ bank:'<path d="M3 10h18M5 10v8m4-8v8m6-8v8m4-8v8M3 21h18L12 3z"/>',
+ box:'<path d="m4 7 8-4 8 4-8 4zM4 7v10l8 4 8-4V7M12 11v10"/>',
+ print:'<path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/>',
+ tools:'<path d="m14 6 4-4 2 2-4 4M13 7 4 16a2 2 0 1 0 3 3l9-9M5 5l4 4"/>',
+ folder:'<path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ link:'<path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/>',
+ globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+ code:'<path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>',
+ image:'<rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="m4 16 5-5 4 4 2-2 5 5"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.2-2-3.5-2.2 1a7 7 0 0 0-1.7-1L15 4h-4l-.3 2.3a7 7 0 0 0-1.7 1l-2.2-1-2 3.5L6.9 11a7 7 0 0 0 0 2l-2.1 1.2 2 3.5 2.2-1a7 7 0 0 0 1.7 1L11 20h4l.3-2.3a7 7 0 0 0 1.7-1l2.2 1 2-3.5-2.2-1.2c.1-.3.1-.7.1-1z"/>',
+ star:'<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/>',
+ note:'<path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4"/>'
+};
 
-  <script src="app.js"></script>
+const emojiGallery=[{"id":"e0_0","type":"emoji","key":"💼","name":"💼","cat":"Bisnis"},{"id":"e1_1","type":"emoji","key":"📈","name":"📈","cat":"Bisnis"},{"id":"e2_2","type":"emoji","key":"📉","name":"📉","cat":"Bisnis"},{"id":"e3_3","type":"emoji","key":"💰","name":"💰","cat":"Bisnis"},{"id":"e4_4","type":"emoji","key":"💳","name":"💳","cat":"Bisnis"},{"id":"e5_5","type":"emoji","key":"💵","name":"💵","cat":"Bisnis"},{"id":"e6_6","type":"emoji","key":"🧾","name":"🧾","cat":"Bisnis"},{"id":"e7_7","type":"emoji","key":"🧮","name":"🧮","cat":"Bisnis"},{"id":"e8_8","type":"emoji","key":"🏦","name":"🏦","cat":"Bisnis"},{"id":"e9_9","type":"emoji","key":"🏢","name":"🏢","cat":"Bisnis"},{"id":"e10_10","type":"emoji","key":"🏪","name":"🏪","cat":"Bisnis"},{"id":"e11_11","type":"emoji","key":"🏭","name":"🏭","cat":"Bisnis"},{"id":"e12_12","type":"emoji","key":"🤝","name":"🤝","cat":"Bisnis"},{"id":"e13_13","type":"emoji","key":"📋","name":"📋","cat":"Bisnis"},{"id":"e14_14","type":"emoji","key":"📌","name":"📌","cat":"Bisnis"},{"id":"e15_15","type":"emoji","key":"📎","name":"📎","cat":"Bisnis"},{"id":"e16_16","type":"emoji","key":"🗂️","name":"🗂️","cat":"Bisnis"},{"id":"e17_17","type":"emoji","key":"📊","name":"📊","cat":"Bisnis"},{"id":"e0_18","type":"emoji","key":"📄","name":"📄","cat":"Dokumen"},{"id":"e1_19","type":"emoji","key":"📃","name":"📃","cat":"Dokumen"},{"id":"e2_20","type":"emoji","key":"📑","name":"📑","cat":"Dokumen"},{"id":"e3_21","type":"emoji","key":"📜","name":"📜","cat":"Dokumen"},{"id":"e4_22","type":"emoji","key":"📝","name":"📝","cat":"Dokumen"},{"id":"e5_23","type":"emoji","key":"✏️","name":"✏️","cat":"Dokumen"},{"id":"e6_24","type":"emoji","key":"🖊️","name":"🖊️","cat":"Dokumen"},{"id":"e7_25","type":"emoji","key":"📚","name":"📚","cat":"Dokumen"},{"id":"e8_26","type":"emoji","key":"📖","name":"📖","cat":"Dokumen"},{"id":"e9_27","type":"emoji","key":"🗒️","name":"🗒️","cat":"Dokumen"},{"id":"e10_28","type":"emoji","key":"🗃️","name":"🗃️","cat":"Dokumen"},{"id":"e11_29","type":"emoji","key":"📁","name":"📁","cat":"Dokumen"},{"id":"e12_30","type":"emoji","key":"📂","name":"📂","cat":"Dokumen"},{"id":"e13_31","type":"emoji","key":"🗄️","name":"🗄️","cat":"Dokumen"},{"id":"e14_32","type":"emoji","key":"🔖","name":"🔖","cat":"Dokumen"},{"id":"e15_33","type":"emoji","key":"📐","name":"📐","cat":"Dokumen"},{"id":"e0_34","type":"emoji","key":"💻","name":"💻","cat":"Teknologi"},{"id":"e1_35","type":"emoji","key":"🖥️","name":"🖥️","cat":"Teknologi"},{"id":"e2_36","type":"emoji","key":"⌨️","name":"⌨️","cat":"Teknologi"},{"id":"e3_37","type":"emoji","key":"🖱️","name":"🖱️","cat":"Teknologi"},{"id":"e4_38","type":"emoji","key":"📱","name":"📱","cat":"Teknologi"},{"id":"e5_39","type":"emoji","key":"📲","name":"📲","cat":"Teknologi"},{"id":"e6_40","type":"emoji","key":"⚙️","name":"⚙️","cat":"Teknologi"},{"id":"e7_41","type":"emoji","key":"🔧","name":"🔧","cat":"Teknologi"},{"id":"e8_42","type":"emoji","key":"🛠️","name":"🛠️","cat":"Teknologi"},{"id":"e9_43","type":"emoji","key":"🔌","name":"🔌","cat":"Teknologi"},{"id":"e10_44","type":"emoji","key":"💾","name":"💾","cat":"Teknologi"},{"id":"e11_45","type":"emoji","key":"💿","name":"💿","cat":"Teknologi"},{"id":"e12_46","type":"emoji","key":"🖨️","name":"🖨️","cat":"Teknologi"},{"id":"e13_47","type":"emoji","key":"📡","name":"📡","cat":"Teknologi"},{"id":"e14_48","type":"emoji","key":"🌐","name":"🌐","cat":"Teknologi"},{"id":"e15_49","type":"emoji","key":"🔗","name":"🔗","cat":"Teknologi"},{"id":"e16_50","type":"emoji","key":"🧩","name":"🧩","cat":"Teknologi"},{"id":"e17_51","type":"emoji","key":"🧑‍💻","name":"🧑‍💻","cat":"Teknologi"},{"id":"e0_52","type":"emoji","key":"📊","name":"📊","cat":"Data"},{"id":"e1_53","type":"emoji","key":"📈","name":"📈","cat":"Data"},{"id":"e2_54","type":"emoji","key":"📉","name":"📉","cat":"Data"},{"id":"e3_55","type":"emoji","key":"🔢","name":"🔢","cat":"Data"},{"id":"e4_56","type":"emoji","key":"🔍","name":"🔍","cat":"Data"},{"id":"e5_57","type":"emoji","key":"🔎","name":"🔎","cat":"Data"},{"id":"e6_58","type":"emoji","key":"🗃️","name":"🗃️","cat":"Data"},{"id":"e7_59","type":"emoji","key":"🗄️","name":"🗄️","cat":"Data"},{"id":"e8_60","type":"emoji","key":"📦","name":"📦","cat":"Data"},{"id":"e9_61","type":"emoji","key":"🧮","name":"🧮","cat":"Data"},{"id":"e10_62","type":"emoji","key":"🧠","name":"🧠","cat":"Data"},{"id":"e11_63","type":"emoji","key":"🎯","name":"🎯","cat":"Data"},{"id":"e12_64","type":"emoji","key":"📌","name":"📌","cat":"Data"},{"id":"e13_65","type":"emoji","key":"🧾","name":"🧾","cat":"Data"},{"id":"e14_66","type":"emoji","key":"🧷","name":"🧷","cat":"Data"},{"id":"e15_67","type":"emoji","key":"📐","name":"📐","cat":"Data"},{"id":"e0_68","type":"emoji","key":"⛽","name":"⛽","cat":"SPBU & Logistik"},{"id":"e1_69","type":"emoji","key":"🚗","name":"🚗","cat":"SPBU & Logistik"},{"id":"e2_70","type":"emoji","key":"🚕","name":"🚕","cat":"SPBU & Logistik"},{"id":"e3_71","type":"emoji","key":"🚚","name":"🚚","cat":"SPBU & Logistik"},{"id":"e4_72","type":"emoji","key":"🚛","name":"🚛","cat":"SPBU & Logistik"},{"id":"e5_73","type":"emoji","key":"🏪","name":"🏪","cat":"SPBU & Logistik"},{"id":"e6_74","type":"emoji","key":"🛢️","name":"🛢️","cat":"SPBU & Logistik"},{"id":"e7_75","type":"emoji","key":"📦","name":"📦","cat":"SPBU & Logistik"},{"id":"e8_76","type":"emoji","key":"🚢","name":"🚢","cat":"SPBU & Logistik"},{"id":"e9_77","type":"emoji","key":"✈️","name":"✈️","cat":"SPBU & Logistik"},{"id":"e10_78","type":"emoji","key":"🛵","name":"🛵","cat":"SPBU & Logistik"},{"id":"e11_79","type":"emoji","key":"🚲","name":"🚲","cat":"SPBU & Logistik"},{"id":"e12_80","type":"emoji","key":"🗺️","name":"🗺️","cat":"SPBU & Logistik"},{"id":"e13_81","type":"emoji","key":"📍","name":"📍","cat":"SPBU & Logistik"},{"id":"e14_82","type":"emoji","key":"🧭","name":"🧭","cat":"SPBU & Logistik"},{"id":"e15_83","type":"emoji","key":"🔋","name":"🔋","cat":"SPBU & Logistik"},{"id":"e0_84","type":"emoji","key":"✉️","name":"✉️","cat":"Komunikasi"},{"id":"e1_85","type":"emoji","key":"📧","name":"📧","cat":"Komunikasi"},{"id":"e2_86","type":"emoji","key":"📨","name":"📨","cat":"Komunikasi"},{"id":"e3_87","type":"emoji","key":"📩","name":"📩","cat":"Komunikasi"},{"id":"e4_88","type":"emoji","key":"📤","name":"📤","cat":"Komunikasi"},{"id":"e5_89","type":"emoji","key":"📥","name":"📥","cat":"Komunikasi"},{"id":"e6_90","type":"emoji","key":"💬","name":"💬","cat":"Komunikasi"},{"id":"e7_91","type":"emoji","key":"🗨️","name":"🗨️","cat":"Komunikasi"},{"id":"e8_92","type":"emoji","key":"📞","name":"📞","cat":"Komunikasi"},{"id":"e9_93","type":"emoji","key":"☎️","name":"☎️","cat":"Komunikasi"},{"id":"e10_94","type":"emoji","key":"📲","name":"📲","cat":"Komunikasi"},{"id":"e11_95","type":"emoji","key":"📢","name":"📢","cat":"Komunikasi"},{"id":"e12_96","type":"emoji","key":"📣","name":"📣","cat":"Komunikasi"},{"id":"e13_97","type":"emoji","key":"🔔","name":"🔔","cat":"Komunikasi"},{"id":"e14_98","type":"emoji","key":"🔕","name":"🔕","cat":"Komunikasi"},{"id":"e15_99","type":"emoji","key":"💡","name":"💡","cat":"Komunikasi"},{"id":"e0_100","type":"emoji","key":"🎨","name":"🎨","cat":"Media"},{"id":"e1_101","type":"emoji","key":"🖼️","name":"🖼️","cat":"Media"},{"id":"e2_102","type":"emoji","key":"📷","name":"📷","cat":"Media"},{"id":"e3_103","type":"emoji","key":"📹","name":"📹","cat":"Media"},{"id":"e4_104","type":"emoji","key":"🎬","name":"🎬","cat":"Media"},{"id":"e5_105","type":"emoji","key":"🎵","name":"🎵","cat":"Media"},{"id":"e6_106","type":"emoji","key":"🎧","name":"🎧","cat":"Media"},{"id":"e7_107","type":"emoji","key":"🎤","name":"🎤","cat":"Media"},{"id":"e8_108","type":"emoji","key":"🎙️","name":"🎙️","cat":"Media"},{"id":"e9_109","type":"emoji","key":"📻","name":"📻","cat":"Media"},{"id":"e10_110","type":"emoji","key":"🎮","name":"🎮","cat":"Media"},{"id":"e11_111","type":"emoji","key":"🕹️","name":"🕹️","cat":"Media"},{"id":"e12_112","type":"emoji","key":"▶️","name":"▶️","cat":"Media"},{"id":"e13_113","type":"emoji","key":"⏯️","name":"⏯️","cat":"Media"},{"id":"e14_114","type":"emoji","key":"🎞️","name":"🎞️","cat":"Media"},{"id":"e15_115","type":"emoji","key":"🎭","name":"🎭","cat":"Media"},{"id":"e0_116","type":"emoji","key":"🛠️","name":"🛠️","cat":"Utilitas"},{"id":"e1_117","type":"emoji","key":"🔧","name":"🔧","cat":"Utilitas"},{"id":"e2_118","type":"emoji","key":"🔨","name":"🔨","cat":"Utilitas"},{"id":"e3_119","type":"emoji","key":"🔩","name":"🔩","cat":"Utilitas"},{"id":"e4_120","type":"emoji","key":"✂️","name":"✂️","cat":"Utilitas"},{"id":"e5_121","type":"emoji","key":"🧰","name":"🧰","cat":"Utilitas"},{"id":"e6_122","type":"emoji","key":"🧹","name":"🧹","cat":"Utilitas"},{"id":"e7_123","type":"emoji","key":"🧪","name":"🧪","cat":"Utilitas"},{"id":"e8_124","type":"emoji","key":"🧯","name":"🧯","cat":"Utilitas"},{"id":"e9_125","type":"emoji","key":"🔒","name":"🔒","cat":"Utilitas"},{"id":"e10_126","type":"emoji","key":"🔓","name":"🔓","cat":"Utilitas"},{"id":"e11_127","type":"emoji","key":"🔑","name":"🔑","cat":"Utilitas"},{"id":"e12_128","type":"emoji","key":"🛡️","name":"🛡️","cat":"Utilitas"},{"id":"e13_129","type":"emoji","key":"⚡","name":"⚡","cat":"Utilitas"},{"id":"e14_130","type":"emoji","key":"🔥","name":"🔥","cat":"Utilitas"},{"id":"e15_131","type":"emoji","key":"💧","name":"💧","cat":"Utilitas"},{"id":"e16_132","type":"emoji","key":"☁️","name":"☁️","cat":"Utilitas"},{"id":"e17_133","type":"emoji","key":"🌙","name":"🌙","cat":"Utilitas"},{"id":"e0_134","type":"emoji","key":"⭐","name":"⭐","cat":"Favorit & Umum"},{"id":"e1_135","type":"emoji","key":"❤️","name":"❤️","cat":"Favorit & Umum"},{"id":"e2_136","type":"emoji","key":"🔥","name":"🔥","cat":"Favorit & Umum"},{"id":"e3_137","type":"emoji","key":"🚀","name":"🚀","cat":"Favorit & Umum"},{"id":"e4_138","type":"emoji","key":"🏠","name":"🏠","cat":"Favorit & Umum"},{"id":"e5_139","type":"emoji","key":"📅","name":"📅","cat":"Favorit & Umum"},{"id":"e6_140","type":"emoji","key":"⏰","name":"⏰","cat":"Favorit & Umum"},{"id":"e7_141","type":"emoji","key":"✅","name":"✅","cat":"Favorit & Umum"},{"id":"e8_142","type":"emoji","key":"❌","name":"❌","cat":"Favorit & Umum"},{"id":"e9_143","type":"emoji","key":"⚠️","name":"⚠️","cat":"Favorit & Umum"},{"id":"e10_144","type":"emoji","key":"❗","name":"❗","cat":"Favorit & Umum"},{"id":"e11_145","type":"emoji","key":"❓","name":"❓","cat":"Favorit & Umum"},{"id":"e12_146","type":"emoji","key":"💡","name":"💡","cat":"Favorit & Umum"},{"id":"e13_147","type":"emoji","key":"🎯","name":"🎯","cat":"Favorit & Umum"},{"id":"e14_148","type":"emoji","key":"🏆","name":"🏆","cat":"Favorit & Umum"},{"id":"e15_149","type":"emoji","key":"🔴","name":"🔴","cat":"Favorit & Umum"},{"id":"e16_150","type":"emoji","key":"🟢","name":"🟢","cat":"Favorit & Umum"},{"id":"e17_151","type":"emoji","key":"🟡","name":"🟡","cat":"Favorit & Umum"}];
+let state=JSON.parse(localStorage.getItem(KEY)||'null');
+if(!state){
+ state={theme:'light',page:0,selectedCat:'Semua',pack:'material',items:[],folders:[]};
+ const samples=[
+  ['SPBU Daily','gas','SPBU','Input dan pengolahan data harian'],
+  ['Excel Tools','chart','Excel','Pengolahan data Excel'],
+  ['PDF Tools','file','PDF','Pengolahan dokumen PDF'],
+  ['Finance','calc','Finance','Perhitungan keuangan'],
+  ['Bank Tools','bank','Bank','Tool perbankan'],
+  ['Inventory','box','Inventory','Pengelolaan inventory'],
+  ['Print Tools','print','Utilitas','Tool cetak'],
+  ['Utilities','tools','Utilitas','Tool umum']
+ ];
+ samples.forEach(a=>state.items.push({id:crypto.randomUUID(),name:a[0],iconKey:a[1],customIcon:'',cat:a[2],desc:a[3],url:'',path:'',version:'1.0.0',favorite:false,customColor:'',emojiIcon:''}));
+ save();
+}
+
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(state));
+ try{localStorage.setItem(KEY+'_dirtyAt',new Date().toISOString())}catch(e){}
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function allCats(){return ['Semua',...new Set(state.items.map(x=>x.cat).filter(Boolean))]}
+function visibleItems(){const q=document.getElementById('search').value.toLowerCase().trim();return state.items.filter(x=>!x.categoryOnly&&(state.selectedCat==='Semua'||x.cat===state.selectedCat)&&(!q||`${x.name} ${x.desc||''} ${x.cat}`.toLowerCase().includes(q)))}
+
+const vectorGallery=[{"id":"gas","type":"vector","key":"gas","name":"Fuel / SPBU","cat":"Vector"},{"id":"chart","type":"vector","key":"chart","name":"Chart","cat":"Vector"},{"id":"file","type":"vector","key":"file","name":"File","cat":"Vector"},{"id":"calc","type":"vector","key":"calc","name":"Calculator","cat":"Vector"},{"id":"bank","type":"vector","key":"bank","name":"Bank","cat":"Vector"},{"id":"box","type":"vector","key":"box","name":"Inventory","cat":"Vector"},{"id":"print","type":"vector","key":"print","name":"Printer","cat":"Vector"},{"id":"tools","type":"vector","key":"tools","name":"Tools","cat":"Vector"},{"id":"folder","type":"vector","key":"folder","name":"Folder","cat":"Vector"},{"id":"link","type":"vector","key":"link","name":"Link","cat":"Vector"},{"id":"globe","type":"vector","key":"globe","name":"Web","cat":"Vector"},{"id":"code","type":"vector","key":"code","name":"Code","cat":"Vector"},{"id":"image","type":"vector","key":"image","name":"Image","cat":"Vector"},{"id":"settings","type":"vector","key":"settings","name":"Settings","cat":"Vector"},{"id":"star","type":"vector","key":"star","name":"Favorite","cat":"Vector"},{"id":"note","type":"vector","key":"note","name":"Note","cat":"Vector"}];
+function packList(){
+ return [
+  {id:'emoji',name:'Emoji',desc:'Warna asli',preview:'⛽'},
+  {id:'material',name:'Material',desc:'Clean modern',preview:'chart'},
+  {id:'mono',name:'Monochrome',desc:'Minimal hitam/putih',preview:'file'},
+  {id:'duotone',name:'Duotone',desc:'Dua warna lembut',preview:'bank'},
+  {id:'glass',name:'Glass',desc:'Soft glass',preview:'tools'},
+  {id:'neon',name:'Neon',desc:'Dark futuristic',preview:'code'},
+  {id:'fresh',name:'Fresh Color',desc:'Colorful & vibrant',preview:'chart'}
+ ];
+}
+function svgIcon(key,cls=''){
+ const d=svgPaths[key]||svgPaths.tools;
+ return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+}
+function iconMarkup(x,preview=false){
+ if(x.customIcon)return `<img src="${x.customIcon}" alt="" style="width:72%;height:72%;object-fit:contain">`;
+ if(x.emojiIcon)return esc(x.emojiIcon);
+ if(x.emojiIcon)return esc(x.emojiIcon);
+ if(state.pack==='emoji')return esc(icons[x.iconKey]||icons.tools);
+ return svgIcon(x.iconKey);
+}
+
+const freshColors={
+ gas:['#ff7a18','#ffb000'],chart:['#00b894','#55efc4'],file:['#6c5ce7','#a29bfe'],
+ calc:['#0984e3','#74b9ff'],bank:['#e84393','#fd79a8'],box:['#e17055','#fab1a0'],
+ print:['#00a8ff','#74b9ff'],tools:['#8e44ad','#c56cf0'],folder:['#f39c12','#feca57'],
+ link:['#16a085','#1dd1a1'],globe:['#0097e6','#48dbfb'],code:['#2d3436','#636e72'],
+ image:['#e84393','#ff9ff3'],settings:['#576574','#8395a7'],star:['#f1c40f','#feca57'],note:['#ff4757','#ff6b81']
+};
+function hexToRgba(hex,a){const h=hex.replace('#','');const n=parseInt(h,16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`}
+function freshStyle(x){
+ const c=freshColors[x.iconKey]||['#4f46e5','#8b7cff'];
+ const custom=x.customColor||'';
+ if(custom)return `background:linear-gradient(135deg,${custom},${hexToRgba(custom,.62)});`;
+ return `background:linear-gradient(135deg,${c[0]},${c[1]});`;
+}
+function iconStyle(){
+ if(state.pack==='material')return 'background:linear-gradient(145deg,#ffffff,#e9ecf4);color:#4f46e5';
+ if(state.pack==='mono')return 'background:#1b1e26;color:#fff';
+ if(state.pack==='duotone')return 'background:linear-gradient(145deg,#e4e7ff,#d8f3ef);color:#3346b8';
+ if(state.pack==='glass')return 'background:linear-gradient(145deg,#ffffffaa,#dfe5ff88);color:#4f46e5;backdrop-filter:blur(12px)';
+ if(state.pack==='neon')return 'background:#171b25;color:#7c83ff;box-shadow:0 0 0 1px #4f46e555,0 0 24px #4f46e533';
+ return 'background:linear-gradient(145deg,#fff,#edf0f7)';
+}
+function renderCats(){
+ const cats=allCats();
+ document.getElementById('categories').innerHTML=cats.map(c=>`<button class="chip ${c===state.selectedCat?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+ document.getElementById('catList').innerHTML=cats.filter(c=>c!=='Semua').map(c=>`<option value="${esc(c)}">`).join('');
+}
+function render(){
+ document.body.classList.toggle('dark',state.theme==='dark');
+ renderCats();
+ const arr=visibleItems(), pages=[];
+ for(let i=0;i<arr.length;i+=24)pages.push(arr.slice(i,i+24));
+ if(!pages.length)pages.push([]);
+ state.page=Math.max(0,Math.min(state.page,pages.length-1));
+ document.getElementById('pages').style.transform=`translateX(-${state.page*100}%)`;
+ document.getElementById('pages').innerHTML=pages.map((p,pi)=>`<div class="page" data-page="${pi}">${p.map(itemHTML).join('')}${!p.length?'<div class="empty">Tidak ada aplikasi yang cocok.</div>':''}</div>`).join('');
+ document.getElementById('dots').innerHTML=pages.map((_,i)=>`<span class="dot ${i===state.page?'active':''}" data-page="${i}"></span>`).join('');
+ document.getElementById('pageText').textContent=pages.length>1?`Halaman ${state.page+1} / ${pages.length}`:'';
+ save();
+}
+function itemHTML(x){
+ return `<div class="app-item" draggable="true" data-id="${x.id}" title="${esc(x.desc||x.name)}">
+ <div class="app-icon ${state.pack==='fresh'?'fresh-icon':''}" style="${state.pack==='fresh'?freshStyle(x):iconStyle()}">${iconMarkup(x)}</div>
+ <div class="app-name">${esc(x.name)}</div><div class="app-cat">${esc(x.cat||'')}</div></div>`;
+}
+function openApp(x){
+ if(x.url)window.open(x.url,'_blank');
+ else if(x.path)alert('Path tersimpan sebagai metadata:\\n'+x.path+'\\n\\nBrowser membatasi pembukaan file lokal secara otomatis.');
+ else alert(x.name+'\\n\\nBelum ada URL aplikasi. Gunakan Edit untuk menambahkannya.');
+}
+function fillIconSelect(selected){
+ const el=document.getElementById('iconKey');
+ el.innerHTML=Object.keys(icons).map(k=>`<option value="${k}">${icons[k]}  ${k}</option>`).join('');
+ el.value=selected||'tools';
+}
+function openModal(x=null){
+ document.getElementById('modalTitle').textContent=x?'Edit Tool':'Tambah Tool Baru';
+ document.getElementById('editId').value=x?.id||'';
+ document.getElementById('name').value=x?.name||'';
+ document.getElementById('cat').value=x?.cat||'';
+ document.getElementById('desc').value=x?.desc||'';
+ document.getElementById('version').value=x?.version||'';
+ document.getElementById('url').value=x?.url||'';
+ document.getElementById('path').value=x?.path||'';
+ fillIconSelect(x?.iconKey||'tools');
+ document.getElementById('iconColor').value=x?.customColor||'#4f46e5';
+ document.getElementById('iconColorText').textContent=(x?.customColor||'#4f46e5').toUpperCase();
+ document.getElementById('uploadPreview').innerHTML=x?.customIcon?`<img src="${x.customIcon}">`:x?.emojiIcon?`<div style="font-size:30px">${esc(x.emojiIcon)}</div>`:'🖼️';
+ document.getElementById('iconKey').dataset.emoji=x?.emojiIcon||'';
+ document.getElementById('iconFile').value='';
+ document.getElementById('appBg').classList.add('show');
+ document.getElementById('name').focus();
+}
+function closeModal(){document.getElementById('appBg').classList.remove('show')}
+function openPacks(){
+ document.getElementById('packGrid').innerHTML=packList().map(p=>`
+ <button class="pack-card ${p.id===state.pack?'active':''}" data-pack="${p.id}">
+   <div class="pack-preview" style="${p.id==='fresh'?'background:linear-gradient(135deg,#ff7a18,#6c5ce7);color:#fff':p.id==='material'?iconStyle():p.id==='mono'?'background:#1b1e26;color:#fff':p.id==='neon'?'background:#171b25;color:#7c83ff':p.id==='glass'?'background:#e8edff;color:#4f46e5':p.id==='duotone'?'background:#e4e7ff;color:#3346b8':'background:#eef0f5'}">
+   ${p.id==='emoji'?p.preview:svgIcon(p.preview)}</div><strong>${p.name}</strong><small>${p.desc}</small>
+ </button>`).join('');
+ document.getElementById('packBg').classList.add('show');
+}
+function renderCatManager(){
+ const cats=[...new Set(state.items.map(x=>x.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ document.getElementById('catManager').innerHTML=cats.length?cats.map(c=>`
+ <div class="cat-row"><input value="${esc(c)}" data-old="${esc(c)}"><button data-rename="${esc(c)}">Simpan</button><button class="danger" data-delete-cat="${esc(c)}">Hapus</button></div>`).join(''):'<div style="color:var(--muted);font-size:12px;padding:12px 0">Belum ada kategori.</div>';
+}
+function openCats(){renderCatManager();document.getElementById('catBg').classList.add('show')}
+function addCategory(){
+ const n=(prompt('Nama kategori baru:')||'').trim();
+ if(!n)return;
+ if(allCats().some(c=>c.toLowerCase()===n.toLowerCase()))return alert('Kategori tersebut sudah ada.');
+ state.items.push({id:crypto.randomUUID(),name:'',iconKey:'tools',customIcon:'',cat:n,desc:'',url:'',path:'',version:'',favorite:false,categoryOnly:true});
+ save();render();openCats();
+}
+function deleteCategory(cat){
+ const affected=state.items.filter(x=>!x.categoryOnly&&x.cat===cat);
+ if(affected.length&&!confirm(`Kategori "${cat}" dipakai oleh ${affected.length} aplikasi. Pindahkan aplikasi tersebut ke "Tanpa Kategori"?`))return;
+ state.items.forEach(x=>{if(x.cat===cat&&!x.categoryOnly)x.cat='Tanpa Kategori'});
+ state.items=state.items.filter(x=>!(x.categoryOnly&&x.cat===cat));
+ if(affected.length&&!state.items.some(x=>x.cat==='Tanpa Kategori'))state.items.push({id:crypto.randomUUID(),name:'',iconKey:'tools',customIcon:'',cat:'Tanpa Kategori',categoryOnly:true});
+ if(state.selectedCat===cat)state.selectedCat='Semua';
+ save();render();renderCatManager();
+}
+
+let galleryCat='Semua';
+function galleryItems(){
+ const q=(document.getElementById('gallerySearch').value||'').toLowerCase().trim();
+ const type=document.getElementById('galleryType').value;
+ let items=[...vectorGallery,...emojiGallery];
+ if(type!=='all')items=items.filter(x=>x.type===type);
+ if(galleryCat!=='Semua')items=items.filter(x=>x.cat===galleryCat);
+ if(q)items=items.filter(x=>`${x.name} ${x.key} ${x.cat}`.toLowerCase().includes(q));
+ return items;
+}
+function renderGallery(){
+ const allCats=['Semua','Vector',...Object.keys(emojiLibrary)];
+ document.getElementById('galleryTabs').innerHTML=allCats.map(c=>`<button class="gallery-tab ${c===galleryCat?'active':''}" data-gcat="${esc(c)}">${esc(c)}</button>`).join('');
+ const items=galleryItems();
+ document.getElementById('galleryGrid').innerHTML=items.length?items.map(x=>{
+   const visual=x.type==='vector'?svgIcon(x.key):esc(x.key);
+   const style=x.type==='vector'?`background:${state.pack==='neon'?'#171b25':'#eef1ff'};color:${state.pack==='neon'?'#8b83ff':'#4f46e5'}`:'background:var(--surface2)';
+   return `<button class="gallery-item" data-gid="${x.id}" data-gtype="${x.type}" data-gkey="${esc(x.key)}"><div class="gicon" style="${style}">${visual}</div><small>${esc(x.name)}</small></button>`;
+ }).join(''):'<div class="empty" style="padding:25px;grid-column:1/-1">Icon tidak ditemukan.</div>';
+ document.getElementById('galleryCount').textContent=`${items.length} pilihan • ${vectorGallery.length} vector + ${emojiGallery.length} emoji`;
+}
+function openGallery(){galleryCat='Semua';document.getElementById('gallerySearch').value='';document.getElementById('galleryType').value='all';renderGallery();document.getElementById('galleryBg').classList.add('show')}
+function closeGallery(){document.getElementById('galleryBg').classList.remove('show')}
+window.openGallery=openGallery; window.closeGallery=closeGallery;
+function contextMenu(x,px,py){
+ const c=document.getElementById('context');
+ c.innerHTML=`<button data-act="open">▶ Buka</button><button data-act="edit">✎ Edit</button><button data-act="fav">${x.favorite?'☆ Hapus Favorit':'★ Jadikan Favorit'}</button><button data-act="delete">🗑 Hapus</button>`;
+ c.style.left=Math.min(px,innerWidth-185)+'px';c.style.top=Math.min(py,innerHeight-180)+'px';c.classList.add('show');
+ c.onclick=e=>{const a=e.target.dataset.act;if(!a)return;c.classList.remove('show');if(a==='open')openApp(x);if(a==='edit')openModal(x);if(a==='fav'){x.favorite=!x.favorite;save();render()}if(a==='delete'&&confirm(`Hapus "${x.name}" dari launcher?`)){state.items=state.items.filter(i=>i.id!==x.id);save();render()}};
+}
+
+
+document.getElementById('galleryBtn').onclick=openGallery;
+document.getElementById('closeGallery').onclick=closeGallery;
+document.getElementById('galleryBg').onclick=e=>{if(e.target.id==='galleryBg')closeGallery()};
+document.getElementById('gallerySearch').oninput=renderGallery;
+document.getElementById('galleryType').onchange=renderGallery;
+document.getElementById('galleryTabs').onclick=e=>{const c=e.target.dataset.gcat;if(c){galleryCat=c;renderGallery()}};
+document.getElementById('galleryGrid').onclick=e=>{
+ const el=e.target.closest('[data-gid]');if(!el)return;
+ const x=[...vectorGallery,...emojiGallery].find(i=>i.id===el.dataset.gid);if(!x)return;
+ document.getElementById('iconKey').value=x.type==='vector'?x.key:'tools';
+ document.getElementById('uploadPreview').innerHTML=x.type==='emoji'?`<div style="font-size:30px">${esc(x.key)}</div>`:'🖼️';
+ document.getElementById('iconFile').value='';
+ // Store emoji selection separately without changing the existing iconKey schema.
+ document.getElementById('iconKey').dataset.emoji=x.type==='emoji'?x.key:'';
+ closeGallery();
+};
+document.getElementById('galleryUpload').onclick=()=>document.getElementById('galleryFile').click();
+document.getElementById('galleryFile').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ if(f.size>800000){alert('Icon terlalu besar. Maksimal 800 KB.');e.target.value='';return}
+ const r=new FileReader();r.onload=()=>{document.getElementById('iconKey').dataset.emoji='';document.getElementById('uploadPreview').innerHTML=`<img src="${r.result}" style="width:100%;height:100%;object-fit:contain">`;closeGallery()};r.readAsDataURL(f);
+};
+document.getElementById('addBtn').onclick=()=>openModal();
+document.getElementById('cancel').onclick=closeModal;
+document.getElementById('appBg').onclick=e=>{if(e.target.id==='appBg')closeModal()};
+document.getElementById('packsBtn').onclick=openPacks;
+document.getElementById('closePack').onclick=()=>document.getElementById('packBg').classList.remove('show');
+document.getElementById('packBg').onclick=e=>{if(e.target.id==='packBg')document.getElementById('packBg').classList.remove('show')};
+document.getElementById('packGrid').onclick=e=>{const id=e.target.closest('[data-pack]')?.dataset.pack;if(id){state.pack=id;save();render();openPacks()}};
+document.getElementById('catsBtn').onclick=openCats;
+document.getElementById('closeCat').onclick=()=>document.getElementById('catBg').classList.remove('show');
+document.getElementById('catBg').onclick=e=>{if(e.target.id==='catBg')document.getElementById('catBg').classList.remove('show')};
+document.getElementById('addCat').onclick=addCategory;
+document.getElementById('catManager').onclick=e=>{
+ const del=e.target.dataset.deleteCat, ren=e.target.dataset.rename;
+ if(del){deleteCategory(del);return}
+ if(ren){
+  const row=e.target.closest('.cat-row'),old=ren,n=row.querySelector('input').value.trim();
+  if(!n)return alert('Nama kategori tidak boleh kosong.');
+  if(n!==old&&allCats().some(c=>c!==old&&c.toLowerCase()===n.toLowerCase()))return alert('Kategori tersebut sudah ada.');
+  state.items.forEach(x=>{if(x.cat===old)x.cat=n});if(state.selectedCat===old)state.selectedCat=n;
+  save();render();renderCatManager();
+ }
+};
+document.getElementById('themeBtn').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';render()};
+document.getElementById('search').oninput=()=>{state.page=0;render()};
+document.getElementById('categories').onclick=e=>{const c=e.target.dataset.cat;if(c){state.selectedCat=c;state.page=0;render()}};
+document.getElementById('dots').onclick=e=>{if(e.target.dataset.page){state.page=+e.target.dataset.page;render()}};
+
+document.getElementById('iconColor').oninput=e=>document.getElementById('iconColorText').textContent=e.target.value.toUpperCase();
+document.getElementById('iconKey').onchange=()=>{document.getElementById('iconKey').dataset.emoji='';document.getElementById('uploadPreview').innerHTML='🖼️';document.getElementById('iconFile').value='';};
+document.getElementById('uploadBtn').onclick=()=>document.getElementById('iconFile').click();
+document.getElementById('iconFile').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ if(f.size>800000){alert('Icon terlalu besar. Gunakan file maksimal 800 KB.');e.target.value='';return}
+ const r=new FileReader();r.onload=()=>document.getElementById('uploadPreview').innerHTML=`<img src="${r.result}">`;r.readAsDataURL(f);
+};
+document.getElementById('form').onsubmit=e=>{
+ e.preventDefault();
+ const id=document.getElementById('editId').value;
+ const old=id?state.items.find(i=>i.id===id):null;
+ const preview=document.querySelector('#uploadPreview img');
+ const x={id:id||crypto.randomUUID(),name:document.getElementById('name').value.trim(),cat:document.getElementById('cat').value.trim(),desc:document.getElementById('desc').value.trim(),version:document.getElementById('version').value.trim(),url:document.getElementById('url').value.trim(),path:document.getElementById('path').value.trim(),iconKey:document.getElementById('iconKey').value,customIcon:preview?preview.src:(old?.customIcon||''),emojiIcon:preview?'':(document.getElementById('iconKey').dataset.emoji||old?.emojiIcon||''),customColor:document.getElementById('iconColor').value,favorite:old?.favorite||false};
+ if(!x.name)return;
+ if(id)state.items=state.items.map(i=>i.id===id?x:i);else state.items.push(x);
+ save();closeModal();render();
+};
+
+let dragId=null;
+document.getElementById('pages').addEventListener('click',e=>{const el=e.target.closest('.app-item');if(!el)return;const x=state.items.find(i=>i.id===el.dataset.id);if(x)openApp(x)});
+document.getElementById('pages').addEventListener('contextmenu',e=>{e.preventDefault();const el=e.target.closest('.app-item');if(el){const x=state.items.find(i=>i.id===el.dataset.id);if(x)contextMenu(x,e.clientX,e.clientY)}});
+document.getElementById('pages').addEventListener('dragstart',e=>{const el=e.target.closest('.app-item');if(!el)return;dragId=el.dataset.id;el.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
+document.getElementById('pages').addEventListener('dragend',e=>{e.target.closest('.app-item')?.classList.remove('dragging');document.querySelectorAll('.drop-target').forEach(x=>x.classList.remove('drop-target'));dragId=null});
+document.getElementById('pages').addEventListener('dragover',e=>{e.preventDefault();const el=e.target.closest('.app-item');if(el&&el.dataset.id!==dragId)el.classList.add('drop-target')});
+document.getElementById('pages').addEventListener('dragleave',e=>{e.target.closest('.app-item')?.classList.remove('drop-target')});
+document.getElementById('pages').addEventListener('drop',e=>{
+ e.preventDefault();const target=e.target.closest('.app-item');if(!target||!dragId||target.dataset.id===dragId)return;
+ const a=state.items.find(i=>i.id===dragId),b=state.items.find(i=>i.id===target.dataset.id);if(!a||!b)return;
+ if(confirm(`Gabungkan "${a.name}" ke dalam folder "${b.name}"?`)){
+  let f=state.folders.find(f=>f.name===b.name);if(!f){f={id:crypto.randomUUID(),name:b.name,items:[b.id]};state.folders.push(f)}if(!f.items.includes(a.id))f.items.push(a.id);
+  state.items=state.items.filter(i=>i.id!==a.id);save();render();
+ }
+});
+
+let sx=0;
+document.getElementById('launcher').addEventListener('pointerdown',e=>sx=e.clientX);
+document.getElementById('launcher').addEventListener('pointerup',e=>{const dx=e.clientX-sx;if(Math.abs(dx)>60){const n=document.querySelectorAll('.page').length;state.page=Math.max(0,Math.min(n-1,state.page+(dx<0?1:-1)));render()}});
+document.addEventListener('click',e=>{if(!e.target.closest('.context'))document.getElementById('context').classList.remove('show')});
+
+render();
+</script>
+
+<script>
+(function(){
+  function byId(id){return document.getElementById(id)}
+  function showGallery(){
+    const bg=byId('galleryBg');
+    if(!bg)return;
+    bg.classList.add('show');
+    const grid=byId('galleryGrid');
+    const count=byId('galleryCount');
+    if(grid && !grid.children.length){
+      const data=[
+        ['⛽','SPBU'],['📊','Chart'],['📄','File'],['🧮','Calculator'],['🏦','Bank'],['📦','Inventory'],['🖨️','Printer'],['🛠️','Tools'],
+        ['📁','Folder'],['🔗','Link'],['🌐','Web'],['💻','Code'],['🖼️','Image'],['⚙️','Settings'],['⭐','Favorite'],['📝','Note'],
+        ['💼','Business'],['💰','Money'],['💳','Payment'],['🧾','Receipt'],['📈','Growth'],['📉','Report'],['📋','Clipboard'],['📌','Pin'],
+        ['🚗','Car'],['🚚','Truck'],['🛢️','Tank'],['🗺️','Map'],['📍','Location'],['🔋','Battery'],['✉️','Mail'],['💬','Chat'],
+        ['📞','Phone'],['🔔','Alert'],['🎨','Design'],['📷','Camera'],['🎬','Video'],['🎵','Music'],['🎮','Game'],['🔒','Security'],
+        ['🔑','Key'],['⚡','Power'],['🔥','Hot'],['💧','Water'],['☁️','Cloud'],['📅','Calendar'],['⏰','Time'],['🚀','Launch'],
+        ['🏠','Home'],['✅','Done'],['⚠️','Warning'],['❗','Important'],['❓','Help'],['💡','Idea'],['🎯','Target'],['🏆','Success']
+      ];
+      grid.innerHTML=data.map((x,i)=>`<button type="button" class="gallery-item" data-boot-icon="${i}"><div class="gicon" style="background:var(--surface2)">${x[0]}</div><small>${x[1]}</small></button>`).join('');
+      if(count)count.textContent=data.length+' pilihan siap digunakan';
+      grid.onclick=function(e){
+        const item=e.target.closest('[data-boot-icon]');
+        if(!item)return;
+        const emoji=item.querySelector('.gicon')?.textContent||'';
+        const key=byId('iconKey');
+        if(key){key.dataset.emoji=emoji;key.value='tools';}
+        const preview=byId('uploadPreview');
+        if(preview)preview.innerHTML='<div style="font-size:30px">'+emoji+'</div>';
+        const bg2=byId('galleryBg');if(bg2)bg2.classList.remove('show');
+      };
+    }
+  }
+  window.openGallery=showGallery;
+  window.closeGallery=function(){const bg=byId('galleryBg');if(bg)bg.classList.remove('show')};
+  function bind(){
+    const b=byId('galleryBtn');
+    if(b){b.onclick=showGallery;b.setAttribute('type','button');}
+    const c=byId('closeGallery');if(c)c.onclick=window.closeGallery;
+    const bg=byId('galleryBg');if(bg)bg.addEventListener('click',function(e){if(e.target===bg)window.closeGallery()});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
+
+<script>
+/* =========================================================
+   MY TOOLS V4 — Google Apps Script Registry Sync
+   Local-first cache + change detection + shared layout sync
+   ========================================================= */
+(function(){
+  const REGKEY='mytools_registry_url_v4';
+  const SNAPKEY='mytools_registry_snapshot_v4';
+  const METAKEY='mytools_registry_meta_v4';
+  const LAYOUTKEY='mytools_registry_layout_snapshot_v4';
+
+  function el(id){return document.getElementById(id)}
+  function getUrl(){return (localStorage.getItem(REGKEY)||'').trim()}
+  function setUrl(v){localStorage.setItem(REGKEY,(v||'').trim())}
+  function nonCategoryItems(){return state.items.filter(x=>!x.categoryOnly)}
+  function cloudShape(x,index){
+    return {
+      id:x.id,name:x.name,description:x.desc||'',category:x.cat||'',
+      icon:x.iconKey||'tools',
+      iconType:x.customIcon?'custom':(x.emojiIcon?'emoji':'vector'),
+      emojiIcon:x.emojiIcon||'',
+      customIconUrl:(x.customIcon||'').startsWith('data:')?'':(x.customIcon||''),
+      customColor:x.customColor||'',
+      onlineUrl:x.url||'',version:x.version||'',
+      favorite:!!x.favorite,order:index,folderId:x.folderId||'',page:Number(x.page)||0
+    };
+  }
+  function snapshot(){
+    return nonCategoryItems().map((x,i)=>cloudShape(x,i));
+  }
+  function snapMap(arr){const m={};(arr||[]).forEach(x=>m[x.id]=x);return m}
+  function changed(a,b){return JSON.stringify(a)!==JSON.stringify(b)}
+  function localChanges(){
+    let old=[];
+    try{old=JSON.parse(localStorage.getItem(SNAPKEY)||'[]')}catch(e){}
+    const A=snapMap(old), B=snapMap(snapshot()), out=[];
+    Object.keys(B).forEach(id=>{
+      if(!A[id] || changed(A[id],B[id])){
+        out.push({
+          action:A[id]?'UPDATE':'CREATE',
+          data:B[id],recordId:id,clientChangeId:'chg-'+id+'-'+Date.now()
+        });
+      }
+    });
+    Object.keys(A).forEach(id=>{
+      if(!B[id]) out.push({
+        action:'DELETE',recordId:id,clientChangeId:'chg-del-'+id+'-'+Date.now()
+      });
+    });
+    return out;
+  }
+  function categoryList(){
+    return [...new Set(state.items.map(x=>x.cat).filter(Boolean))]
+      .map((name,i)=>({id:'cat-'+btoa(unescape(encodeURIComponent(name))).replace(/=/g,''),name,order:i}));
+  }
+  function setStatus(text,kind){
+    const s=el('cloudStatus');if(!s)return;
+    s.className='cloud-status '+(kind||'');
+    s.innerHTML='<span class="sync-dot '+(kind||'')+'"></span>'+text;
+  }
+  function saveMeta(o){localStorage.setItem(METAKEY,JSON.stringify(o||{}))}
+  function loadMeta(){try{return JSON.parse(localStorage.getItem(METAKEY)||'{}')}catch(e){return {}}}
+  function cloudButton(text){const b=el('cloudBtn');if(b)b.textContent=text}
+
+  async function api(url,options){
+    const r=await fetch(url,options||{method:'GET',cache:'no-store'});
+    const t=await r.text();
+    let data;try{data=JSON.parse(t)}catch(e){
+      throw new Error('Respons registry bukan JSON. Periksa URL Web App GAS dan deployment.');
+    }
+    if(!r.ok || data.success===false)throw new Error(data.error||('HTTP '+r.status));
+    return data;
+  }
+
+  function applyRemoteState(data){
+    const current=nonCategoryItems();
+    const byId=snapMap(current);
+    const apps=(data.apps||[]).map(a=>{
+      const old=byId[a.id]||{};
+      return {
+        id:a.id,name:a.name,desc:a.description||'',cat:a.category||'',url:a.onlineUrl||'',
+        path:old.path||'',version:a.version||'',iconKey:a.icon||'tools',
+        emojiIcon:a.emojiIcon||'',customIcon:a.customIconUrl||old.customIcon||'',
+        customColor:a.customColor||old.customColor||'#4f46e5',
+        favorite:!!a.favorite,order:Number(a.order)||0,folderId:a.folderId||'',
+        page:Number(a.page)||0,categoryOnly:false,_cloudKnown:true
+      };
+    });
+    apps.sort((a,b)=>(a.order||0)-(b.order||0));
+
+    const names=new Set((data.categories||[]).map(c=>String(c.name||'')).filter(Boolean));
+    const categoryOnly=(data.categories||[]).filter(c=>c.name).map(c=>({
+      id:'cat-'+c.id,name:'',iconKey:'tools',customIcon:'',cat:String(c.name),
+      desc:'',url:'',path:'',version:'',favorite:false,categoryOnly:true
+    }));
+    // Preserve local-only apps that have never been synced.
+    const cloudIds=new Set(apps.map(a=>a.id));
+    const unsynced=current.filter(x=>!cloudIds.has(x.id)&&!x._cloudKnown);
+    state.items=[...apps,...categoryOnly,...unsynced];
+
+    if(data.layout && data.layout.launcher){
+      const L=data.layout.launcher;
+      if(L.theme)state.theme=L.theme;
+      if(L.pack)state.pack=L.pack;
+      if(Array.isArray(L.folders))state.folders=L.folders;
+    }
+
+    save();
+    render();
+    localStorage.setItem(SNAPKEY,JSON.stringify(snapshot()));
+    localStorage.setItem(LAYOUTKEY,JSON.stringify({
+      categories:categoryList(),folders:state.folders||[],theme:state.theme,pack:state.pack
+    }));
+    return apps.length;
+  }
+
+  async function testConnection(){
+    const url=getUrl();
+    if(!url){setStatus('Masukkan URL Web App Google Apps Script terlebih dahulu.','err');return false}
+    setStatus('Menghubungi registry…','busy');cloudButton('☁ Testing…');
+    try{
+      const data=await api(url+'?action=GET');
+      const apps=Array.isArray(data.apps)?data.apps:[];
+      setStatus('Koneksi OK • '+apps.length+' aplikasi di registry.','ok');
+      cloudButton('☁ Sync');return true;
+    }catch(err){
+      setStatus('Koneksi gagal: '+err.message,'err');cloudButton('☁ Sync');return false;
+    }
+  }
+
+  async function sync(){
+    const url=getUrl();
+    if(!url){openCloud();setStatus('URL registry belum diisi.','err');return}
+    setStatus('Membaca perubahan lokal…','busy');cloudButton('☁ Sync…');
+    try{
+      const changes=localChanges();
+      const data=await api(url,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'BATCH_SYNC',payload:{pendingChanges:changes}})
+      });
+
+      const appsCount=applyRemoteState(data);
+
+      // Shared layout/category data is intentionally separate from Apps rows.
+      await api(url,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({
+          action:'SAVE_LAYOUT',
+          payload:{
+            theme:state.theme,pack:state.pack,folders:state.folders||[],
+            categories:categoryList(),updatedBy:'Browser Device'
+          }
+        })
+      });
+
+      // Pull once more so every device receives the server's final state.
+      const finalState=await api(url+'?action=GET');
+      const finalCount=applyRemoteState(finalState);
+
+      saveMeta({
+        lastSync:new Date().toISOString(),count:finalCount,
+        sent:changes.length,failed:data.failedChanges||[]
+      });
+
+      if((data.failedChanges||[]).length){
+        setStatus('Sync selesai sebagian • '+data.failedChanges.length+' perubahan gagal.','err');
+      }else{
+        setStatus('Sync berhasil • '+finalCount+' aplikasi • '+new Date().toLocaleTimeString('id-ID'),'ok');
+      }
+      cloudButton('☁ Sync');closeCloud();
+    }catch(err){
+      setStatus('Sync gagal: '+err.message,'err');cloudButton('☁ Sync');
+    }
+  }
+
+  function openCloud(){
+    el('registryUrl').value=getUrl();
+    const m=loadMeta();
+    if(getUrl()){
+      setStatus(m.lastSync
+        ? 'Terakhir sync: '+new Date(m.lastSync).toLocaleString('id-ID')
+        : 'URL registry sudah tersimpan.','');
+    }else setStatus('Belum terhubung ke registry.','');
+    el('cloudBg').classList.add('show');
+  }
+  function closeCloud(){el('cloudBg').classList.remove('show')}
+
+  window.myToolsCloud={sync,testConnection,openCloud};
+
+  function bind(){
+    el('cloudBtn').onclick=openCloud;
+    el('closeCloud').onclick=closeCloud;
+    el('cloudBg').onclick=e=>{if(e.target.id==='cloudBg')closeCloud()};
+    el('registryUrl').onchange=e=>setUrl(e.target.value);
+    el('testCloud').onclick=async()=>{setUrl(el('registryUrl').value);await testConnection()};
+    el('syncCloud').onclick=async()=>{setUrl(el('registryUrl').value);await sync()};
+
+    // Automatic pull only when there are no local changes waiting.
+    if(getUrl()){
+      setTimeout(async()=>{
+        try{
+          const pending=localChanges();
+          if(pending.length) {
+            setStatus('Ada '+pending.length+' perubahan lokal • tekan Sync untuk mengirim.','busy');
+            return;
+          }
+          const data=await api(getUrl()+'?action=GET');
+          applyRemoteState(data);
+          setStatus('Cloud terhubung • '+(data.apps||[]).length+' aplikasi','ok');
+        }catch(e){
+          // Offline startup is allowed; cached launcher remains usable.
+        }
+      },700);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
 </body>
 </html>
