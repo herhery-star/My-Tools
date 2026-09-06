@@ -1553,6 +1553,178 @@ body.editor-active .lo-editor-actions{
     display:inline-flex!important;
 }
 
+
+/* =========================================================
+   DASHBOARD SEARCH — SO / LO
+   ========================================================= */
+.dashboard-search{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-height:38px;
+    margin:8px 0 2px;
+    padding:0 8px;
+    border:1px solid #cbd9e8;
+    border-radius:8px;
+    background:#fff;
+    box-shadow:0 2px 7px rgba(15,23,42,.05);
+    transition:border-color .18s ease, box-shadow .18s ease;
+}
+.dashboard-search:focus-within{
+    border-color:#4b86e8;
+    box-shadow:0 0 0 3px rgba(59,130,246,.11);
+}
+.dashboard-search-icon{
+    width:22px;
+    flex:0 0 22px;
+    text-align:center;
+    color:#1769e8;
+    font-size:19px;
+    font-weight:800;
+    line-height:1;
+}
+.dashboard-search input{
+    flex:1;
+    min-width:0;
+    width:100%;
+    height:34px;
+    padding:5px 2px;
+    border:0!important;
+    outline:0!important;
+    box-shadow:none!important;
+    background:transparent!important;
+    font-size:11px!important;
+    color:#172554;
+}
+.dashboard-search input::placeholder{color:#94a3b8}
+.dashboard-search-clear{
+    display:none;
+    width:25px!important;
+    min-width:25px!important;
+    height:25px!important;
+    min-height:25px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:50%!important;
+    background:#edf2f7!important;
+    color:#64748b!important;
+    font-size:16px!important;
+    line-height:1!important;
+}
+.dashboard-search.has-value .dashboard-search-clear{display:grid!important;place-items:center}
+.dashboard-search-info{
+    min-height:15px;
+    margin:0 2px 3px;
+    color:#64748b;
+    font-size:9px;
+}
+.dashboard-search-info.has-results{color:#1769e8;font-weight:700}
+.dashboard-search-info.no-results{color:#c62828;font-weight:700}
+.dashboard-search-hidden{display:none!important}
+.dashboard-search-row-hidden{display:none!important}
+.dashboard-search-empty{
+    margin:7px 0;
+    padding:14px 10px;
+    text-align:center;
+    border:1px dashed #cbd5e1;
+    border-radius:8px;
+    background:#f8fafc;
+    color:#64748b;
+    font-size:10px;
+}
+
+
+/* =========================================================
+   DASHBOARD SEARCH + DEDICATED DATE PICKER
+   ========================================================= */
+.dashboard-search-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 150px;
+    gap:7px;
+    align-items:stretch;
+    margin:8px 0 2px;
+}
+.dashboard-search-row .dashboard-search{
+    margin:0!important;
+}
+.dashboard-date-search{
+    min-width:0;
+    min-height:38px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:0 7px;
+    border:1px solid #cbd9e8;
+    border-radius:8px;
+    background:#fff;
+    box-shadow:0 2px 7px rgba(15,23,42,.05);
+    transition:border-color .18s ease, box-shadow .18s ease;
+}
+.dashboard-date-search:focus-within{
+    border-color:#4b86e8;
+    box-shadow:0 0 0 3px rgba(59,130,246,.11);
+}
+.dashboard-date-icon{
+    color:#1769e8;
+    font-size:15px;
+    line-height:1;
+}
+.dashboard-date-field{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+.dashboard-date-label{
+    color:#64748b;
+    font-size:8px;
+    line-height:1;
+    margin-bottom:2px;
+}
+.dashboard-date-field input{
+    width:100%;
+    min-width:0;
+    height:18px;
+    padding:0;
+    border:0!important;
+    outline:0!important;
+    box-shadow:none!important;
+    background:transparent!important;
+    color:#172554;
+    font-size:10px!important;
+    font-weight:700;
+    font-family:inherit;
+}
+.dashboard-date-clear{
+    display:none;
+    width:22px!important;
+    min-width:22px!important;
+    height:22px!important;
+    min-height:22px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:50%!important;
+    background:#edf2f7!important;
+    color:#64748b!important;
+    font-size:15px!important;
+    line-height:1!important;
+}
+.dashboard-date-search.has-value .dashboard-date-clear{
+    display:grid!important;
+    place-items:center;
+}
+@media(max-width:900px){
+    .dashboard-search-row{
+        grid-template-columns:minmax(0,1fr) 135px;
+    }
+}
+@media(max-width:650px){
+    .dashboard-search-row{
+        grid-template-columns:1fr;
+    }
+}
+
 </style>
 
 </head>
@@ -1675,6 +1847,27 @@ body.editor-active .lo-editor-actions{
                     <span>SPBU-74.906.16</span><span class="spbu-indicator" aria-hidden="true"></span>
                 </button>
             </div>
+
+            <div class="dashboard-search-row" role="search" aria-label="Pencarian Dashboard">
+                <div class="dashboard-search" aria-label="Cari Nomor SO, LO, atau Produk">
+                    <div class="dashboard-search-icon">⌕</div>
+                    <input type="search"
+                           id="dashboardSearchInput"
+                           autocomplete="off"
+                           placeholder="Cari Nomor SO, LO, atau Produk..."
+                           aria-label="Cari Nomor SO, LO, atau Produk">
+                    <button type="button" id="dashboardSearchClear" class="dashboard-search-clear" title="Hapus pencarian" aria-label="Hapus pencarian">×</button>
+                </div>
+                <div class="dashboard-date-search" aria-label="Cari berdasarkan tanggal">
+                    <span class="dashboard-date-icon">▣</span>
+                    <div class="dashboard-date-field">
+                        <span class="dashboard-date-label">Tanggal</span>
+                        <input type="date" id="dashboardDateInput" aria-label="Cari berdasarkan tanggal">
+                    </div>
+                    <button type="button" id="dashboardDateClear" class="dashboard-date-clear" title="Hapus tanggal" aria-label="Hapus tanggal">×</button>
+                </div>
+            </div>
+            <div id="dashboardSearchInfo" class="dashboard-search-info" aria-live="polite"></div>
 
             <div class="dashboard-metrics">
                 <div class="metric blue-metric"><div class="metric-icon">▤</div><div><b id="metricActive">0</b><span>Total SO Aktif</span></div></div>
@@ -2260,7 +2453,18 @@ body.editor-active .lo-editor-actions{
                         loSelect.appendChild(option);
                     }
 
-                    rows += `<tr class="${spbuClass}">
+                    const rowSearchText = [
+                        so.nomor_so || '',
+                        prod.product_name || '',
+                        formatDate(so.tanggal_so) || '',
+                        so.tanggal_so || '',
+                        (prod.lo || []).filter(lo => !lo.deleted_at).map(lo => [
+                            lo.nomor_lo || '',
+                            formatDate(lo.tanggal_lo) || '',
+                            lo.tanggal_lo || ''
+                        ].join(' ')).join(' ')
+                    ].join(' ').toLowerCase();
+                    rows += `<tr class="${spbuClass}" data-dashboard-search="${escapeHtml(rowSearchText)}">
                         <td>${escapeHtml(so.nomor_so)}</td>
                         <td>${formatDate(so.tanggal_so)}</td>
                         <td>${escapeHtml(prod.product_name || '')}</td>
@@ -2274,7 +2478,21 @@ body.editor-active .lo-editor-actions{
                 });
 
                 const sectionClass = so.spbu === 'SPBU-74.906.16' ? 'spbu-green-section' : so.spbu === 'SPBU-74.906.07' ? 'spbu-blue-section' : '';
-                const html = `<div class="so-table-card ${sectionClass}" data-dashboard-spbu="${escapeHtml(so.spbu || '')}">
+                const cardSearchText = [
+                    so.nomor_so || '',
+                    so.spbu || '',
+                    formatDate(so.tanggal_so) || '',
+                    so.tanggal_so || '',
+                    ...(products || []).flatMap(prod => [
+                        prod.product_name || '',
+                        ...(prod.lo || []).filter(lo => !lo.deleted_at).flatMap(lo => [
+                            lo.nomor_lo || '',
+                            formatDate(lo.tanggal_lo) || '',
+                            lo.tanggal_lo || ''
+                        ])
+                    ])
+                ].join(' ').toLowerCase();
+                const html = `<div class="so-table-card ${sectionClass}" data-dashboard-spbu="${escapeHtml(so.spbu || '')}" data-dashboard-search="${escapeHtml(cardSearchText)}">
                     <div class="so-table-head">
                         <div class="so-head-main">
                             <strong>SO: ${escapeHtml(so.nomor_so)}</strong>
@@ -2321,6 +2539,9 @@ body.editor-active .lo-editor-actions{
             if (typeof window.applyDashboardSPBUFilter === 'function') {
                 window.applyDashboardSPBUFilter();
             }
+            if (typeof window.applyDashboardSearch === 'function') {
+                window.applyDashboardSearch();
+            }
 
         } catch (error) {
             console.error('fetchDashboard error:', error);
@@ -2333,17 +2554,23 @@ body.editor-active .lo-editor-actions{
     }
 
     // =========================
-    // FILTER DASHBOARD BERDASARKAN SPBU
+    // FILTER DASHBOARD BERDASARKAN SPBU + PENCARIAN SO/LO
     // =========================
-    (function initDashboardSPBUFilter() {
+    (function initDashboardFilters() {
         const blueBtn = document.getElementById('filterSPBU07');
         const greenBtn = document.getElementById('filterSPBU16');
         const activeContainer = document.getElementById('dashboardActive');
         const completedContainer = document.getElementById('dashboardCompleted');
+        const searchInput = document.getElementById('dashboardSearchInput');
+        const searchClear = document.getElementById('dashboardSearchClear');
+        const searchBox = document.querySelector('.dashboard-search');
+        const searchInfo = document.getElementById('dashboardSearchInfo');
 
         if (!blueBtn || !greenBtn || !activeContainer || !completedContainer) return;
 
         let activeFilter = '';
+        let searchTerm = '';
+        let searchDate = '';
 
         function setButtonState() {
             const blueOn = !activeFilter || activeFilter === 'SPBU-74.906.07';
@@ -2355,49 +2582,180 @@ body.editor-active .lo-editor-actions{
             greenBtn.setAttribute('aria-pressed', String(greenOn));
         }
 
-        function updateEmptyMessage(container, hasCards, visibleCount) {
-            let empty = container.querySelector('.dashboard-filter-empty');
-            if (!activeFilter || !hasCards || visibleCount > 0) {
-                if (empty) empty.remove();
-                return;
-            }
-            if (!empty) {
-                empty = document.createElement('div');
-                empty.className = 'dashboard-filter-empty';
-                container.appendChild(empty);
-            }
-            empty.textContent = `Tidak ada catatan untuk ${activeFilter}.`;
+        function getCards(container) {
+            return Array.from(container.querySelectorAll('.so-table-card, .so-card'));
         }
 
-        function applyFilter(filter) {
-            activeFilter = activeFilter === filter ? '' : filter;
+        function removeSearchEmpty(container) {
+            container.querySelector('.dashboard-search-empty')?.remove();
+        }
+
+        function normalizeSearch(value) {
+            return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        }
+
+        function dateSearchVariants(value) {
+            const raw = String(value || '').trim();
+            const variants = new Set([raw.toLowerCase()]);
+            const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+            if (iso) {
+                const y = iso[1], mo = String(Number(iso[2])), d = String(Number(iso[3]));
+                variants.add(`${d}/${mo}/${y}`);
+                variants.add(`${String(Number(d)).padStart(2,'0')}/${String(Number(mo)).padStart(2,'0')}/${y}`);
+                variants.add(`${d}-${mo}-${y}`);
+                variants.add(`${String(Number(d)).padStart(2,'0')}-${String(Number(mo)).padStart(2,'0')}-${y}`);
+            }
+            const dmy = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+            if (dmy) {
+                const d = String(Number(dmy[1])), mo = String(Number(dmy[2])), y = dmy[3];
+                variants.add(`${y}-${String(Number(mo)).padStart(2,'0')}-${String(Number(d)).padStart(2,'0')}`);
+            }
+            return Array.from(variants);
+        }
+
+        function searchTextMatches(text, term) {
+            const normalizedText = normalizeSearch(text);
+            if (!term) return true;
+            if (normalizedText.includes(term)) return true;
+            return dateSearchVariants(term).some(v => v && normalizedText.includes(v));
+        }
+
+        function applyFilters() {
+            const normalized = normalizeSearch(searchTerm);
+            let totalMatches = 0;
 
             [activeContainer, completedContainer].forEach(container => {
-                const cards = Array.from(container.querySelectorAll('.so-table-card'));
-                let visibleCount = 0;
+                const cards = getCards(container);
+                let visibleCards = 0;
+
+                removeSearchEmpty(container);
 
                 cards.forEach(card => {
-                    const match = !activeFilter || card.dataset.dashboardSpbu === activeFilter;
-                    card.classList.toggle('dashboard-spbu-hidden', !match);
-                    if (match) visibleCount++;
+                    const spbuMatch = !activeFilter || card.dataset.dashboardSpbu === activeFilter;
+                    const rows = Array.from(card.querySelectorAll('tbody tr[data-dashboard-search]'));
+                    let matchingRows = 0;
+
+                    rows.forEach(row => {
+                        const rowText = row.dataset.dashboardSearch || '';
+                        const keywordMatch = !normalized || searchTextMatches(rowText, normalized);
+
+                        // Date input is an exact filter. The row metadata contains
+                        // both the formatted SO date and ISO date, plus LO dates.
+                        const dateMatch = !searchDate || rowText.includes(searchDate);
+
+                        const rowMatch = keywordMatch && dateMatch;
+                        row.classList.toggle('dashboard-search-row-hidden', !rowMatch);
+                        if (rowMatch) matchingRows++;
+                    });
+
+                    const cardText = card.dataset.dashboardSearch || '';
+                    const keywordCardMatch = !normalized || searchTextMatches(cardText, normalized);
+                    const dateCardMatch = !searchDate || cardText.includes(searchDate);
+
+                    const searchMatch = keywordCardMatch && dateCardMatch;
+                    const show = spbuMatch && searchMatch && (!normalized && !searchDate || matchingRows > 0);
+
+                    // If only the SO/card metadata matches a keyword/date, show
+                    // all rows belonging to that card.
+                    if (show && ((normalized && searchTextMatches(cardText, normalized)) || (searchDate && cardText.includes(searchDate)))) {
+                        rows.forEach(row => {
+                            const rowText = row.dataset.dashboardSearch || '';
+                            const keywordMatch = !normalized || searchTextMatches(rowText, normalized);
+                            const dateMatch = !searchDate || rowText.includes(searchDate);
+                            row.classList.toggle('dashboard-search-row-hidden', !(keywordMatch && dateMatch));
+                        });
+                        matchingRows = rows.filter(row => !row.classList.contains('dashboard-search-row-hidden')).length;
+                    }
+
+                    const finalShow = spbuMatch && searchMatch && (!normalized && !searchDate || matchingRows > 0);
+                    card.classList.toggle('dashboard-search-hidden', !finalShow);
+
+                    if (finalShow) {
+                        visibleCards++;
+                        totalMatches += matchingRows;
+                    }
                 });
 
-                updateEmptyMessage(container, cards.length > 0, visibleCount);
+                if ((normalized || searchDate) && visibleCards === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'dashboard-search-empty';
+                    empty.textContent = searchDate
+                        ? `Tidak ditemukan data pada tanggal tersebut${normalized ? ` untuk "${searchTerm.trim()}"` : ''}.`
+                        : `Tidak ditemukan data untuk "${searchTerm.trim()}".`;
+                    container.appendChild(empty);
+                }
             });
+
+            if (searchBox) searchBox.classList.toggle('has-value', !!normalized);
+
+            const dateBox = document.querySelector('.dashboard-date-search');
+            if (dateBox) dateBox.classList.toggle('has-value', !!searchDate);
+
+            if (searchInfo) {
+                if (!normalized && !searchDate) {
+                    searchInfo.textContent = '';
+                    searchInfo.className = 'dashboard-search-info';
+                } else if (totalMatches > 0) {
+                    const dateLabel = searchDate ? ` pada ${searchDate}` : '';
+                    searchInfo.textContent = `${totalMatches} baris terkait ditemukan${dateLabel}.`;
+                    searchInfo.className = 'dashboard-search-info has-results';
+                } else {
+                    searchInfo.textContent = 'Tidak ada data yang cocok.';
+                    searchInfo.className = 'dashboard-search-info no-results';
+                }
+            }
 
             setButtonState();
         }
 
-        blueBtn.addEventListener('click', () => applyFilter('SPBU-74.906.07'));
-        greenBtn.addEventListener('click', () => applyFilter('SPBU-74.906.16'));
+        function applySPBUFilter(filter) {
+            activeFilter = activeFilter === filter ? '' : filter;
+            applyFilters();
+        }
 
-        // Saat data dashboard dimuat ulang, terapkan kembali filter yang sedang aktif.
+        blueBtn.addEventListener('click', () => applySPBUFilter('SPBU-74.906.07'));
+        greenBtn.addEventListener('click', () => applySPBUFilter('SPBU-74.906.16'));
+
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                searchTerm = searchInput.value;
+                applyFilters();
+            });
+        }
+
+        const dateInput = document.getElementById('dashboardDateInput');
+        const dateClear = document.getElementById('dashboardDateClear');
+
+        if (dateInput) {
+            dateInput.addEventListener('change', () => {
+                searchDate = dateInput.value || '';
+                applyFilters();
+            });
+        }
+
+        dateClear?.addEventListener('click', () => {
+            if (!dateInput) return;
+            dateInput.value = '';
+            searchDate = '';
+            applyFilters();
+        });
+
+        searchClear?.addEventListener('click', () => {
+            if (!searchInput) return;
+            searchInput.value = '';
+            searchTerm = '';
+            searchInput.focus();
+            applyFilters();
+        });
+
         window.applyDashboardSPBUFilter = function () {
-            if (activeFilter) {
-                const current = activeFilter;
-                activeFilter = '';
-                applyFilter(current);
-            }
+            applyFilters();
+        };
+
+        window.applyDashboardSearch = function () {
+            if (searchInput) searchTerm = searchInput.value || '';
+            if (dateInput) searchDate = dateInput.value || '';
+            applyFilters();
         };
 
         setButtonState();
