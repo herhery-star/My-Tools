@@ -102,7 +102,16 @@
                     </select>
                 </div>
             </div>
-            <div class="flex md:justify-end items-center gap-4 pt-2 md:pt-0">
+            <div class="flex flex-wrap md:justify-end items-center gap-3 pt-2 md:pt-0">
+                <div class="flex items-center gap-2">
+                    <label for="filterTanggalMulai" class="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-wide whitespace-nowrap">Dari</label>
+                    <input type="date" id="filterTanggalMulai" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white cursor-pointer" />
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="filterTanggalAkhir" class="text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-wide whitespace-nowrap">Sampai</label>
+                    <input type="date" id="filterTanggalAkhir" class="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white cursor-pointer" />
+                </div>
+                <button id="clearDateFilterBtn" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold transition-all">Reset Tanggal</button>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="toggleColumnTanggal" checked class="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer" />
                     <label for="toggleColumnTanggal" class="text-[10px] md:text-xs font-bold text-slate-600 uppercase tracking-wide cursor-pointer select-none">Tampilkan Kolom Tanggal</label>
@@ -320,27 +329,28 @@
         function updateTitleSection() {
             const documentTitle = themes[currentTheme].name;
             document.getElementById('sectionLargeTitle').innerText = `REKENING KORAN - ${documentTitle.toUpperCase()}`;
-            
-            if (cleanMutationRows.length > 0) {
-                const semuaTanggal = cleanMutationRows.map(row => row.tanggal);
-                const uniqueTanggal = [...new Set(semuaTanggal)];
 
+            if (cleanMutationRows.length > 0) {
+                const periodRows = cleanMutationRows.filter(rowPassesDateFilter);
+                const sourceRows = periodRows.length ? periodRows : cleanMutationRows;
+                const uniqueTanggal = [...new Set(sourceRows.map(row => row.tanggal))];
+
+                let basePeriod = 'Periode Tanggal: -';
                 if (uniqueTanggal.length === 1) {
-                    document.getElementById('sectionDateRange').innerText = `Tanggal: ${uniqueTanggal[0]}`;
-                } else {
+                    basePeriod = `Tanggal: ${uniqueTanggal[0]}`;
+                } else if (uniqueTanggal.length > 1) {
                     const urutTanggal = [...uniqueTanggal].sort((a, b) => {
-                        let partsA = a.split('/');
-                        let partsB = b.split('/');
-                        let keyA = parseInt((partsA[2] || '') + (partsA[1] || '') + (partsA[0] || ''));
-                        let keyB = parseInt((partsB[2] || '') + (partsB[1] || '') + (partsB[0] || ''));
-                        return keyA - keyB;
+                        const pa = a.split('/'), pb = b.split('/');
+                        return parseInt((pa[2]||'')+(pa[1]||'')+(pa[0]||'')) -
+                               parseInt((pb[2]||'')+(pb[1]||'')+(pb[0]||''));
                     });
-                    const startDt = urutTanggal[0];
-                    const endDt = urutTanggal[urutTanggal.length - 1];
-                    document.getElementById('sectionDateRange').innerText = `Periode Tanggal: ${startDt} s.d. ${endDt}`;
+                    basePeriod = `Periode Tanggal: ${urutTanggal[0]} s.d. ${urutTanggal[urutTanggal.length-1]}`;
                 }
+                const filterText = getFilterPeriodText();
+                document.getElementById('sectionDateRange').innerText =
+                    filterText ? `${basePeriod} | ${filterText}` : basePeriod;
             } else {
-                document.getElementById('sectionDateRange').innerText = `Periode Tanggal: -`;
+                document.getElementById('sectionDateRange').innerText = 'Periode Tanggal: -';
             }
         }
 
@@ -475,6 +485,12 @@
 
                 historyStack = []; // Reset riwayat undo setiap memuat PDF baru
                 updateUndoButtonState();
+
+                filterTanggalMulai = '';
+                filterTanggalAkhir = '';
+                document.getElementById('filterTanggalMulai').value = '';
+                document.getElementById('filterTanggalAkhir').value = '';
+                document.getElementById('clearDateFilterBtn').classList.add('hidden');
 
                 cleanMutationRows = await parseBROMutationData(pdfDocument);
                 
@@ -725,6 +741,45 @@
             return parseFloat(clean) || 0;
         }
 
+        function mutationDateToISO(tanggal) {
+            if (!tanggal) return '';
+            const parts = tanggal.split('/');
+            if (parts.length !== 3) return '';
+            let [dd, mm, yy] = parts;
+            let year = parseInt(yy, 10);
+            if (isNaN(year)) return '';
+            year += year < 70 ? 2000 : 1900;
+            return `${year}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+        }
+
+        function rowPassesDateFilter(row) {
+            const rowDate = mutationDateToISO(row.tanggal);
+            if (!rowDate) return true;
+            if (filterTanggalMulai && rowDate < filterTanggalMulai) return false;
+            if (filterTanggalAkhir && rowDate > filterTanggalAkhir) return false;
+            return true;
+        }
+
+        function rowPassesActiveFilters(row) {
+            const keywordPass = activeFilterKeyword === '' ||
+                row.uraian.toLowerCase().includes(activeFilterKeyword.toLowerCase());
+            return keywordPass && rowPassesDateFilter(row);
+        }
+
+        function formatDateInputToBRI(isoDate) {
+            if (!isoDate) return '';
+            const [yyyy, mm, dd] = isoDate.split('-');
+            return `${dd}/${mm}/${yyyy.slice(-2)}`;
+        }
+
+        function getFilterPeriodText() {
+            if (filterTanggalMulai && filterTanggalAkhir)
+                return `Filter Tanggal: ${formatDateInputToBRI(filterTanggalMulai)} s.d. ${formatDateInputToBRI(filterTanggalAkhir)}`;
+            if (filterTanggalMulai) return `Filter Tanggal: mulai ${formatDateInputToBRI(filterTanggalMulai)}`;
+            if (filterTanggalAkhir) return `Filter Tanggal: sampai ${formatDateInputToBRI(filterTanggalAkhir)}`;
+            return '';
+        }
+
         function getFormattedTimestamp() {
             const d = new Date();
             const day = String(d.getDate()).padStart(2, '0');
@@ -776,93 +831,68 @@
             tableBody.innerHTML = '';
 
             const thTanggal = document.getElementById('thTanggal');
-            if (showTanggalColumn) {
-                thTanggal.classList.remove('hidden');
-            } else {
-                thTanggal.classList.add('hidden');
-            }
+            thTanggal.classList.toggle('hidden', !showTanggalColumn);
 
-            let runBalance = parseInputToFloat(document.getElementById('inputSaldoAwal').value);
-            let accumulatedDebet = 0;
-            let accumulatedKredit = 0;
-
-            if(cleanMutationRows.length === 0) {
+            if (cleanMutationRows.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400 italic text-xs">Berkas belum dimasukkan. Silakan unggah dokumen PDF atau ZIP rekening koran Anda.</td></tr>`;
                 tableFoot.classList.add('hidden');
                 document.getElementById('mergeActionContainer').classList.add('hidden');
                 return;
             }
 
-            let displayIndex = 1;
+            const openingBalance = parseInputToFloat(document.getElementById('inputSaldoAwal').value);
+            let runBalance = openingBalance;
+            let accumulatedDebet = 0, accumulatedKredit = 0;
+            let displayIndex = 1, displayedRows = 0;
+            let lastVisibleBalance = openingBalance;
 
             cleanMutationRows.forEach((row, rowIndex) => {
-                runBalance = runBalance + row.kredit - row.debet;
-                
+                runBalance += row.kredit - row.debet;
+                if (!rowPassesActiveFilters(row)) return;
+
                 accumulatedDebet += row.debet;
                 accumulatedKredit += row.kredit;
-
-                if (activeFilterKeyword !== '') {
-                    const kataKunci = activeFilterKeyword.toLowerCase();
-                    if (!row.uraian.toLowerCase().includes(kataKunci)) {
-                        return; 
-                    }
-                }
-
-                const balanceColorClass = runBalance < 0 ? 'text-rose-600 font-bold' : 'text-slate-900 font-normal';
+                lastVisibleBalance = runBalance;
 
                 const trElement = document.createElement('tr');
                 trElement.className = "hover:bg-slate-50/80 text-slate-700 transition-colors font-normal text-xs md:text-sm";
-                
                 const debetText = row.debet !== 0 ? formatIdCurrency(row.debet) : '-';
                 const kreditText = row.kredit > 0 ? formatIdCurrency(row.kredit) : '-';
                 const balanceText = formatIdCurrency(runBalance);
+                const safeUraian = row.uraian.replace(/"/g, '&quot;');
 
                 trElement.innerHTML = `
                     <td class="text-center p-2 font-normal text-slate-400 select-none">${displayIndex}</td>
-                    <td class="text-center p-2">
-                        <input type="checkbox" class="row-checkbox rounded cursor-pointer w-4 h-4" data-index="${rowIndex}" onchange="handleCheckboxChange()" />
-                    </td>
+                    <td class="text-center p-2"><input type="checkbox" class="row-checkbox rounded cursor-pointer w-4 h-4" data-index="${rowIndex}" onchange="handleCheckboxChange()" /></td>
                     <td class="font-normal font-mono text-slate-500 ${showTanggalColumn ? '' : 'hidden'}">${row.tanggal}</td>
-                    <td>
-                        <input type="text" value="${row.uraian}" 
-                            class="w-full bg-transparent hover:bg-amber-50/70 focus:bg-white focus:ring-2 focus:ring-blue-400 rounded-md px-2 py-1 border-none outline-none transition-all font-normal text-slate-900 text-xs md:text-sm"
-                            onchange="updateUraianValue(${rowIndex}, this.value)"
-                            onkeydown="if(event.key === 'Enter') this.blur();" />
-                    </td>
+                    <td><input type="text" value="${safeUraian}" class="w-full bg-transparent hover:bg-amber-50/70 focus:bg-white focus:ring-2 focus:ring-blue-400 rounded-md px-2 py-1 border-none outline-none transition-all font-normal text-slate-900 text-xs md:text-sm" onchange="updateUraianValue(${rowIndex}, this.value)" onkeydown="if(event.key === 'Enter') this.blur();" /></td>
                     <td class="text-right font-mono text-rose-600 font-normal cursor-pointer select-all" title="Klik 2x untuk menyalin angka murni" ondblclick="copyValueToClipboard(this, '${debetText}')">${debetText}</td>
                     <td class="text-right font-mono text-emerald-600 font-normal cursor-pointer select-all" title="Klik 2x untuk menyalin angka murni" ondblclick="copyValueToClipboard(this, '${kreditText}')">${kreditText}</td>
-                    <td class="text-right font-mono bg-slate-50/50 ${balanceColorClass} cursor-pointer select-all" title="Klik 2x untuk menyalin angka murni" ondblclick="copyValueToClipboard(this, '${balanceText}')">${balanceText}</td>
+                    <td class="text-right font-mono bg-slate-50/50 ${runBalance < 0 ? 'text-rose-600 font-bold' : 'text-slate-900 font-normal'} cursor-pointer select-all" title="Klik 2x untuk menyalin angka murni" ondblclick="copyValueToClipboard(this, '${balanceText}')">${balanceText}</td>
                 `;
                 tableBody.appendChild(trElement);
                 displayIndex++;
+                displayedRows++;
             });
+
+            if (!displayedRows) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-slate-400 italic text-xs">Tidak ada transaksi yang sesuai dengan filter tanggal / kata kunci.</td></tr>`;
+            }
 
             document.getElementById('summaryDebet').innerText = formatIdCurrency(accumulatedDebet);
             document.getElementById('summaryKredit').innerText = formatIdCurrency(accumulatedKredit);
-            document.getElementById('summaryAkhir').innerText = formatIdCurrency(runBalance);
+            document.getElementById('summaryAkhir').innerText = formatIdCurrency(lastVisibleBalance);
 
             tableFoot.classList.remove('hidden');
-            const footBalanceColorClass = runBalance < 0 ? 'text-rose-600' : 'text-slate-900';
-            
             tableFoot.innerHTML = `
                 <tr class="text-slate-900 bg-slate-100 border-b border-slate-300 font-bold text-xs md:text-sm">
-                    <td class="text-center py-3">#</td>
-                    <td class="text-center py-3"></td>
+                    <td class="text-center py-3">#</td><td class="text-center py-3"></td>
                     ${showTanggalColumn ? '<td class="py-3"></td>' : ''}
                     <td class="text-left py-3 tracking-wide text-[10px] md:text-xs uppercase font-black">TOTAL</td>
-                    <td class="text-right font-mono text-rose-600 font-black cursor-pointer select-all" title="Klik 2x untuk menyalin" ondblclick="copyValueToClipboard(this, '${formatIdCurrency(accumulatedDebet)}')">${formatIdCurrency(accumulatedDebet)}</td>
-                    <td class="text-right font-mono text-emerald-700 font-black cursor-pointer select-all" title="Klik 2x untuk menyalin" ondblclick="copyValueToClipboard(this, '${formatIdCurrency(accumulatedKredit)}')">${formatIdCurrency(accumulatedKredit)}</td>
-                    <td class="text-right font-mono font-black bg-amber-50/60 ${footBalanceColorClass} cursor-pointer hover:bg-amber-100 hover:text-blue-700 select-none border-l-2 border-amber-400 transition-all group p-2 relative" 
-                        onclick="openLastPageOfSourcePdf()" 
-                        title="Klik untuk melihat lampiran halaman terakhir dokumen PDF asli">
-                        <span class="flex items-center justify-end gap-1.5">
-                            ${formatIdCurrency(runBalance)}
-                            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 inline transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                        </span>
-                    </td>
-                </tr>
-            `;
-
+                    <td class="text-right font-mono text-rose-600 font-black">${formatIdCurrency(accumulatedDebet)}</td>
+                    <td class="text-right font-mono text-emerald-700 font-black">${formatIdCurrency(accumulatedKredit)}</td>
+                    <td class="text-right font-mono font-black bg-amber-50/60 ${lastVisibleBalance < 0 ? 'text-rose-600' : 'text-slate-900'} cursor-pointer border-l-2 border-amber-400 p-2" onclick="openLastPageOfSourcePdf()" title="Klik untuk melihat lampiran halaman terakhir dokumen PDF asli">${formatIdCurrency(lastVisibleBalance)}</td>
+                </tr>`;
             handleCheckboxChange();
         }
 
@@ -921,6 +951,7 @@
                 clearBtn.classList.add('hidden');
             }
             document.getElementById('selectKeywordsDropdown').value = activeFilterKeyword.toUpperCase();
+            updateTitleSection();
             renderTable();
         });
 
@@ -929,6 +960,34 @@
             document.getElementById('selectKeywordsDropdown').value = '';
             activeFilterKeyword = '';
             this.classList.add('hidden');
+            updateTitleSection();
+            renderTable();
+        });
+
+        function applyDateFilter() {
+            const mulai = document.getElementById('filterTanggalMulai').value;
+            const akhir = document.getElementById('filterTanggalAkhir').value;
+            if (mulai && akhir && mulai > akhir) {
+                alert('Tanggal "Dari" tidak boleh lebih besar dari tanggal "Sampai".');
+                return;
+            }
+            filterTanggalMulai = mulai;
+            filterTanggalAkhir = akhir;
+            document.getElementById('clearDateFilterBtn').classList.toggle('hidden', !(mulai || akhir));
+            updateTitleSection();
+            renderTable();
+        }
+
+        document.getElementById('filterTanggalMulai').addEventListener('change', applyDateFilter);
+        document.getElementById('filterTanggalAkhir').addEventListener('change', applyDateFilter);
+
+        document.getElementById('clearDateFilterBtn').addEventListener('click', function() {
+            document.getElementById('filterTanggalMulai').value = '';
+            document.getElementById('filterTanggalAkhir').value = '';
+            filterTanggalMulai = '';
+            filterTanggalAkhir = '';
+            this.classList.add('hidden');
+            updateTitleSection();
             renderTable();
         });
 
@@ -1025,11 +1084,8 @@
             let totalK = 0;
 
             cleanMutationRows.forEach(row => {
-                if (activeFilterKeyword !== '' && !row.uraian.toLowerCase().includes(activeFilterKeyword.toLowerCase())) {
-                    return;
-                }
-
                 excelRunBalance = excelRunBalance + row.kredit - row.debet;
+                if (!rowPassesActiveFilters(row)) return;
                 totalD += row.debet;
                 totalK += row.kredit;
 
@@ -1123,11 +1179,8 @@
             let totalK = 0;
 
             cleanMutationRows.forEach(row => {
-                if (activeFilterKeyword !== '' && !row.uraian.toLowerCase().includes(activeFilterKeyword.toLowerCase())) {
-                    return;
-                }
-
                 pdfRunBalance = pdfRunBalance + row.kredit - row.debet;
+                if (!rowPassesActiveFilters(row)) return;
                 totalD += row.debet;
                 totalK += row.kredit;
 
