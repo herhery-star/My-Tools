@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estimasi Pembelian BBM</title>
+<style>
+:root{
+  --ui-scale:1;
+  --green:#15803d;
+  --green-soft:#ecfdf5;
+  --blue:#2563eb;
+  --blue-soft:#eff6ff;
+  --border:#cbd5e1;
+  --text:#172033;
+  --muted:#64748b;
+  --danger:#dc2626;
+  --bg:#f4f6f8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;font-size:13px;
+}
+.app{max-width:1050px;margin:auto;padding:10px}
+.tabs{
+  display:flex;gap:5px;background:#fff;border:1px solid var(--border);
+  padding:5px;border-radius:8px;margin-bottom:8px;
+}
+.tab{
+  flex:1;border:0;background:#eef2f7;padding:9px 10px;border-radius:5px;
+  font-weight:700;cursor:pointer;
+}
+.tab.active{background:#172033;color:#fff}
+.panel{display:none}.panel.active{display:block}
+.card{
+  background:#fff;border:1px solid var(--border);border-radius:8px;
+  overflow:hidden;margin-bottom:8px;
+}
+.title{
+  padding:8px 10px;font-weight:800;font-size:16px;text-align:center;
+  border-bottom:1px solid var(--border);
+}
+.subtitle{text-align:center;color:var(--muted);font-size:12px;padding:5px 10px}
+.form-head{
+  display:grid;grid-template-columns:150px 1fr 150px 1fr;
+  border-bottom:1px solid var(--border);
+}
+.form-head label,.form-head input{
+  min-height:32px;padding:6px 8px;border:0;border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.form-head label{font-weight:700;background:#f8fafc}
+input{
+  width:100%;font:inherit;border:1px solid var(--border);
+  border-radius:4px;padding:6px 7px;
+}
+input[type=number]{text-align:right}
+.money-input,.price-input{text-align:right}
+.extra-label{width:100%;text-align:left}
+.extra-row td:first-child{padding:3px 6px}
+.extra-fields{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:5px;align-items:center}
+.extra-fields input{min-height:27px}
+.report-extra-label{font-style:normal}
+
+.spbu-head{
+  padding:7px 10px;font-weight:800;color:#fff;font-size:14px;
+}
+.green .spbu-head{background:var(--green)}
+.blue .spbu-head{background:var(--blue)}
+.section-title{
+  padding:5px 9px;font-weight:800;background:#f8fafc;
+  border-bottom:1px solid var(--border);
+}
+.money-table,.purchase-table,.price-table{
+  width:100%;border-collapse:collapse;table-layout:fixed;
+}
+.money-table th,.money-table td,
+.purchase-table th,.purchase-table td,
+.price-table th,.price-table td{
+  border:1px solid var(--border);padding:4px 6px;height:29px;
+}
+.money-table th:first-child,.money-table td:first-child{width:34%;text-align:left}
+.money-table td:not(:first-child),.purchase-table th:not(:first-child){text-align:right}
+.purchase-table td:not(:first-child){text-align:right}
+.money-table .calc{font-weight:800;background:#f8fafc}
+.purchase-table th:first-child{width:27%;text-align:left}
+.purchase-table th{background:#f1f5f9;font-size:12px}
+.purchase-table td:first-child{text-align:left;font-weight:600}
+.qty{
+  display:inline-block;width:48px;min-width:48px;vertical-align:middle;text-align:center;
+  padding:4px 2px;
+}
+.qty-select{
+  width:48px;min-width:48px;height:28px;padding:2px 2px;
+  border:1px solid var(--border);border-radius:4px;background:#fff;
+  font:inherit;text-align:center;
+}
+.inline-editor{
+  display:flex;justify-content:flex-end;align-items:center;gap:4px;
+}
+.result-line{white-space:nowrap}
+.total-row{font-weight:800;background:#f8fafc}
+.balance-row{font-weight:800}
+.balance-positive{color:var(--green)}
+.balance-negative{color:var(--danger)}
+.note{font-size:11px;color:var(--muted);padding:6px 8px}
+.actions{display:flex;gap:6px;padding:7px 8px}
+button.action{
+  border:0;border-radius:5px;padding:8px 12px;font-weight:700;cursor:pointer;
+}
+.primary{background:#172033;color:#fff}.secondary{background:#e2e8f0}
+.scale-control{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:#fff;border:1px solid var(--border);border-radius:7px;
+  padding:5px;margin-bottom:7px;font-size:12px;
+}
+.scale-btn{
+  width:32px;height:28px;border:1px solid var(--border);border-radius:5px;
+  background:#f1f5f9;font-size:18px;line-height:1;cursor:pointer;
+  font-weight:700;
+}
+#scaleValue{min-width:45px;text-align:center}
+.report{
+  background:#fff;border:1px solid var(--border);padding:calc(12px * var(--ui-scale));
+  font-size:calc(13px * var(--ui-scale));
+}
+.report h1{text-align:center;font-size:calc(19px * var(--ui-scale));margin:0 0 calc(2px * var(--ui-scale))}
+.report .date{text-align:center;color:var(--muted);margin-bottom:calc(9px * var(--ui-scale))}
+.report-spbu{border:1px solid var(--border);margin-bottom:9px}
+.report-spbu.green{border-top:4px solid var(--green)}
+.report-spbu.blue{border-top:4px solid var(--blue)}
+.report-spbu h2{font-size:calc(15px * var(--ui-scale));margin:0;padding:calc(6px * var(--ui-scale)) calc(8px * var(--ui-scale))}
+.report-spbu.green h2{color:var(--green)}
+.report-spbu.blue h2{color:var(--blue)}
+.report-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--border)
+}
+.report-money,.report-options{padding:0 7px 6px}
+.report-money table,.report-options table{width:100%;border-collapse:collapse}
+.report-money td,.report-options th,.report-options td{
+  border:1px solid var(--border);
+  padding:calc(3px * var(--ui-scale)) calc(5px * var(--ui-scale));
+  height:calc(25px * var(--ui-scale));
+}
+.report-money td:last-child,.report-options td:not(:first-child){text-align:right;white-space:nowrap}
+.report-options th{background:#f1f5f9}
+.report-options th:first-child{width:28%}
+.report-options td:not(:first-child),.report-options th:not(:first-child){text-align:right}
+.report-options td:first-child{text-align:left;font-weight:600}
+.report-total{font-weight:800;background:#f8fafc}
+.report-grand{
+  border:1px solid var(--border);padding:calc(8px * var(--ui-scale));
+  text-align:center;font-weight:800;font-size:calc(15px * var(--ui-scale));
+}
+.report-positive{color:var(--green);font-weight:800}
+.report-negative{color:var(--danger);font-weight:800}
+.price-form{
+  display:grid;grid-template-columns:180px 1fr 1fr 130px;
+  gap:6px;align-items:end;padding:8px;
+}
+.price-form label{font-weight:700;font-size:11px;color:var(--muted)}
+.price-form input,.price-form select{margin-top:3px}
+.price-table th{background:#f1f5f9}
+.price-table td{text-align:right}
+.price-table td:first-child,.price-table td:nth-child(2){text-align:left}
+.price-table td:nth-child(1),.price-table td:nth-child(2){text-align:left}
+.price-table .delete{color:var(--danger);cursor:pointer;font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:15px}
+@media(max-width:760px){
+  body{font-size:12px}
+  .app{padding:5px}
+  .form-head{grid-template-columns:120px 1fr}
+  .form-head label:nth-of-type(2),.form-head input:nth-of-type(2){grid-column:auto}
+  .report-grid{grid-template-columns:1fr}
+  .price-form{grid-template-columns:1fr 1fr}
+  .purchase-table th:first-child{width:25%}
+  .qty,.qty-select{width:48px;min-width:48px}
+  .extra-fields{grid-template-columns:minmax(0,1fr) 130px}
+}
+
+/* Supabase connection */
+.connection-card{margin-bottom:8px}
+.connection-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border)}
+.connection-status{display:flex;align-items:center;gap:7px;font-weight:800}
+.status-dot{width:10px;height:10px;border-radius:50%;background:#94a3b8;display:inline-block}
+.status-online .status-dot{background:var(--green)}
+.status-offline .status-dot{background:var(--danger)}
+.status-sync .status-dot{background:#f59e0b}
+.connection-body{padding:8px 10px;display:none}
+.connection-body.open{display:block}
+.connection-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.connection-grid .full{grid-column:1/-1}
+.connection-grid label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px}
+.connection-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:7px}
+.connection-message{font-size:11px;color:var(--muted);margin-top:6px;white-space:pre-wrap}
+.auth-user{font-size:11px;color:var(--muted)}
+@media(max-width:760px){.connection-grid{grid-template-columns:1fr}.connection-grid .full{grid-column:auto}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="app">
+
+<div class="card connection-card">
+  <div class="connection-bar">
+    <div class="connection-status" id="connectionStatus"><span class="status-dot"></span><span id="connectionStatusText">BELUM TERHUBUNG</span></div>
+    <button class="action secondary" onclick="toggleConnection()" id="connectionToggle">KONFIGURASI</button>
+  </div>
+  <div class="connection-body" id="connectionBody">
+    <div class="connection-grid">
+      <div class="full"><label>SUPABASE PROJECT URL</label><input id="supabaseUrl" type="text" value="https://rrrpycfmugqqpsotays.supabase.co" readonly></div>
+      <div class="full"><label>PUBLISHABLE KEY</label><input id="supabaseKey" type="password" placeholder="Tempel sb_publishable_... di sini" autocomplete="off"></div>
+      <div><label>EMAIL LOGIN</label><input id="authEmail" type="email" placeholder="Email user Supabase"></div>
+      <div><label>PASSWORD</label><input id="authPassword" type="password" placeholder="Password user Supabase" autocomplete="current-password"></div>
+    </div>
+    <div class="connection-actions">
+      <button class="action primary" onclick="saveSupabaseConfig()">SIMPAN &amp; TES KONEKSI</button>
+      <button class="action secondary" onclick="loginSupabase()">LOGIN</button>
+      <button class="action secondary" onclick="logoutSupabase()">LOGOUT</button>
+      <button class="action secondary" onclick="loadSupabaseMaster()">AMBIL MASTER SUPABASE</button>
+    </div>
+    <div class="auth-user" id="authUser">Belum login.</div>
+    <div class="connection-message" id="connectionMessage">Publishable Key boleh digunakan di browser. Jangan masukkan Secret Key.</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('form',this)">Form Estimasi</button>
+  <button class="tab" onclick="showTab('report',this)">Laporan</button>
+  <button class="tab" onclick="showTab('prices',this)">Master Harga</button>
+</div>
+
+<section id="form" class="panel active">
+  <div class="card">
+    <div class="title">ESTIMASI PEMBELIAN BBM</div>
+    <div class="form-head">
+      <label>Tanggal Form</label><input id="formDate" type="date" onchange="refreshAll()">
+      <label>Tanggal Pengambilan</label><input id="takeDate" type="date">
+    </div>
+  </div>
+
+  <div id="formSpbus"></div>
+  <div class="actions">
+    <button class="action primary" onclick="showReport()">PREVIEW LAPORAN</button>
+    <button class="action secondary" onclick="resetForm()">RESET</button>
+  </div>
+</section>
+
+<section id="report" class="panel">
+  <div class="scale-control">
+    <span>UKURAN TAMPILAN</span>
+    <button class="scale-btn" onclick="changeScale(-5)">−</button>
+    <strong id="scaleValue">100%</strong>
+    <button class="scale-btn" onclick="changeScale(5)">+</button>
+  </div>
+  <div class="report" id="reportContent"></div>
+  <div class="actions">
+    <button class="action primary" onclick="window.print()">CETAK / SIMPAN PDF</button>
+    <button class="action secondary" onclick="showTab('form',document.querySelectorAll('.tab')[0])">KEMBALI KE FORM</button>
+  </div>
+</section>
+
+<section id="prices" class="panel">
+  <div class="card">
+    <div class="title">MASTER HARGA BBM</div>
+    <div class="subtitle">Harga diinput dalam satuan 8 KL. Setelah LOGIN, master harga Supabase menjadi sumber harga aplikasi; cache lokal dipakai saat offline.</div>
+    <div class="price-form">
+      <div><label>TANGGAL BERLAKU</label><input id="priceDate" type="date"></div>
+      <div><label>PRODUK</label><select id="priceProduct"></select></div>
+      <div><label>HARGA / 8 KL</label><input id="priceValue" class="price-input" type="text" inputmode="numeric" placeholder="Contoh: 80.000.000" oninput="formatNominalInput(this)"></div>
+      <button class="action primary" onclick="addPrice()">SIMPAN HARGA</button>
+    </div>
+  </div>
+  <div class="card">
+    <table class="price-table">
+      <thead><tr><th>Tanggal Berlaku</th><th>Produk</th><th>Harga / 8 KL</th><th></th></tr></thead>
+      <tbody id="priceRows"></tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<script>
+const SUPABASE_URL_DEFAULT="https://rrrpycfmugqqpsotays.supabase.co";
+let supabaseClient=null;
+let supabaseMasterLoaded=false;
+let supabaseProducts=[];
+let supabaseMappings=[];
+
+let PRODUCTS=["Pertalite","Biosolar","Pertamax","Pertamax Turbo","Dexlite"];
+let SPBUS=[
+ {id:"pangkajene",name:"SPBU-74.906.16 PANGKAJENE",color:"green",extra:[],supabaseId:1},
+ {id:"labakkang",name:"SPBU-74.906.07 LABAKKANG",color:"blue",extra:["TF Dex PT Citatah (hari ini)"],supabaseId:2}
+];
+
+function setConnectionStatus(type,text){
+ const el=document.getElementById("connectionStatus");
+ el.className="connection-status "+(type?"status-"+type:"");
+ document.getElementById("connectionStatusText").textContent=text;
+}
+function connectionMessage(msg){document.getElementById("connectionMessage").textContent=msg||""}
+function toggleConnection(){document.getElementById("connectionBody").classList.toggle("open")}
+function getSupabaseConfig(){
+ const url=localStorage.getItem("supabaseUrl")||SUPABASE_URL_DEFAULT;
+ const key=localStorage.getItem("supabasePublishableKey")||"";
+ return {url,key};
+}
+function initSupabaseClient(){
+ const cfg=getSupabaseConfig();
+ document.getElementById("supabaseUrl").value=cfg.url;
+ const key=cfg.key;
+ if(!key){supabaseClient=null;setConnectionStatus("","BELUM TERHUBUNG");return false}
+ if(!window.supabase){setConnectionStatus("offline","LIBRARY BELUM TERMUAT");return false}
+ try{supabaseClient=window.supabase.createClient(cfg.url,key);return true}
+ catch(e){supabaseClient=null;setConnectionStatus("offline","KONFIGURASI SALAH");connectionMessage(e.message);return false}
+}
+async function saveSupabaseConfig(){
+ const url=document.getElementById("supabaseUrl").value.trim();
+ const key=document.getElementById("supabaseKey").value.trim();
+ if(!url||!key){alert("Project URL dan Publishable Key wajib diisi.");return}
+ localStorage.setItem("supabaseUrl",url);
+ localStorage.setItem("supabasePublishableKey",key);
+ if(!initSupabaseClient())return;
+ setConnectionStatus("sync","MENGUJI...");
+ connectionMessage("Menghubungkan ke Supabase...");
+ try{
+   // Pada tahap ini kita hanya memastikan URL + Publishable Key dapat
+   // membentuk Supabase client. Pemeriksaan jaringan dan Auth dilakukan
+   // saat LOGIN, sehingga error browser/CORS terlihat lebih jelas.
+   setConnectionStatus("online","CLIENT SIAP");
+   connectionMessage("Client Supabase berhasil dibuat. Silakan LOGIN untuk menguji koneksi jaringan dan Auth.");
+ }catch(e){
+   setConnectionStatus("offline","KONEKSI GAGAL");
+   connectionMessage("Gagal terhubung: "+(e.message||e));
+ }
+}
+function updateAuthUser(user){
+ document.getElementById("authUser").textContent=user?"Login: "+(user.email||user.id):"Belum login.";
+}
+async function loginSupabase(){
+ if(!supabaseClient && !initSupabaseClient()){alert("Simpan Project URL + Publishable Key terlebih dahulu.");return}
+ const email=document.getElementById("authEmail").value.trim();
+ const password=document.getElementById("authPassword").value;
+ if(!email||!password){alert("Isi email dan password user Supabase.");return}
+ setConnectionStatus("sync","LOGIN...");
+ try{
+  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  updateAuthUser(data.user);
+  setConnectionStatus("online","LOGIN BERHASIL");
+  connectionMessage("Login berhasil. Mengambil master Supabase...");
+  await loadSupabaseMaster(true);
+ }catch(e){setConnectionStatus("offline","LOGIN GAGAL");connectionMessage("Login gagal: "+(e.message||e));}
+}
+async function logoutSupabase(){
+ if(!supabaseClient)return;
+ const {error}=await supabaseClient.auth.signOut();
+ if(error){connectionMessage("Logout gagal: "+error.message);return}
+ updateAuthUser(null);setConnectionStatus("","TERHUBUNG, BELUM LOGIN");connectionMessage("Logout berhasil.");
+}
+async function loadSupabaseMaster(silent=false){
+ if(!supabaseClient && !initSupabaseClient()){if(!silent)alert("Konfigurasi Supabase belum disimpan.");return false}
+ const {data:sessionData}=await supabaseClient.auth.getSession();
+ if(!sessionData?.session?.user){
+   setConnectionStatus("offline","BELUM LOGIN");
+   connectionMessage("Master Supabase dilindungi RLS. Silakan LOGIN terlebih dahulu.");
+   if(!silent)alert("Silakan LOGIN terlebih dahulu untuk mengambil master Supabase.");
+   return false;
+ }
+ setConnectionStatus("sync","MENGAMBIL MASTER...");
+ try{
+  const [spbuRes,prodRes,mapRes,priceRes]=await Promise.all([
+   supabaseClient.from("spbu_master").select("id,kode_spbu,nama_spbu,warna,aktif").eq("aktif",true).order("id"),
+   supabaseClient.from("produk_master").select("id,nama_produk,kode_produk,satuan,aktif").eq("aktif",true).order("id"),
+   supabaseClient.from("produk_transaksi_master").select("id,spbu_id,produk_id,ship_to,sold_to,aktif").eq("aktif",true),
+   supabaseClient.from("harga_bbm_history").select("id,produk_id,tanggal_berlaku,harga_8kl").order("tanggal_berlaku",{ascending:false})
+  ]);
+  for(const r of [spbuRes,prodRes,mapRes,priceRes])if(r.error)throw r.error;
+  const activeSpbus=spbuRes.data||[];
+  supabaseProducts=prodRes.data||[];
+  supabaseMappings=mapRes.data||[];
+  if(activeSpbus.length){
+    SPBUS=activeSpbus.map(x=>({
+      id:(x.kode_spbu||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||String(x.id),
+      name:(x.kode_spbu?x.kode_spbu+" ":"")+String(x.nama_spbu||"").toUpperCase(),
+      color:(x.warna||"").toLowerCase()==="biru"?"blue":"green",
+      extra:[], supabaseId:x.id
+    }));
+    const lab=SPBUS.find(x=>String(x.supabaseId)==="2" || x.name.includes("LABAKKANG"));
+    if(lab){
+      const existing=(typeof data!=="undefined" && data?.spbus?.[lab.id]) || null;
+      lab.extra=[existing?.extraLabel || "Komponen tambahan"];
+    }
+  }
+  if(supabaseProducts.length){PRODUCTS=supabaseProducts.map(p=>p.nama_produk);}
+  // Pastikan struktur data lokal mengikuti master SPBU terbaru.
+  SPBUS.forEach(s=>{
+    if(!data.spbus[s.id]) data.spbus[s.id]={saldo:0,shift1:0,shift2:0,setoran:0,extraLabel:"Komponen tambahan",extras:0,qty:[{},{},{}]};
+    for(let oi=0;oi<3;oi++) if(!data.spbus[s.id].qty[oi]) data.spbus[s.id].qty[oi]={};
+  });
+  const productNameById=Object.fromEntries(supabaseProducts.map(p=>[p.id,p.nama_produk]));
+  prices=(priceRes.data||[]).map(x=>({id:x.id,date:x.tanggal_berlaku,product:productNameById[x.produk_id],productId:x.produk_id,price:Number(x.harga_8kl)})).filter(x=>x.product);
+  localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+  supabaseMasterLoaded=true;
+  setConnectionStatus("online","MASTER SUPABASE TERLOAD");
+  connectionMessage("Berhasil: "+activeSpbus.length+" SPBU, "+supabaseProducts.length+" produk, "+supabaseMappings.length+" mapping, "+prices.length+" riwayat harga.");
+  renderPrices();renderForm();renderReport();
+  return true;
+ }catch(e){setConnectionStatus("offline","MASTER GAGAL DIMUAT");connectionMessage("Gagal mengambil master: "+(e.message||e)+"\nPastikan sudah LOGIN dan RLS policy SELECT sudah aktif.");return false;}
+}
+
+let prices=JSON.parse(localStorage.getItem("bbmPrices8KL")||"null");
+if(!prices){
+  const old8=JSON.parse(localStorage.getItem("bbmPricesKL")||"null");
+  const oldLiter=JSON.parse(localStorage.getItem("bbmPrices")||"null");
+  if(old8){
+    // Migrasi prototype sebelumnya: harga/KL -> harga/8 KL
+    prices=old8.map(x=>({...x,price:Number(x.price||0)*8}));
+  }else if(oldLiter){
+    // Migrasi data harga/liter lama -> harga/8 KL
+    prices=oldLiter.map(x=>({...x,price:Number(x.price||0)*8000}));
+  }else{
+    prices=[
+      {date:"2026-09-01",product:"Pertalite",price:80000000},
+      {date:"2026-09-01",product:"Biosolar",price:54400000},
+      {date:"2026-09-01",product:"Pertamax",price:98400000},
+      {date:"2026-09-01",product:"Pertamax Turbo",price:104800000},
+      {date:"2026-09-01",product:"Dexlite",price:110800000}
+    ];
+  }
+  localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+}
+
+let data=JSON.parse(localStorage.getItem("bbmForm")||"null")||makeBlank();
+// Kompatibilitas data prototype lama: setiap SPBU sekarang memiliki satu baris
+// komponen tambahan yang keterangannya dapat diedit dan nilainya bisa +/-.
+SPBUS.forEach(s=>{
+  const x=data.spbus[s.id];
+  if(x){
+    if(typeof x.extraLabel!=="string") x.extraLabel="Komponen tambahan";
+    if(typeof x.extras!=="number") x.extras=Number(x.extras)||0;
+  }
+});
+
+function makeBlank(){
+ const x={date:"2026-09-11",takeDate:"",spbus:{}};
+ SPBUS.forEach(s=>{
+   x.spbus[s.id]={saldo:0,shift1:0,shift2:0,setoran:0,extraLabel:"Komponen tambahan",extras:0,qty:[{},{},{}]};
+ });
+ return x;
+}
+function fmt(n){return new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(Number(n)||0)}
+function parseDate(v){return v?new Date(v+"T00:00:00"):null}
+function effectivePrice(product,date){
+ const d=parseDate(date);
+ if(!d)return 0;
+ const list=prices.filter(x=>x.product===product&&parseDate(x.date)<=d)
+                  .sort((a,b)=>parseDate(b.date)-parseDate(a.date));
+ return list.length?Number(list[0].price):0;
+}
+function save(){localStorage.setItem("bbmForm",JSON.stringify(data));localStorage.setItem("bbmPrices8KL",JSON.stringify(prices))}
+function showTab(id,btn){
+ document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+ if(id==="report")renderReport();
+ if(id==="prices")renderPrices();
+}
+async function init(){
+ initSupabaseClient();
+ if(supabaseClient){
+   try{
+     const {data:sessionData}=await supabaseClient.auth.getSession();
+     updateAuthUser(sessionData?.session?.user||null);
+     if(sessionData?.session?.user){
+       setConnectionStatus("online","LOGIN TERSIMPAN");
+       await loadSupabaseMaster(true);
+     }else{
+       setConnectionStatus("","CLIENT SIAP");
+       connectionMessage("Supabase client siap. LOGIN diperlukan untuk membaca master.");
+     }
+   }catch(e){setConnectionStatus("offline","SUPABASE TIDAK DAPAT DIAKSES");connectionMessage(e.message||String(e));}
+ }
+ document.getElementById("formDate").value=data.date;
+ document.getElementById("takeDate").value=data.takeDate||"";
+ const sel=document.getElementById("priceProduct");
+ sel.innerHTML=PRODUCTS.map(p=>`<option>${p}</option>`).join("");
+ renderForm();
+ renderPrices();
+ renderReport();
+}
+function refreshAll(){
+ data.date=document.getElementById("formDate").value;
+ data.takeDate=document.getElementById("takeDate").value;
+ save();renderForm();renderReport();
+}
+function num(v){
+  if(typeof v === "string") v=v.replace(/\./g,"").replace(/,/g,"");
+  return Number(v)||0;
+}
+function formatNominalInput(el){
+  const source=String(el.value||"");
+  const negative=/^-/.test(source.trim());
+  const raw=source.replace(/\D/g,"");
+  if(!raw){el.value="";return}
+  el.value=(negative?"-":"")+fmt(raw);
+}
+function calc(s){
+ const jumlah=s.shift1+s.shift2+s.setoran+s.extras;
+ const totalSaldo=s.saldo+jumlah;
+ return {jumlah,totalSaldo};
+}
+function optionCalc(s,oi){
+ let total=0,totalQty=0,rows=[];
+ PRODUCTS.forEach(p=>{
+   const q=num(s.qty[oi][p]||0);
+   if(q>0){
+     const val=(q/8)*effectivePrice(p,data.date);
+     total+=val;totalQty+=q;rows.push({p,q,val});
+   }
+ });
+ return {total,totalQty,rows,balance:calc(s).totalSaldo-total};
+}
+function renderForm(){
+ const root=document.getElementById("formSpbus");
+ root.innerHTML=SPBUS.map(s=>{
+   const x=data.spbus[s.id], c=calc(x);
+   return `<div class="card ${s.color}">
+    <div class="spbu-head">${s.name}</div>
+    <table class="money-table">
+      <tbody>
+       <tr><td>SALDO AWAL</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.saldo?fmt(x.saldo):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','saldo',this.value)"></td></tr>
+       <tr class="extra-row"><td colspan="2"><div class="extra-fields"><input class="extra-label" type="text" value="${escapeHtml(x.extraLabel||"Komponen tambahan")}" placeholder="Keterangan komponen tambahan" onchange="setExtraLabel('${s.id}',this.value)"><input class="money-input" type="text" inputmode="numeric" value="${x.extras?fmt(x.extras):""}" placeholder="0 / -0" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','extras',this.value)"></div></td></tr>
+       <tr><td>SHIFT-1</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.shift1?fmt(x.shift1):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','shift1',this.value)"></td></tr>
+       <tr><td>SHIFT-2</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.shift2?fmt(x.shift2):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','shift2',this.value)"></td></tr>
+       <tr><td>SETORAN AWAL</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.setoran?fmt(x.setoran):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','setoran',this.value)"></td></tr>
+       <tr class="calc"><td>JUMLAH</td><td>${fmt(c.jumlah)}</td></tr>
+       <tr class="calc"><td>TOT SALDO REKENING</td><td>${fmt(c.totalSaldo)}</td></tr>
+      </tbody>
+    </table>
+    <div class="section-title">OPSI PEMBELIAN</div>
+    <table class="purchase-table">
+      <thead><tr><th>PRODUK</th><th>OPSI-1</th><th>OPSI-2</th><th>OPSI-3</th></tr></thead>
+      <tbody>
+       ${PRODUCTS.map(p=>`<tr>
+        <td>${p}</td>
+        ${[0,1,2].map(oi=>`<td><div class="inline-editor"><select class="qty-select" onchange="setQty('${s.id}',${oi},'${p}',this.value)">
+          <option value="">—</option>
+          ${(p==="Dexlite"?[4,8,16,32]:[8,16,24]).map(q=>`<option value="${q}" ${Number(x.qty[oi][p]||0)===q?'selected':''}>${q}</option>`).join("")}
+        </select> KL <span class="result-line">- Rp. ${fmt((num(x.qty[oi][p]||0)/8)*effectivePrice(p,data.date))}</span></div></td>`).join("")}
+       </tr>`).join("")}
+       <tr class="total-row"><td>TOT KEBUTUHAN PEMBELIAN</td>${[0,1,2].map(oi=>`<td>${fmt(optionCalc(x,oi).total)}</td>`).join("")}</tr>
+       <tr class="balance-row"><td>LEBIH/KURANG SALDO</td>${[0,1,2].map(oi=>{
+          const b=optionCalc(x,oi).balance;
+          return `<td class="${b<0?'balance-negative':'balance-positive'}">${fmt(b)}</td>`;
+       }).join("")}</tr>
+      </tbody>
+    </table>
+   </div>`
+ }).join("");
+}
+function escapeHtml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function setExtraLabel(id,v){data.spbus[id].extraLabel=String(v||"").trim()||"Komponen tambahan";save();renderForm();renderReport()}
+function setMoney(id,key,v){data.spbus[id][key]=num(v);save();renderForm();renderReport()}
+function setQty(id,oi,p,v){data.spbus[id].qty[oi][p]=num(v);save();renderForm();renderReport()}
+function showReport(){renderReport();showTab("report",document.querySelectorAll(".tab")[1])}
+function renderReport(){
+ const fd=data.date?new Date(data.date+"T00:00:00"):new Date();
+ const dateText=fd.toLocaleDateString("id-ID",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+ let html=`<h1>ESTIMASI PEMBELIAN BBM</h1><div class="date">${dateText}</div>`;
+ let grand=0;
+ SPBUS.forEach(s=>{
+   const x=data.spbus[s.id], c=calc(x);
+   let opts=[0,1,2].map(oi=>({oi,...optionCalc(x,oi)})).filter(o=>o.rows.length>0);
+   opts.forEach(o=>grand+=o.total);
+   html+=`<div class="report-spbu ${s.color}">
+    <h2>${s.name}</h2>
+    <div class="report-grid">
+     <div class="report-money">
+      <table>
+       <tr><td>SALDO AWAL</td><td>${fmt(x.saldo)}</td></tr>
+       <tr><td class="report-extra-label">${escapeHtml(x.extraLabel||"Komponen tambahan")}</td><td>${fmt(x.extras)}</td></tr>
+       <tr><td>SHIFT-1</td><td>${fmt(x.shift1)}</td></tr>
+       <tr><td>SHIFT-2</td><td>${fmt(x.shift2)}</td></tr>
+       <tr><td>SETORAN AWAL</td><td>${fmt(x.setoran)}</td></tr>
+       <tr class="report-total"><td>JUMLAH</td><td>${fmt(c.jumlah)}</td></tr>
+       <tr class="report-total"><td>TOT SALDO REKENING</td><td>${fmt(c.totalSaldo)}</td></tr>
+      </table>
+     </div>
+     <div class="report-options">
+      ${opts.length?`<table><thead><tr><th>PRODUK</th>${opts.map(o=>`<th>OPSI-${o.oi+1}</th>`).join("")}</tr></thead><tbody>
+       ${PRODUCTS.filter(p=>opts.some(o=>o.rows.some(r=>r.p===p))).map(p=>`<tr><td>${p}</td>${opts.map(o=>{
+          const r=o.rows.find(r=>r.p===p);
+          return `<td>${r?`${fmt(r.q)} KL - Rp. ${fmt(r.val)}`:""}</td>`;
+       }).join("")}</tr>`).join("")}
+       <tr class="report-total"><td>TOT KEBUTUHAN PEMBELIAN</td>${opts.map(o=>`<td>${fmt(o.total)}</td>`).join("")}</tr>
+       <tr><td>LEBIH/KURANG SALDO</td>${opts.map(o=>`<td class="${o.balance<0?'report-negative':'report-positive'}">${fmt(o.balance)}</td>`).join("")}</tr>
+      </tbody></table>`:`<div class="empty">Belum ada opsi pembelian.</div>`}
+     </div>
+    </div>
+   </div>`;
+ });
+ html+=`<div class="report-grand">
+ TOTAL ESTIMASI PEMBELIAN 2 SPBU &nbsp; ${fmt(grand)}
+ </div>`;
+ document.getElementById("reportContent").innerHTML=html;
+}
+function addPrice(){
+ const date=document.getElementById("priceDate").value;
+ const product=document.getElementById("priceProduct").value;
+ const price=num(document.getElementById("priceValue").value);
+ if(!date||!product||price<=0){alert("Lengkapi tanggal, produk, dan harga.");return}
+ prices.push({date,product,price});save();
+ document.getElementById("priceValue").value="";
+ renderPrices();renderForm();renderReport();
+}
+function renderPrices(){
+ const rows=[...prices].sort((a,b)=>parseDate(b.date)-parseDate(a.date));
+ document.getElementById("priceRows").innerHTML=rows.length?rows.map((x,i)=>`<tr>
+ <td>${parseDate(x.date).toLocaleDateString("id-ID")}</td>
+ <td>${x.product}</td><td>${fmt(x.price)}</td>
+ <td class="delete" onclick="deletePrice(${prices.indexOf(x)})">Hapus</td></tr>`).join("")
+ :`<tr><td colspan="4" class="empty">Belum ada data harga.</td></tr>`;
+}
+function deletePrice(i){if(confirm("Hapus data harga ini?")){prices.splice(i,1);save();renderPrices();renderForm();renderReport()}}
+let displayScale = Number(localStorage.getItem("bbmDisplayScale") || 100);
+displayScale = Math.min(125, Math.max(75, displayScale));
+
+function applyScale(){
+ document.documentElement.style.setProperty("--ui-scale", displayScale/100);
+ const el=document.getElementById("scaleValue");
+ if(el) el.textContent=displayScale+"%";
+ localStorage.setItem("bbmDisplayScale", displayScale);
+}
+function changeScale(delta){
+ displayScale=Math.min(125,Math.max(75,displayScale+delta));
+ applyScale();
+}
+
+function resetForm(){
+ if(!confirm("Kosongkan seluruh input form?"))return;
+ data=makeBlank();data.date=new Date().toISOString().slice(0,10);
+ document.getElementById("formDate").value=data.date;document.getElementById("takeDate").value="";
+ save();renderForm();renderReport();
+}
+init();
+applyScale();
+</script>
+</body>
+</html>
