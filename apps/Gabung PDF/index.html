@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Page Size Normalizer & Merger</title>
+    <!-- Tailwind CSS CDN for Utility Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0284c7', 600: '#0369a1', 700: '#075985' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PDF.js & pdf-lib CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+    <style>
+        .drag-over { border-color: #0284c7 !important; background-color: rgba(2, 132, 199, 0.05); }
+        .ghost-item { opacity: 0.4; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #475569; }
+        /* Page Organizer */
+        .page-card { user-select:none; cursor:grab; transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease; }
+        .page-card.dragging { opacity:.45; transform:scale(.97); }
+        .page-card.drop-target { box-shadow:0 0 0 2px #0284c7; }
+        .page-thumb-wrap { aspect-ratio:210 / 297; }
+        .page-thumb-wrap canvas { display:block; width:100%; height:100%; object-fit:contain; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-sans transition-colors duration-200">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brand-600 text-white p-2 rounded-lg">
+                    <i class="fa-solid fa-file-pdf text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">PDF Normalizer & Merger</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Penyeragam Ukuran Halaman PDF Vektor & Penggabung Dokumen</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="text-xs bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-800 font-medium">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> 100% Lokal (Client-Side)
+                </span>
+                <button id="themeToggle" class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-moon text-lg" id="themeIcon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- File Upload Area -->
+        <section id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 text-center bg-white dark:bg-slate-950 transition hover:border-brand-500 cursor-pointer relative">
+            <input type="file" id="fileInput" multiple accept=".pdf" class="hidden">
+            <div class="flex flex-col items-center justify-center space-y-3">
+                <div class="w-16 h-16 bg-brand-50 dark:bg-brand-950/50 text-brand-600 rounded-full flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div>
+                    <p class="text-base font-semibold">Tarik & Lepaskan File PDF di Sini</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Dapat memilih banyak file sekaligus (.pdf)</p>
+                </div>
+                <button onclick="document.getElementById('fileInput').click()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg shadow-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Tambah PDF
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Workspace (Grid 2 Column) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Panel: File List & Management -->
+            <div class="lg:col-span-7 space-y-6">
+                <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <h2 class="font-semibold text-base">Daftar Dokumen</h2>
+                            <span id="fileCountBadge" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs px-2 py-0.5 rounded-full font-bold">0 File</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="clearAllBtn" class="text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 font-medium px-2 py-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/50 transition hidden">
+                                <i class="fa-solid fa-trash mr-1"></i> Hapus Semua
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- File Table / Reorder List -->
+                    <div class="overflow-x-auto min-h-[200px] max-h-[420px] overflow-y-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 font-semibold uppercase sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-2.5 w-10">Urutan</th>
+                                    <th class="p-2.5">Nama File</th>
+                                    <th class="p-2.5 text-center">Hal</th>
+                                    <th class="p-2.5">Ukuran Asli Halaman</th>
+                                    <th class="p-2.5 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fileListTable" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Dynamic Render -->
+                                <tr id="emptyTableNotice">
+                                    <td colspan="5" class="text-center py-12 text-slate-400 dark:text-slate-600">
+                                        <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
+                                        Belum ada file PDF yang ditambahkan.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Per-Page Detail Drawer -->
+                <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+                    <h3 class="font-semibold text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-brand-600"></i> Detail Halaman Dokumen
+                    </h3>
+                    <div id="pageInfoDetail" class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg min-h-[60px] flex items-center">
+                        Pilih atau klik file PDF di atas untuk melihat analisis ukuran individual per halaman.
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <div><h3 class="font-semibold text-sm flex items-center gap-2"><i class="fa-solid fa-table-cells-large text-brand-600"></i> Pengaturan Urutan Halaman</h3><p id="pageOrderSummary" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Belum ada halaman.</p></div>
+                        <button id="openPageOrganizerBtn" disabled class="shrink-0 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-3 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition"><i class="fa-solid fa-list-ol mr-1"></i> Atur Halaman</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Output Settings & Preview -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Output Configurations -->
+                <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                    <h2 class="font-semibold text-base border-b border-slate-100 dark:border-slate-800 pb-2">Pengaturan Target</h2>
+
+                    <!-- Target Size Selection -->
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Ukuran Target Halaman</label>
+                        <select id="targetPreset" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="A4_P">A4 Portrait (210 × 297 mm)</option>
+                            <option value="A4_L">A4 Landscape (297 × 210 mm)</option>
+                            <option value="F4_P">F4 / Folio Portrait (215 × 330 mm)</option>
+                            <option value="F4_L">F4 / Folio Landscape (330 × 215 mm)</option>
+                            <option value="LETTER_P">Letter Portrait (216 × 279 mm)</option>
+                            <option value="LETTER_L">Letter Landscape (279 × 216 mm)</option>
+                            <option value="LEGAL_P">Legal Portrait (216 × 356 mm)</option>
+                            <option value="A3_P">A3 Portrait (297 × 420 mm)</option>
+                            <option value="A3_L">A3 Landscape (420 × 297 mm)</option>
+                            <option value="A5_P">A5 Portrait (148 × 210 mm)</option>
+                            <option value="CUSTOM">Custom (Sesuai Input)</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Dimensions (Hidden by default) -->
+                    <div id="customDimensionBox" class="grid grid-cols-2 gap-3 hidden bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+                        <div>
+                            <label class="text-[11px] text-slate-500">Lebar (mm)</label>
+                            <input type="number" id="customWidth" value="210" min="10" step="0.1" class="w-full text-xs p-2 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-500">Tinggi (mm)</label>
+                            <input type="number" id="customHeight" value="297" min="10" step="0.1" class="w-full text-xs p-2 rounded border border-slate-300 dark:border-slate-700 dark:bg-slate-800">
+                        </div>
+                    </div>
+
+                    <!-- Adjustment Method -->
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Metode Penyesuaian (Scaling Mode)</label>
+                        <select id="scaleMode" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="FIT">FIT (Skala Proporsional, Posisi Tengah) — Disarankan</option>
+                            <option value="FILL">FILL (Memenuhi Target, Potong Sisi Melebihi)</option>
+                            <option value="STRETCH">STRETCH (Penuhi Seluruh Halaman, Ubah Aspect Ratio)</option>
+                            <option value="CENTER">ORIGINAL CENTER (Tanpa Scaling Jika Muat, Tengah)</option>
+                        </select>
+                        <p id="scaleWarning" class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 hidden">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Mode Stretch dapat menyebabkan dokumen terlihat melebar atau memanjang.
+                        </p>
+                    </div>
+
+                    <!-- Margins & Orientation -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Margin (mm)</label>
+                            <select id="marginPreset" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                                <option value="0">0 mm (Tanpa Margin)</option>
+                                <option value="3">3 mm</option>
+                                <option value="5" selected>5 mm (Default)</option>
+                                <option value="10">10 mm</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Orientasi Mode</label>
+                            <select id="autoOrientation" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+                                <option value="AUTO">Auto (Ikuti Target)</option>
+                                <option value="PORTRAIT">Paksa Portrait</option>
+                                <option value="LANDSCAPE">Paksa Landscape</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Output Filename -->
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nama File Hasil</label>
+                        <input type="text" id="outputFileName" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" placeholder="PDF_Normalized_Output.pdf">
+                    </div>
+                </div>
+
+                <!-- Visual Live Preview Container -->
+                <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+                    <h3 class="font-semibold text-sm">Visual Live Preview</h3>
+                    <div class="grid grid-cols-2 gap-3 bg-slate-100 dark:bg-slate-900 p-4 rounded-lg items-center justify-center text-center">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Halaman Asli</span>
+                            <div class="w-full h-36 border border-slate-300 dark:border-slate-700 bg-white flex items-center justify-center relative overflow-hidden shadow-sm mx-auto rounded">
+                                <canvas id="previewOriginalCanvas" class="max-h-full max-w-full object-contain"></canvas>
+                            </div>
+                            <span id="previewOriginalMeta" class="text-[10px] text-slate-500 mt-1 block">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600 block mb-1">Simulasi Target</span>
+                            <div class="w-full h-36 border border-brand-300 dark:border-brand-800 bg-white flex items-center justify-center relative overflow-hidden shadow-sm mx-auto rounded">
+                                <canvas id="previewTargetCanvas" class="max-h-full max-w-full object-contain"></canvas>
+                            </div>
+                            <span id="previewTargetMeta" class="text-[10px] text-brand-600 font-medium mt-1 block">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button & Execution Area -->
+                <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                    <button id="processBtn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 rounded-xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> NORMALIZE & MERGE PDF
+                    </button>
+
+                    <!-- Progress Indicator Box -->
+                    <div id="progressBox" class="hidden space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span id="progressStatus">Memproses dokumen...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                            <div id="progressBar" class="bg-brand-600 h-full w-0 transition-all duration-200"></div>
+                        </div>
+                    </div>
+
+                    <!-- Validation Summary Card -->
+                    <div id="validationCard" class="hidden bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-4 rounded-xl space-y-2">
+                        <div class="flex items-center text-emerald-700 dark:text-emerald-400 font-bold text-xs gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> Proses Selesai & Tervalidasi
+                        </div>
+                        <div class="text-[11px] grid grid-cols-2 gap-x-2 gap-y-1 text-slate-600 dark:text-slate-300">
+                            <div>Total Hal Diproses: <strong id="valPages">0</strong></div>
+                            <div>Ukuran Seragam: <strong id="valUniform">Ya ✓</strong></div>
+                            <div>Ukuran Asli Total: <strong id="valOrigSize">0 MB</strong></div>
+                            <div>Perkiraan Hasil: <strong id="valOutputSize">0 MB</strong></div>
+                        </div>
+                        <a id="downloadBtn" class="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 rounded-lg shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i> DOWNLOAD PDF SEKARANG
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Page Organizer Modal -->
+    <div id="pageOrganizerModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm p-4">
+      <div class="w-full max-w-6xl h-[92vh] mx-auto bg-white dark:bg-slate-950 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4"><div><h2 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-table-cells-large text-brand-600"></i> Pengaturan Urutan Halaman</h2><p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Tarik kartu halaman untuk mengubah urutan PDF hasil.</p></div><button id="closePageOrganizerBtn" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+        <div class="px-5 py-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2"><span id="organizerPageCount" class="text-xs font-semibold">0 halaman</span><div class="flex gap-2"><button id="resetPageOrderBtn" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700"><i class="fa-solid fa-rotate-left mr-1"></i> Reset Urutan</button><button id="donePageOrganizerBtn" class="text-xs px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold"><i class="fa-solid fa-check mr-1"></i> Selesai</button></div></div>
+        <div id="pageOrganizerGrid" class="flex-1 overflow-y-auto p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 content-start"></div>
+        <div class="px-5 py-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400"><i class="fa-solid fa-circle-info mr-1"></i> Hapus halaman di sini untuk mengecualikannya dari hasil PDF.</div>
+      </div>
+    </div>
+
+    <!-- Application Script Engine -->
+    <script>
+        // Setup PDF.js Worker using Blob fallback to guarantee zero-CORS restriction
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Const Metric Definitions (1 mm = 72/25.4 points)
+        textMM_TO_PTS = mm => (mm * 72) / 25.4;
+        ptsToMM = pts => (pts * 25.4) / 72;
+
+        const STANDARD_SIZES_MM = {
+            'A4_P': { w: 210, h: 297, name: 'A4 Portrait' },
+            'A4_L': { w: 297, h: 210, name: 'A4 Landscape' },
+            'F4_P': { w: 215, h: 330, name: 'F4 Portrait' },
+            'F4_L': { w: 330, h: 215, name: 'F4 Landscape' },
+            'LETTER_P': { w: 216, h: 279, name: 'Letter Portrait' },
+            'LETTER_L': { w: 279, h: 216, name: 'Letter Landscape' },
+            'LEGAL_P': { w: 216, h: 356, name: 'Legal Portrait' },
+            'A3_P': { w: 297, h: 420, name: 'A3 Portrait' },
+            'A3_L': { w: 420, h: 297, name: 'A3 Landscape' },
+            'A5_P': { w: 148, h: 210, name: 'A5 Portrait' }
+        };
+
+        // Application Global State
+        const state = {
+            files: [], // Array of loaded file objects { id, file, pdfJsDoc, numPages, pageSpecs: [] }
+            pageOrder: [], // [{ key, fileId, pageNumber }]
+            activePreviewIndex: 0,
+            isProcessing: false
+        };
+
+        // DOM Element Registry
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileListTable = document.getElementById('fileListTable');
+        const fileCountBadge = document.getElementById('fileCountBadge');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const targetPreset = document.getElementById('targetPreset');
+        const customDimensionBox = document.getElementById('customDimensionBox');
+        const customWidth = document.getElementById('customWidth');
+        const customHeight = document.getElementById('customHeight');
+        const scaleMode = document.getElementById('scaleMode');
+        const scaleWarning = document.getElementById('scaleWarning');
+        const marginPreset = document.getElementById('marginPreset');
+        const autoOrientation = document.getElementById('autoOrientation');
+        const outputFileName = document.getElementById('outputFileName');
+        const processBtn = document.getElementById('processBtn');
+        const progressBox = document.getElementById('progressBox');
+        const progressBar = document.getElementById('progressBar');
+        const progressStatus = document.getElementById('progressStatus');
+        const progressPercent = document.getElementById('progressPercent');
+        const validationCard = document.getElementById('validationCard');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const pageInfoDetail = document.getElementById('pageInfoDetail');
+        const openPageOrganizerBtn = document.getElementById('openPageOrganizerBtn');
+        const pageOrganizerModal = document.getElementById('pageOrganizerModal');
+        const closePageOrganizerBtn = document.getElementById('closePageOrganizerBtn');
+        const donePageOrganizerBtn = document.getElementById('donePageOrganizerBtn');
+        const resetPageOrderBtn = document.getElementById('resetPageOrderBtn');
+        const pageOrganizerGrid = document.getElementById('pageOrganizerGrid');
+        const organizerPageCount = document.getElementById('organizerPageCount');
+        const pageOrderSummary = document.getElementById('pageOrderSummary');
+
+        // Theme Toggle Handler
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            document.getElementById('themeIcon').className = newTheme === 'dark' ? 'fa-solid fa-sun text-lg' : 'fa-solid fa-moon text-lg';
+        });
+
+        // Set Default Dynamic Filename with Current Date
+        const todayStr = new Date().toISOString().split('T')[0];
+        outputFileName.value = `PDF_Normalized_A4_${todayStr}.pdf`;
+        updatePageOrderUI();
+
+        // File Drag & Drop Listeners
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); });
+        });
+        dropZone.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleIncomingFiles(Array.from(e.dataTransfer.files));
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleIncomingFiles(Array.from(e.target.files));
+            }
+        });
+
+        // ========================= PAGE ORGANIZER =========================
+        const makePageKey = (fileId, pageNumber) => `${fileId}::${pageNumber}`;
+        const getFileById = fileId => state.files.find(f => f.id === fileId);
+        function refreshPageOrderUI() {
+          const n = state.pageOrder.length;
+          pageOrderSummary.textContent = n
+            ? `${n} halaman — ${isDefaultPageOrder() ? 'urutan mengikuti file.' : 'urutan telah disesuaikan.'}`
+            : 'Belum ada halaman.';
+          openPageOrganizerBtn.disabled = n === 0;
+          if (!pageOrganizerModal.classList.contains('hidden')) renderPageOrganizer();
+        }
+
+        function buildDefaultPageOrder() {
+          state.pageOrder = [];
+          state.files.forEach(f => {
+            for (let p = 1; p <= f.numPages; p++) {
+              state.pageOrder.push({
+                key: makePageKey(f.id, p),
+                fileId: f.id,
+                pageNumber: p
+              });
+            }
+          });
+          refreshPageOrderUI();
+        }
+
+        function appendPagesForFile(f) {
+          for (let p = 1; p <= f.numPages; p++) {
+            state.pageOrder.push({
+              key: makePageKey(f.id, p),
+              fileId: f.id,
+              pageNumber: p
+            });
+          }
+          refreshPageOrderUI();
+        }
+
+        function removePagesForFile(fileId) {
+          state.pageOrder = state.pageOrder.filter(x => x.fileId !== fileId);
+          refreshPageOrderUI();
+        }
+
+        function isDefaultPageOrder() {
+          let i = 0;
+          for (const f of state.files) {
+            for (let p = 1; p <= f.numPages; p++) {
+              const x = state.pageOrder[i++];
+              if (!x || x.fileId !== f.id || x.pageNumber !== p) return false;
+            }
+          }
+          return i === state.pageOrder.length;
+        }
+
+        // Hanya memperbarui teks/status. Tidak melakukan render thumbnail.
+        function updatePageOrderUI() {
+          const n = state.pageOrder.length;
+          pageOrderSummary.textContent = n
+            ? `${n} halaman — ${isDefaultPageOrder() ? 'urutan mengikuti file.' : 'urutan telah disesuaikan.'}`
+            : 'Belum ada halaman.';
+          openPageOrganizerBtn.disabled = n === 0;
+        }
+
+        function escapeHtml(v) {
+          return String(v).replace(/[&<>"']/g, c => ({
+            '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
+          }[c]));
+        }
+
+        // Setiap render mendapat ID sendiri. Jika ada render baru, render lama
+        // tidak boleh lagi memasukkan elemen ke DOM setelah operasi async selesai.
+        let pageOrganizerRenderId = 0;
+
+        async function renderPageOrganizer() {
+          const renderId = ++pageOrganizerRenderId;
+          const grid = pageOrganizerGrid;
+          const items = state.pageOrder.slice();
+
+          grid.innerHTML = '';
+          organizerPageCount.textContent = `${items.length} halaman`;
+
+          if (!items.length) {
+            grid.innerHTML = '<div class="col-span-full text-center py-16 text-slate-400"><i class="fa-solid fa-file-circle-xmark text-4xl mb-3 block"></i>Tidak ada halaman.</div>';
+            return;
+          }
+
+          // Render thumbnail satu per satu ke canvas sementara.
+          // Canvas baru dimasukkan ke DOM hanya jika render ini masih aktif.
+          for (let index = 0; index < items.length; index++) {
+            if (renderId !== pageOrganizerRenderId || pageOrganizerModal.classList.contains('hidden')) return;
+
+            const item = items[index];
+            const f = getFileById(item.fileId);
+            if (!f) continue;
+
+            const card = document.createElement('div');
+            card.className = 'page-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm';
+            card.draggable = true;
+            card.dataset.key = item.key;
+
+            card.innerHTML = `<div class="relative page-thumb-wrap bg-slate-100 dark:bg-slate-800 p-2"><canvas class="w-full h-full rounded bg-white shadow-sm"></canvas><div class="absolute top-2 left-2 bg-brand-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow page-position">${index+1}</div><button class="delete-page absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-[10px] shadow" title="Hapus halaman"><i class="fa-solid fa-trash"></i></button></div><div class="p-2"><div class="text-[10px] font-semibold text-slate-700 dark:text-slate-200 truncate" title="${escapeHtml(f.file.name)}">${escapeHtml(f.file.name)}</div><div class="text-[10px] text-slate-400 mt-0.5">Halaman ${item.pageNumber}</div></div>`;
+
+            try {
+              const page = await f.pdfJsDoc.getPage(item.pageNumber);
+              const vp = page.getViewport({ scale: .28 });
+              const canvas = card.querySelector('canvas');
+              canvas.width = Math.max(1, Math.round(vp.width));
+              canvas.height = Math.max(1, Math.round(vp.height));
+              await page.render({
+                canvasContext: canvas.getContext('2d'),
+                viewport: vp
+              }).promise;
+            } catch (err) {
+              console.error('Thumbnail error:', err);
+            }
+
+            // Jangan pernah memasukkan hasil render lama ke DOM.
+            if (renderId !== pageOrganizerRenderId || pageOrganizerModal.classList.contains('hidden')) return;
+
+            bindPageOrganizerCard(card, item);
+            grid.appendChild(card);
+          }
+        }
+
+        function bindPageOrganizerCard(card, item) {
+          const key = item.key;
+
+          card.querySelector('.delete-page').onclick = e => {
+            e.stopPropagation();
+            const index = state.pageOrder.findIndex(x => x.key === key);
+            if (index === -1) return;
+
+            state.pageOrder.splice(index, 1);
+            updatePageOrderUI();
+            if (!pageOrganizerModal.classList.contains('hidden')) renderPageOrganizer();
+          };
+
+          card.ondragstart = e => {
+            card.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', key);
+          };
+
+          card.ondragend = () => {
+            card.classList.remove('dragging');
+            document.querySelectorAll('.page-card').forEach(c => c.classList.remove('drop-target'));
+          };
+
+          card.ondragover = e => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            card.classList.add('drop-target');
+          };
+
+          card.ondragleave = e => {
+            // Hanya hilangkan highlight saat benar-benar meninggalkan kartu.
+            if (!card.contains(e.relatedTarget)) card.classList.remove('drop-target');
+          };
+
+          card.ondrop = e => {
+            e.preventDefault();
+            e.stopPropagation();
+            card.classList.remove('drop-target');
+
+            const draggedKey = e.dataTransfer.getData('text/plain');
+            if (!draggedKey || draggedKey === key) return;
+
+            const from = state.pageOrder.findIndex(x => x.key === draggedKey);
+            const to = state.pageOrder.findIndex(x => x.key === key);
+            if (from === -1 || to === -1 || from === to) return;
+
+            const [moved] = state.pageOrder.splice(from, 1);
+            state.pageOrder.splice(to, 0, moved);
+
+            // Satu perubahan = satu render. Tidak ada render ganda dari helper UI.
+            updatePageOrderUI();
+            renderPageOrganizer();
+          };
+        }
+
+        function openPageOrganizer(){if(!state.pageOrder.length)return;pageOrganizerModal.classList.remove('hidden');document.body.classList.add('overflow-hidden');renderPageOrganizer();}
+        function closePageOrganizer(){pageOrganizerModal.classList.add('hidden');document.body.classList.remove('overflow-hidden');}
+        openPageOrganizerBtn.onclick=openPageOrganizer; closePageOrganizerBtn.onclick=closePageOrganizer; donePageOrganizerBtn.onclick=closePageOrganizer; pageOrganizerModal.onclick=e=>{if(e.target===pageOrganizerModal)closePageOrganizer();}; resetPageOrderBtn.onclick=()=>{buildDefaultPageOrder();};
+
+        // Process Incoming Files
+        async function handleIncomingFiles(fileList) {
+            const validFiles = fileList.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+            if (validFiles.length === 0) {
+                alert('Tolong pilih file dengan format PDF!');
+                return;
+            }
+
+            for (const file of validFiles) {
+                try {
+                    // IMPORTANT: PDF.js may transfer/detach the ArrayBuffer sent to its worker.
+                    // Keep a separate copy for pdf-lib so it remains usable during processing.
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfJsArrayBuffer = arrayBuffer.slice(0);
+                    const pdfJsDoc = await pdfjsLib.getDocument({ data: pdfJsArrayBuffer }).promise;
+                    const numPages = pdfJsDoc.numPages;
+                    const pageSpecs = [];
+
+                    // Extract True Page Dimensions from CropBox / MediaBox
+                    for (let i = 1; i <= numPages; i++) {
+                        const page = await pdfJsDoc.getPage(i);
+                        const viewport = page.getViewport({ scale: 1.0 });
+                        const widthMm = ptsToMM(viewport.width);
+                        const heightMm = ptsToMM(viewport.height);
+                        pageSpecs.push({
+                            pageNumber: i,
+                            widthPts: viewport.width,
+                            heightPts: viewport.height,
+                            widthMm: widthMm.toFixed(1),
+                            heightMm: heightMm.toFixed(1),
+                            orientation: widthMm > heightMm ? 'Landscape' : 'Portrait',
+                            standardMatch: matchStandardPaperSize(widthMm, heightMm)
+                        });
+                    }
+
+                    const fileObj = { id: Math.random().toString(36).substr(2, 9), file, arrayBuffer, pdfJsDoc, numPages, pageSpecs };
+                    state.files.push(fileObj);
+                    appendPagesForFile(fileObj);
+
+                } catch (err) {
+                    alert(`Gagal membaca PDF "${file.name}": ${err.message}. Memutus proses untuk file ini.`);
+                }
+            }
+
+            renderFileList();
+            updatePreview();
+        }
+
+        // Match Page Size to Standard Paper Formats
+        function matchStandardPaperSize(w, h) {
+            const tolerance = 4; // 4mm tolerance range
+            for (const key in STANDARD_SIZES_MM) {
+                const s = STANDARD_SIZES_MM[key];
+                if (Math.abs(s.w - w) <= tolerance && Math.abs(s.h - h) <= tolerance) {
+                    return s.name;
+                }
+            }
+            return 'Custom';
+        }
+
+        // Render File Table & Control State
+        function renderFileList() {
+            fileListTable.innerHTML = '';
+            fileCountBadge.textContent = `${state.files.length} File`;
+
+            if (state.files.length === 0) {
+                fileListTable.innerHTML = `
+                    <tr id="emptyTableNotice">
+                        <td colspan="5" class="text-center py-12 text-slate-400 dark:text-slate-600">
+                            <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
+                            Belum ada file PDF yang ditambahkan.
+                        </td>
+                    </tr>`;
+                clearAllBtn.classList.add('hidden');
+                pageInfoDetail.textContent = 'Pilih atau klik file PDF di atas untuk melihat analisis ukuran individual per halaman.';
+                return;
+            }
+
+            clearAllBtn.classList.remove('hidden');
+
+            state.files.forEach((fileObj, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition';
+                if (idx === state.activePreviewIndex) tr.classList.add('bg-brand-50/50', 'dark:bg-brand-950/30');
+
+                const dominantSize = fileObj.pageSpecs[0]?.standardMatch || 'Custom';
+                const firstPageMm = `${fileObj.pageSpecs[0]?.widthMm} × ${fileObj.pageSpecs[0]?.heightMm} mm`;
+
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-slate-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-grip-vertical cursor-grab text-slate-300"></i> ${idx + 1}
+                    </td>
+                    <td class="p-2.5 font-medium truncate max-w-[160px]" title="${fileObj.file.name}">${fileObj.file.name}</td>
+                    <td class="p-2.5 text-center font-bold">${fileObj.numPages}</td>
+                    <td class="p-2.5">
+                        <span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px]">${dominantSize}</span>
+                        <span class="text-[10px] text-slate-400 block">${firstPageMm}</span>
+                    </td>
+                    <td class="p-2.5 text-right space-x-1">
+                        <button onclick="moveFile(${idx}, -1)" class="p-1 text-slate-400 hover:text-slate-600" title="Naik"><i class="fa-solid fa-arrow-up"></i></button>
+                        <button onclick="moveFile(${idx}, 1)" class="p-1 text-slate-400 hover:text-slate-600" title="Turun"><i class="fa-solid fa-arrow-down"></i></button>
+                        <button onclick="removeFile(${idx})" class="p-1 text-rose-500 hover:text-rose-700" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+
+                tr.addEventListener('click', (e) => {
+                    if (!e.target.closest('button')) {
+                        state.activePreviewIndex = idx;
+                        renderFileList();
+                        updatePreview();
+                        showPageDetails(fileObj);
+                    }
+                });
+
+                fileListTable.appendChild(tr);
+            });
+        }
+
+        function moveFile(idx, direction) {
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= state.files.length) return;
+            const wasDefaultOrder = isDefaultPageOrder();
+            const temp = state.files[idx];
+            state.files[idx] = state.files[targetIdx];
+            state.files[targetIdx] = temp;
+            state.activePreviewIndex = targetIdx;
+            // If the user has not customized individual pages, keep page order synchronized with file order.
+            if (wasDefaultOrder) buildDefaultPageOrder();
+            renderFileList();
+            updatePreview();
+            updatePageOrderUI();
+        }
+
+        function removeFile(idx) {
+            const removed=state.files[idx];
+            if(removed) removePagesForFile(removed.id);
+            state.files.splice(idx, 1);
+            if (state.activePreviewIndex >= state.files.length) state.activePreviewIndex=Math.max(0,state.files.length-1);
+            renderFileList(); updatePreview(); updatePageOrderUI();
+        }
+
+        clearAllBtn.addEventListener('click', () => {
+            state.files = [];
+            state.pageOrder = [];
+            state.activePreviewIndex = 0;
+            renderFileList();
+            updatePreview();
+            updatePageOrderUI();
+        });
+
+        // Show Per-Page Details
+        function showPageDetails(fileObj) {
+            let html = `<div class="w-full space-y-1"><p class="font-bold text-slate-700 dark:text-slate-200">${fileObj.file.name}:</p><div class="max-h-24 overflow-y-auto space-y-1">`;
+            fileObj.pageSpecs.forEach((spec) => {
+                html += `<div class="flex justify-between text-[11px] border-b border-slate-100 dark:border-slate-800 pb-0.5">
+                    <span>Halaman ${spec.pageNumber}</span>
+                    <span class="font-mono text-slate-600 dark:text-slate-400">${spec.widthMm} × ${spec.heightMm} mm (${spec.standardMatch}) - ${spec.orientation}</span>
+                </div>`;
+            });
+            html += `</div></div>`;
+            pageInfoDetail.innerHTML = html;
+        }
+
+        // Configuration Input Listeners
+        targetPreset.addEventListener('change', () => {
+            if (targetPreset.value === 'CUSTOM') {
+                customDimensionBox.classList.remove('hidden');
+            } else {
+                customDimensionBox.classList.add('hidden');
+            }
+            updatePreview();
+        });
+
+        [customWidth, customHeight, scaleMode, marginPreset, autoOrientation].forEach(el => {
+            el.addEventListener('change', () => {
+                if (scaleMode.value === 'STRETCH') {
+                    scaleWarning.classList.remove('hidden');
+                } else {
+                    scaleWarning.classList.add('hidden');
+                }
+                updatePreview();
+            });
+        });
+
+        // Calculate Selected Target Dimensions in Points & MM
+        function getTargetDimensions() {
+            let wMm = 210, hMm = 297;
+            const presetVal = targetPreset.value;
+
+            if (presetVal === 'CUSTOM') {
+                wMm = parseFloat(customWidth.value) || 210;
+                hMm = parseFloat(customHeight.value) || 297;
+            } else if (STANDARD_SIZES_MM[presetVal]) {
+                wMm = STANDARD_SIZES_MM[presetVal].w;
+                hMm = STANDARD_SIZES_MM[presetVal].h;
+            }
+
+            const orient = autoOrientation.value;
+            if (orient === 'PORTRAIT' && wMm > hMm) {
+                const tmp = wMm; wMm = hMm; hMm = tmp;
+            } else if (orient === 'LANDSCAPE' && hMm > wMm) {
+                const tmp = wMm; wMm = hMm; hMm = tmp;
+            }
+
+            return {
+                wMm,
+                hMm,
+                wPts: textMM_TO_PTS(wMm),
+                hPts: textMM_TO_PTS(hMm)
+            };
+        }
+
+        // Render Live Preview Canvases
+        async function updatePreview() {
+            const origCanvas = document.getElementById('previewOriginalCanvas');
+            const targetCanvas = document.getElementById('previewTargetCanvas');
+            const origMeta = document.getElementById('previewOriginalMeta');
+            const targetMeta = document.getElementById('previewTargetMeta');
+
+            if (state.files.length === 0) {
+                const ctx1 = origCanvas.getContext('2d'); ctx1.clearRect(0, 0, origCanvas.width, origCanvas.height);
+                const ctx2 = targetCanvas.getContext('2d'); ctx2.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+                origMeta.textContent = '-';
+                targetMeta.textContent = '-';
+                return;
+            }
+
+            const activeDoc = state.files[state.activePreviewIndex];
+            const page = await activeDoc.pdfJsDoc.getPage(1);
+            const viewport = page.getViewport({ scale: 0.5 });
+
+            // Render Original
+            origCanvas.width = viewport.width;
+            origCanvas.height = viewport.height;
+            const ctxOrig = origCanvas.getContext('2d');
+            await page.render({ canvasContext: ctxOrig, viewport: viewport }).promise;
+
+            const origSpec = activeDoc.pageSpecs[0];
+            origMeta.textContent = `${origSpec.widthMm} × ${origSpec.heightMm} mm (${origSpec.standardMatch})`;
+
+            // Simulate Target Canvas
+            const target = getTargetDimensions();
+            const targetAspect = target.wPts / target.hPts;
+            
+            targetCanvas.width = 150;
+            targetCanvas.height = 150 / targetAspect;
+            const ctxTar = targetCanvas.getContext('2d');
+
+            // Draw Background
+            ctxTar.fillStyle = '#ffffff';
+            ctxTar.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+            ctxTar.strokeStyle = '#0284c7';
+            ctxTar.lineWidth = 2;
+            ctxTar.strokeRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+            // Draw Scaled Simulated Original Box
+            const marginPts = textMM_TO_PTS(parseFloat(marginPreset.value) || 0);
+            const marginScale = targetCanvas.width / target.wPts;
+            const marginPx = marginPts * marginScale;
+
+            const availW = targetCanvas.width - (marginPx * 2);
+            const availH = targetCanvas.height - (marginPx * 2);
+
+            let scale = Math.min(availW / viewport.width, availH / viewport.height);
+            let drawW = viewport.width * scale;
+            let drawH = viewport.height * scale;
+
+            if (scaleMode.value === 'STRETCH') {
+                drawW = availW;
+                drawH = availH;
+            }
+
+            const x = marginPx + (availW - drawW) / 2;
+            const y = marginPx + (availH - drawH) / 2;
+
+            ctxTar.globalAlpha = 0.8;
+            ctxTar.drawImage(origCanvas, x, y, drawW, drawH);
+            ctxTar.globalAlpha = 1.0;
+
+            targetMeta.textContent = `${target.wMm} × ${target.hMm} mm | Mode: ${scaleMode.value}`;
+        }
+
+        // Core Normalization & Merging Processing Function
+        processBtn.addEventListener('click', async () => {
+            if (state.files.length === 0) {
+                alert('Silahkan tambahkan minimal satu file PDF terlebih dahulu!');
+                return;
+            }
+
+            state.isProcessing = true;
+            processBtn.disabled = true;
+            progressBox.classList.remove('hidden');
+            validationCard.classList.add('hidden');
+
+            try {
+                const targetDim = getTargetDimensions();
+                const marginPts = textMM_TO_PTS(parseFloat(marginPreset.value) || 0);
+                const mode = scaleMode.value;
+
+                // Create Output PDF Document using pdf-lib
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                
+                const totalPagesCount = state.pageOrder.length;
+                let processedPagesCount = 0;
+                if (!totalPagesCount) throw new Error('Tidak ada halaman yang dipilih untuk diproses.');
+
+                const sourcePdfCache = new Map();
+                for (const fileObj of state.files) sourcePdfCache.set(fileObj.id, await PDFLib.PDFDocument.load(fileObj.arrayBuffer));
+
+                // pageOrder adalah sumber kebenaran urutan output.
+                for (const orderItem of state.pageOrder) {
+                    const fileObj=getFileById(orderItem.fileId);
+                    if(!fileObj) continue;
+                    const srcPdf=sourcePdfCache.get(orderItem.fileId);
+                    const pageIdx=orderItem.pageNumber-1;
+                    processedPagesCount++;
+                    const percent=Math.round((processedPagesCount/totalPagesCount)*100);
+                    progressBar.style.width=`${percent}%`; progressPercent.textContent=`${percent}%`;
+                    progressStatus.textContent=`Memproses ${processedPagesCount}/${totalPagesCount}: ${fileObj.file.name} — Halaman ${orderItem.pageNumber}...`;
+                    await new Promise(resolve=>requestAnimationFrame(resolve));
+                    const [embeddedPage]=await mergedPdf.embedPdf(srcPdf,[pageIdx]);
+                    const newPage=mergedPdf.addPage([targetDim.wPts,targetDim.hPts]);
+                    const origW=embeddedPage.width, origH=embeddedPage.height;
+                    const availW=targetDim.wPts-(marginPts*2), availH=targetDim.hPts-(marginPts*2);
+                    const scaleX=availW/origW, scaleY=availH/origH;
+                    let scale=Math.min(scaleX,scaleY), drawW=origW*scale, drawH=origH*scale;
+                    if(mode==='STRETCH'){drawW=availW;drawH=availH;}
+                    else if(mode==='FILL'){scale=Math.max(scaleX,scaleY);drawW=origW*scale;drawH=origH*scale;}
+                    else if(mode==='CENTER'){scale=1;if(origW>availW||origH>availH)scale=Math.min(availW/origW,availH/origH);drawW=origW*scale;drawH=origH*scale;}
+                    const posX=marginPts+(availW-drawW)/2, posY=marginPts+(availH-drawH)/2;
+                    newPage.drawPage(embeddedPage,{x:posX,y:posY,width:drawW,height:drawH});
+                }
+
+                // Finalize PDF Generation
+                progressStatus.textContent = 'Menyusun & Mengompresi PDF Final...';
+                const pdfBytes = await mergedPdf.save();
+                
+                // Create Download Blob
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const downloadUrl = URL.createObjectURL(blob);
+
+                // Show Validation Details
+                let origTotalBytes = 0;
+                state.files.forEach(f => origTotalBytes += f.file.size);
+
+                document.getElementById('valPages').textContent = totalPagesCount;
+                document.getElementById('valUniform').textContent = 'Ya ✓';
+                document.getElementById('valOrigSize').textContent = `${(origTotalBytes / (1024 * 1024)).toFixed(2)} MB`;
+                document.getElementById('valOutputSize').textContent = `${(pdfBytes.byteLength / (1024 * 1024)).toFixed(2)} MB`;
+
+                const finalName = outputFileName.value.trim() || 'PDF_Normalized_Output.pdf';
+                downloadBtn.href = downloadUrl;
+                downloadBtn.download = finalName.endsWith('.pdf') ? finalName : `${finalName}.pdf`;
+
+                validationCard.classList.remove('hidden');
+                progressStatus.textContent = 'Proses Berhasil Selesai!';
+
+            } catch (err) {
+                alert(`Terjadi kesalahan saat memproses PDF: ${err.message}`);
+                console.error(err);
+            } finally {
+                state.isProcessing = false;
+                processBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
