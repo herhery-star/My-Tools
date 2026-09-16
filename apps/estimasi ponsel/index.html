@@ -29,20 +29,31 @@ input:focus,select:focus{border-color:#7b8da3;box-shadow:0 0 0 2px #e9eef3}
 .sub{font-size:9px;letter-spacing:.12em;color:var(--muted);font-weight:900;margin-bottom:7px}
 .money-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .money{text-align:right;font-weight:800}
-.option{border:1px solid #dfe5eb;border-radius:9px;margin-top:8px;overflow:hidden}
-.option-head{padding:8px 9px;background:#f8fafb;font-size:11px;font-weight:900}
-.qty-row{display:grid;grid-template-columns:1fr 76px 24px;align-items:center;gap:5px;padding:5px 8px;border-top:1px solid #f0f2f5;font-size:12px;font-weight:700}
-.qty-row input{margin:0;padding:7px;text-align:right;font-weight:800}
-.unit{font-size:10px;color:var(--muted)}
-.choice{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.choice button{padding:9px 5px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font-weight:900;color:#475467}
-.choice button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
-.status{margin:10px 12px 0;padding:8px;border-radius:7px;background:#f5f7f9;color:var(--muted);font-size:10px}
-.status.ok{background:#ecfdf3;color:var(--green)}.status.bad{background:#fef3f2;color:var(--red)}
-.sendbar{position:fixed;bottom:0;left:0;right:0;padding:8px;background:rgba(243,246,248,.96);border-top:1px solid var(--line);z-index:20}
-.send{display:block;width:min(536px,calc(100% - 16px));margin:auto;padding:13px;border:0;border-radius:9px;background:var(--accent);color:#0b2438;font-size:14px;font-weight:900}
-.small{font-size:10px;color:var(--muted);text-align:center;margin-top:5px}
-@media(max-width:390px){.money-grid{grid-template-columns:1fr}.context{grid-template-columns:1fr}.qty-row{grid-template-columns:1fr 70px 22px}}
+.option{border:1px solid #dfe5eb;border-radius:9px;margin-top:8px;overflow:hidden;display:block!important}
+.option-head{padding:8px 9px;background:#f8fafb;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:space-between}
+.option-count{font-size:9px;color:#667085;font-weight:700}
+.product-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 92px 28px;
+  align-items:center;
+  gap:6px;
+  padding:5px 7px;
+  border-top:1px solid #f0f2f5;
+}
+.product-row select,.product-row input{margin:0;height:34px;padding:6px 7px;font-size:12px}
+.product-row input{text-align:right;font-weight:800}
+.product-row .remove-row{
+  width:28px;height:28px;padding:0;border:1px solid #d7dee6;
+  border-radius:7px;background:#fff;color:#667085;font-weight:900;
+}
+.add-row{
+  width:100%;padding:7px;border:0;border-top:1px dashed #d7dee6;
+  background:#fff;color:#475467;font-size:10px;font-weight:900;
+}
+.add-row:active{background:#f2f5f8}
+@media(max-width:390px){
+  .product-row{grid-template-columns:minmax(0,1fr) 78px 26px}
+}.context{grid-template-columns:1fr}.qty-row{grid-template-columns:1fr 70px 22px}}
 </style>
 
 <style id="v15-ui">
@@ -175,38 +186,30 @@ input:focus,select:focus{border-color:#7b8da3;box-shadow:0 0 0 2px #e9eef3}
 .money-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .money{text-align:right;font-weight:800}
 .option{border:1px solid #dfe5eb;border-radius:9px;margin-top:8px;overflow:hidden;display:block!important}
-.option-head{padding:8px 9px;background:#f8fafb;font-size:11px;font-weight:900}
-.qty-row{
-  display:grid;grid-template-columns:1fr 76px 24px;align-items:center;
-  gap:5px;padding:5px 8px;border-top:1px solid #f0f2f5;
-  font-size:12px;font-weight:700;
+.option-head{padding:8px 9px;background:#f8fafb;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:space-between}
+.option-count{font-size:9px;color:#667085;font-weight:700}
+.product-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 92px 28px;
+  align-items:center;
+  gap:6px;
+  padding:5px 7px;
+  border-top:1px solid #f0f2f5;
 }
-.qty-row input{margin:0;padding:7px;text-align:right;font-weight:800}
-.unit{font-size:10px;color:var(--muted)}
-.choice{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.choice button{
-  padding:9px 5px;border:1px solid #cbd5e1;border-radius:7px;
-  background:#fff;font-weight:900;color:#475467;
+.product-row select,.product-row input{margin:0;height:34px;padding:6px 7px;font-size:12px}
+.product-row input{text-align:right;font-weight:800}
+.product-row .remove-row{
+  width:28px;height:28px;padding:0;border:1px solid #d7dee6;
+  border-radius:7px;background:#fff;color:#667085;font-weight:900;
 }
-.choice button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
-.status{margin:10px 12px 0;padding:8px;border-radius:7px;background:#f5f7f9;color:var(--muted);font-size:10px}
-.status.ok{background:#ecfdf3;color:var(--green)}
-.status.bad{background:#fef3f2;color:var(--red)}
-.small{font-size:10px;color:var(--muted);text-align:center;margin:6px 12px}
-
-.sendbar{
-  position:fixed;left:0;right:0;bottom:0;height:var(--send-h);
-  padding:7px 8px 8px;background:rgba(238,242,245,.97);
-  border-top:1px solid var(--line);z-index:20;
+.add-row{
+  width:100%;padding:7px;border:0;border-top:1px dashed #d7dee6;
+  background:#fff;color:#475467;font-size:10px;font-weight:900;
 }
-.send{
-  display:block;width:min(544px,100%);height:47px;margin:auto;padding:10px;
-  border:0;border-radius:10px;background:var(--accent);color:#0b2438;
-  font-size:14px;font-weight:900;
-}
-.send:active{transform:translateY(1px)}
+.add-row:active{background:#f2f5f8}
 @media(max-width:390px){
-  .qty-row{grid-template-columns:1fr 68px 22px}
+  .product-row{grid-template-columns:minmax(0,1fr) 78px 26px}
+}
 }
 </style>
 <style id="v14-options">
@@ -220,6 +223,88 @@ input:focus,select:focus{border-color:#7b8da3;box-shadow:0 0 0 2px #e9eef3}
   margin-bottom:9px;
 }
 #options .option:last-child{margin-bottom:0}
+</style>
+
+
+<style id="v17-sendbar">
+.sendbar{
+  position:fixed!important;
+  left:0!important;right:0!important;bottom:0!important;
+  height:62px!important;
+  display:flex!important;align-items:center!important;
+  padding:7px 8px 8px!important;
+  background:rgba(238,242,245,.98)!important;
+  border-top:1px solid #cfd9e3!important;
+  z-index:9999!important;
+}
+.sendbar .send{
+  display:block!important;
+  width:min(544px,100%)!important;
+  height:47px!important;
+  margin:0 auto!important;
+  padding:10px!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:#b8d6ef!important;
+  color:#0b2438!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  cursor:pointer!important;
+}
+.form-scroll{
+  padding-bottom:78px!important;
+}
+</style>
+
+
+<style id="v18-choice-design">
+/* PILIHAN AKHIR — tombol besar, proporsional, mudah disentuh */
+.final-choice-section{
+  padding:11px 12px 13px!important;
+  background:#fff;
+}
+.final-choice-title{
+  font-size:10px!important;
+  letter-spacing:.12em!important;
+  font-weight:900!important;
+  color:#475467!important;
+  margin-bottom:8px!important;
+}
+.choice{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%!important;
+}
+.choice button{
+  min-width:0!important;
+  height:52px!important;
+  padding:7px 4px!important;
+  border:1px solid #cbd5e1!important;
+  border-radius:11px!important;
+  background:#f8fafc!important;
+  color:#344054!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  letter-spacing:.02em!important;
+  box-shadow:0 1px 2px rgba(16,24,40,.05)!important;
+  transition:transform .12s ease,background .15s ease,color .15s ease,
+             border-color .15s ease,box-shadow .15s ease!important;
+}
+.choice button:active{
+  transform:scale(.97)!important;
+}
+.choice button.active{
+  background:#22c55e!important;
+  color:#fff!important;
+  border-color:#16a34a!important;
+  box-shadow:0 0 0 2px rgba(34,197,94,.20),0 0 14px rgba(34,197,94,.45)!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.18)!important;
+}
+@media(max-width:390px){
+  .choice{gap:6px!important}
+  .choice button{height:48px!important;font-size:13px!important}
+}
 </style>
 
 </head>
@@ -277,13 +362,13 @@ Set akhir"></textarea></div>
     </div>
 
     <div class="section">
-      <div class="sub">ESTIMASI PEMBELIAN</div>
+      <div class="sub">ESTIMASI PEMBELIAN · 3 BARIS DEFAULT</div>
       <div id="options"></div>
     </div>
 
     <div class="section">
       <div class="sub">PILIHAN AKHIR</div>
-      <div class="choice">
+      <div class="final-choice-section"><div class="final-choice-title">PILIHAN AKHIR</div><div class="choice">
         <button data-choice="1">OPSI 1</button>
         <button data-choice="2">OPSI 2</button>
         <button data-choice="3">OPSI 3</button>
@@ -345,18 +430,57 @@ onValue(ref(db,".info/connected"),snap=>{
   $("connection").style.color=connected?"#087a45":"#b42318";
 });
 
-for(let oi=1;oi<=3;oi++){
+function productOptions(selectedValue=""){
+  return `<option value="">Pilih produk</option>` +
+    PRODUCTS.map(p=>`<option value="${p}" ${p===selectedValue?"selected":""}>${p}</option>`).join("");
+}
+
+function updateOptionCount(box){
+  const count=box.querySelectorAll(".product-row").length;
+  const el=box.querySelector(".option-count");
+  if(el) el.textContent=`${count} baris`;
+}
+
+function addProductRow(box, product="", qty=""){
+  const row=document.createElement("div");
+  row.className="product-row";
+  row.innerHTML=`
+    <select class="product" aria-label="Produk">${productOptions(product)}</select>
+    <input class="qty" data-opt="${box.dataset.opt}" inputmode="numeric" type="number" min="0" step="1" placeholder="KL" value="${qty}">
+    <button type="button" class="remove-row" aria-label="Hapus baris">×</button>
+  `;
+  row.querySelector(".remove-row").onclick=()=>{
+    const rows=box.querySelectorAll(".product-row");
+    if(rows.length<=1){
+      row.querySelector(".product").value="";
+      row.querySelector(".qty").value="";
+      return;
+    }
+    row.remove();
+    updateOptionCount(box);
+  };
+  box.querySelector(".product-rows").appendChild(row);
+  updateOptionCount(box);
+}
+
+function createOption(oi){
   const box=document.createElement("div");
   box.className="option";
-  box.innerHTML=`<div class="option-head">OPSI ${oi}</div>`;
-  for(const p of PRODUCTS){
-    const row=document.createElement("div");
-    row.className="qty-row";
-    row.innerHTML=`<span>${p}</span><input class="qty" data-opt="${oi}" data-product="${p}" inputmode="numeric" placeholder="—"><span class="unit">KL</span>`;
-    box.appendChild(row);
-  }
+  box.dataset.opt=String(oi);
+  box.innerHTML=`
+    <div class="option-head">
+      <span>OPSI ${oi}</span><span class="option-count">3 baris</span>
+    </div>
+    <div class="product-rows"></div>
+    <button type="button" class="add-row">＋ Tambah produk</button>
+  `;
+  const rows=box.querySelector(".product-rows");
+  for(let i=0;i<3;i++) addProductRow(box);
+  box.querySelector(".add-row").onclick=()=>addProductRow(box);
   $("options").appendChild(box);
 }
+
+for(let oi=1;oi<=3;oi++) createOption(oi);
 
 document.querySelectorAll(".money").forEach(el=>{
   el.addEventListener("input",()=>formatMoney(el));
@@ -372,7 +496,9 @@ document.querySelectorAll("[data-choice]").forEach(btn=>{
 $("clearNotes").onclick=()=>{$("notes").value=""};
 
 $("resetForm").onclick=()=>{
-  document.querySelectorAll(".money,.qty").forEach(x=>x.value="");
+  document.querySelectorAll(".money").forEach(x=>x.value="");
+  document.querySelectorAll(".product-row").forEach(x=>x.remove());
+  document.querySelectorAll(".option").forEach(box=>{for(let i=0;i<3;i++) addProductRow(box);});
   selected="";
   document.querySelectorAll("[data-choice]").forEach(x=>x.classList.remove("active"));
   setStatus("Form dikosongkan.","");
@@ -393,12 +519,15 @@ $("send").onclick=async()=>{
     if(v){patch[`spbus/${sp}/${el.dataset.field}`]=Number(v);count++}
   }
 
-  for(const el of document.querySelectorAll(".qty")){
-    const v=rawNumber(el.value);
-    if(v){
-      const oi=Number(el.dataset.opt)-1;
-      patch[`spbus/${sp}/qty/${oi}/${el.dataset.product}`]=Number(v);
-      count++;
+  for(const box of document.querySelectorAll(".option")){
+    const oi=Number(box.dataset.opt)-1;
+    for(const row of box.querySelectorAll(".product-row")){
+      const product=row.querySelector(".product")?.value || "";
+      const v=rawNumber(row.querySelector(".qty")?.value);
+      if(product && v){
+        patch[`spbus/${sp}/qty/${oi}/${product}`]=Number(v);
+        count++;
+      }
     }
   }
 
