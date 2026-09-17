@@ -1,23 +1,32 @@
 {
-  "name": "My Tools",
-  "short_name": "My Tools",
-  "description": "HTML PWA Launcher",
+  "id": "./",
+  "name": "MY TOOLS",
+  "short_name": "MY TOOLS",
+  "description": "MY TOOLS — Personal App Launcher",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#4f46e5",
   "icons": [
     {
       "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "MY TOOLS",
+      "short_name": "Buka",
+      "url": "./"
     }
   ]
 }
