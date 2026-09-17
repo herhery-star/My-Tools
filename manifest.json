@@ -1,11 +1,11 @@
 {
-  "name": "MY TOOLS V2 – Personal Multi-Device HTML App Launcher",
-  "short_name": "My Tools V2",
-  "description": "Personal HTML Application Launcher & Toolbox dengan Cloud Sync & Offline Support",
-  "start_url": "./index.html",
+  "name": "My Tools",
+  "short_name": "My Tools",
+  "description": "HTML PWA Launcher",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "./icon-192.png",
