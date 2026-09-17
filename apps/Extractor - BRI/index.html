@@ -79,6 +79,15 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
                     <span>Undo</span>
                 </button>
+                <!-- Tombol tambahan Reset dan Back -->
+                <button id="btnReset" type="button" onclick="resetApp()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs md:text-sm px-3.5 py-2.5 rounded-lg cursor-pointer flex items-center gap-1.5 transition-all shadow-sm" title="Reset seluruh data dan tampilan">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M5.64 9A7 7 0 0117.9 6.1L20 8M18.36 15A7 7 0 016.1 17.9L4 16"></path></svg>
+                    <span>Reset</span>
+                </button>
+                <button id="btnBack" type="button" onclick="goBack()" class="bg-slate-600 hover:bg-slate-700 text-white font-bold text-xs md:text-sm px-3.5 py-2.5 rounded-lg cursor-pointer flex items-center gap-1.5 transition-all shadow-sm" title="Kembali ke halaman sebelumnya">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Back</span>
+                </button>
                 <button id="btnExcel" disabled class="bg-slate-200 text-slate-400 font-bold text-xs md:text-sm px-4 py-2.5 rounded-lg cursor-not-allowed flex items-center gap-2 transition-all shadow-sm">
                     Simpan Excel
                 </button>
@@ -1280,6 +1289,115 @@
             document.getElementById('pdfPreviewFrame').src = generatedPdfBlobUrl;
             document.getElementById('pdfModal').classList.remove('hidden');
         });
+
+        /* =========================================================
+           TAMBAHAN FITUR RESET & BACK
+           Tidak mengubah fungsi yang sudah ada.
+           ========================================================= */
+
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                alert('Tidak ada halaman sebelumnya untuk kembali.');
+            }
+        }
+
+        function resetApp() {
+            const hasData =
+                cleanMutationRows.length > 0 ||
+                historyStack.length > 0 ||
+                document.getElementById('pdfInput').files.length > 0 ||
+                document.getElementById('filterUraian').value.trim() !== '' ||
+                document.getElementById('filterTanggalMulai').value !== '' ||
+                document.getElementById('filterTanggalAkhir').value !== '' ||
+                document.getElementById('inputSaldoAwal').value !== '0,00';
+
+            if (hasData) {
+                const confirmed = confirm(
+                    'Reset akan menghapus data PDF yang sedang diproses, hasil ekstraksi, perubahan uraian, filter, saldo awal, dan riwayat Undo.\n\nLanjutkan reset?'
+                );
+                if (!confirmed) return;
+            }
+
+            // Lepaskan object URL agar tidak menumpuk di memori.
+            if (uploadedPdfBlobUrl) {
+                URL.revokeObjectURL(uploadedPdfBlobUrl);
+                uploadedPdfBlobUrl = null;
+            }
+
+            if (generatedPdfBlobUrl) {
+                URL.revokeObjectURL(generatedPdfBlobUrl);
+                generatedPdfBlobUrl = null;
+            }
+
+            // Reset seluruh state data.
+            cleanMutationRows = [];
+            historyStack = [];
+            sortState = { column: null, direction: 'asc' };
+            showTanggalColumn = true;
+            activeFilterKeyword = '';
+            generatedPdfName = '';
+            detectedOpeningBalance = null;
+            totalOriginalPages = 1;
+            zipFilesMap = {};
+            filterTanggalMulai = '';
+            filterTanggalAkhir = '';
+
+            // Reset input dan filter.
+            document.getElementById('pdfInput').value = '';
+            document.getElementById('fileName').innerText = 'Belum ada file yang diproses';
+            document.getElementById('filterUraian').value = '';
+            document.getElementById('selectKeywordsDropdown').innerHTML =
+                '<option value="">-- Sering Muncul --</option>';
+            document.getElementById('selectKeywordsDropdown').value = '';
+            document.getElementById('filterTanggalMulai').value = '';
+            document.getElementById('filterTanggalAkhir').value = '';
+            document.getElementById('clearFilterBtn').classList.add('hidden');
+            document.getElementById('clearDateFilterBtn').classList.add('hidden');
+            document.getElementById('inputSaldoAwal').value = '0,00';
+            document.getElementById('toggleColumnTanggal').checked = true;
+            document.getElementById('selectAllCheckbox').checked = false;
+
+            // Reset selector ZIP.
+            document.getElementById('zipFileSelect').innerHTML = '';
+            document.getElementById('zipSelectorContainer').classList.add('hidden');
+
+            // Reset tombol hasil.
+            document.getElementById('btnExcel').disabled = true;
+            document.getElementById('btnPdf').disabled = true;
+            document.getElementById('btnFetchOpeningBalance').disabled = true;
+            document.getElementById('btnFetchOpeningBalance').className =
+                "bg-slate-200 text-slate-400 p-1.5 rounded-md cursor-not-allowed transition-all shadow-sm flex items-center justify-center flex-shrink-0";
+
+            // Reset tampilan ringkasan.
+            document.getElementById('summaryDebet').innerText = '0,00';
+            document.getElementById('summaryKredit').innerText = '0,00';
+            document.getElementById('summaryAkhir').innerText = '0,00';
+
+            // Reset modal jika sedang terbuka.
+            document.getElementById('pdfModal').classList.add('hidden');
+            document.getElementById('pdfPreviewFrame').src = '';
+            document.getElementById('sourcePdfModal').classList.add('hidden');
+            document.getElementById('sourcePdfPreviewFrame').src = '';
+
+            // Reset tema ke tema awal aplikasi.
+            switchTheme('pangkajene');
+
+            // Reset tombol Undo dan area tabel.
+            updateUndoButtonState();
+            updateTitleSection();
+            renderTable();
+
+            // Pastikan tombol Merge tersembunyi.
+            document.getElementById('mergeActionContainer').classList.add('hidden');
+            document.getElementById('checkedCount').innerText = '0';
+
+            // Kembalikan ikon sorting.
+            document.getElementById('sortIcon0').innerText = '↕';
+            document.getElementById('sortIcon1').innerText = '↕';
+        }
+
     </script>
 </body>
 </html>
