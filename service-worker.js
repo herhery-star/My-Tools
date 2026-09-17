@@ -1,420 +1,146 @@
 /**
- * MY TOOLS
- * Progressive Web App Service Worker
- * Version: 1.0.0
+ * MY TOOLS V6 — Progressive Web App Service Worker
+ * Version: 2.0.0
+ *
+ * Single-file application:
+ * index.html + manifest + icons
  */
 
-const CACHE_NAME = 'my-tools-shell-v1';
+const CACHE_NAME = 'my-tools-shell-v2';
 
-const ASSETS_TO_CACHE = [
+const APP_SHELL = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png',
-  './favicon.ico'
+  './icon-512.png'
 ];
 
-
-/* =========================================
+/* ================================
    INSTALL
-   ========================================= */
-
-self.addEventListener('install', (event) => {
-
-  console.log('SW: Installing', CACHE_NAME);
-
+   ================================ */
+self.addEventListener('install', event => {
   event.waitUntil(
-
     caches.open(CACHE_NAME)
-      .then((cache) => {
-
-        return cache.addAll(ASSETS_TO_CACHE);
-
-      })
-      .then(() => {
-
-        // Aktifkan Service Worker baru segera
-        return self.skipWaiting();
-
-      })
-
+      .then(cache => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
   );
-
 });
 
-
-/* =========================================
+/* ================================
    ACTIVATE
-   ========================================= */
-
-self.addEventListener('activate', (event) => {
-
-  console.log('SW: Activating', CACHE_NAME);
-
+   ================================ */
+self.addEventListener('activate', event => {
   event.waitUntil(
-
     caches.keys()
-      .then((cacheNames) => {
-
-        return Promise.all(
-
-          cacheNames.map((cacheName) => {
-
-            if (cacheName !== CACHE_NAME) {
-
-              console.log(
-                'SW: Removing old cache:',
-                cacheName
-              );
-
-              return caches.delete(cacheName);
-
-            }
-
-            return null;
-
-          })
-
-        );
-
-      })
-
-      .then(() => {
-
-        // Ambil kontrol semua halaman
-        return self.clients.claim();
-
-      })
-
+      .then(keys =>
+        Promise.all(
+          keys
+            .filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
+        )
+      )
+      .then(() => self.clients.claim())
   );
-
 });
 
-
-/* =========================================
+/* ================================
    FETCH
-   ========================================= */
-
-self.addEventListener('fetch', (event) => {
-
+   ================================ */
+self.addEventListener('fetch', event => {
   const request = event.request;
 
-  // Hanya proses request GET
-  if (request.method !== 'GET') {
-    return;
-  }
+  if (request.method !== 'GET') return;
 
-  const requestUrl = new URL(request.url);
+  const url = new URL(request.url);
 
-
-  /* -----------------------------------------
-     JANGAN CACHE GOOGLE APPS SCRIPT
-     ----------------------------------------- */
-
+  // Jangan intercept komunikasi Google Apps Script.
   if (
-    requestUrl.hostname.includes('script.google.com') ||
-    requestUrl.hostname.includes('googleusercontent.com')
+    url.hostname.includes('script.google.com') ||
+    url.hostname.includes('googleusercontent.com')
   ) {
-
-    event.respondWith(
-      fetch(request)
-    );
-
     return;
   }
 
-
-  /* -----------------------------------------
-     MANIFEST
-     NETWORK FIRST
-     ----------------------------------------- */
-
-  if (
-    requestUrl.pathname.endsWith('/manifest.json') ||
-    requestUrl.pathname.endsWith('/manifest.webmanifest')
-  ) {
-
-    event.respondWith(
-
-      fetch(request, {
-        cache: 'no-store'
-      })
-
-      .then((response) => {
-
-        if (response && response.ok) {
-
-          const responseClone = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-
-              cache.put(
-                request,
-                responseClone
-              );
-
-            });
-
-        }
-
-        return response;
-
-      })
-
-      .catch(() => {
-
-        return caches.match(request);
-
-      })
-
-    );
-
-    return;
-  }
-
-
-  /* -----------------------------------------
-     ICON PWA
-     NETWORK FIRST
-     ----------------------------------------- */
-
-  if (
-    requestUrl.pathname.endsWith('/icon-192.png') ||
-    requestUrl.pathname.endsWith('/icon-512.png') ||
-    requestUrl.pathname.endsWith('/favicon.ico')
-  ) {
-
-    event.respondWith(
-
-      fetch(request, {
-        cache: 'no-store'
-      })
-
-      .then((response) => {
-
-        if (response && response.ok) {
-
-          const responseClone = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-
-              cache.put(
-                request,
-                responseClone
-              );
-
-            });
-
-        }
-
-        return response;
-
-      })
-
-      .catch(() => {
-
-        return caches.match(request);
-
-      })
-
-    );
-
-    return;
-  }
-
-
-  /* -----------------------------------------
-     INDEX / HTML
-     NETWORK FIRST
-     ----------------------------------------- */
-
+  // HTML / navigation: network first.
   if (
     request.mode === 'navigate' ||
-    requestUrl.pathname.endsWith('.html')
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('/')
   ) {
-
     event.respondWith(
-
-      fetch(request, {
-        cache: 'no-store'
-      })
-
-      .then((response) => {
-
-        if (response && response.ok) {
-
-          const responseClone = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-
-              cache.put(
-                request,
-                responseClone
-              );
-
-            });
-
-        }
-
-        return response;
-
-      })
-
-      .catch(() => {
-
-        return caches.match('./index.html');
-
-      })
-
+      fetch(request, { cache: 'no-store' })
+        .then(response => {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then(
+            cached => cached || caches.match('./index.html')
+          )
+        )
     );
-
     return;
   }
 
+  // Manifest dan icon: network first agar perubahan icon/manifest
+  // cepat terdeteksi setelah versi baru dipasang.
+  if (
+    url.pathname.endsWith('/manifest.json') ||
+    url.pathname.endsWith('/icon-192.png') ||
+    url.pathname.endsWith('/icon-512.png')
+  ) {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then(response => {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-  /* -----------------------------------------
-     STATIC ASSETS
-     CACHE FIRST
-     ----------------------------------------- */
-
+  // Asset lain: cache first, lalu ambil dari network.
   event.respondWith(
+    caches.match(request).then(cached => {
+      if (cached) return cached;
 
-    caches.match(request)
-
-      .then((cachedResponse) => {
-
-        if (cachedResponse) {
-
-          // Background update
-          fetch(request)
-            .then((networkResponse) => {
-
-              if (
-                networkResponse &&
-                networkResponse.status === 200
-              ) {
-
-                caches.open(CACHE_NAME)
-                  .then((cache) => {
-
-                    cache.put(
-                      request,
-                      networkResponse.clone()
-                    );
-
-                  });
-
-              }
-
-            })
-            .catch(() => {
-              // Offline — gunakan cache
-            });
-
-          return cachedResponse;
+      return fetch(request).then(response => {
+        if (response && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(request, clone));
         }
-
-
-        /* -------------------------------------
-           BELUM ADA DI CACHE
-           ------------------------------------- */
-
-        return fetch(request)
-
-          .then((networkResponse) => {
-
-            if (
-              networkResponse &&
-              networkResponse.status === 200
-            ) {
-
-              const responseClone =
-                networkResponse.clone();
-
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-
-                  cache.put(
-                    request,
-                    responseClone
-                  );
-
-                });
-
-            }
-
-            return networkResponse;
-
-          });
-
-      })
-
+        return response;
+      });
+    })
   );
-
 });
 
-
-/* =========================================
+/* ================================
    MESSAGE
-   ========================================= */
-
-self.addEventListener('message', (event) => {
-
-  if (!event.data) {
-    return;
-  }
-
-
-  /* -----------------------------------------
-     FORCE UPDATE
-     ----------------------------------------- */
+   ================================ */
+self.addEventListener('message', event => {
+  if (!event.data) return;
 
   if (event.data.action === 'skipWaiting') {
-
-    console.log(
-      'SW: Force skipWaiting'
-    );
-
     self.skipWaiting();
-
   }
-
-
-  /* -----------------------------------------
-     CLEAR CACHE
-     ----------------------------------------- */
 
   if (event.data.action === 'clearCache') {
-
-    console.log(
-      'SW: Clearing cache'
-    );
-
     event.waitUntil(
-
-      caches.keys()
-        .then((cacheNames) => {
-
-          return Promise.all(
-
-            cacheNames.map((cacheName) => {
-
-              return caches.delete(cacheName);
-
-            })
-
-          );
-
-        })
-
+      caches.keys().then(keys =>
+        Promise.all(keys.map(key => caches.delete(key)))
+      )
     );
-
   }
-
 });
