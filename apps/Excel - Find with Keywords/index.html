@@ -159,13 +159,25 @@
         let isHideIgnoredActive = false;
         
         // Data default kata kunci awal jika penyimpanan browser kosong
-        let glossaryListGlobal = ["Total", "Nama", "Pajak"];
+        let glossaryListGlobal = [
+            "Iwan", "irwan", "rizal", "risal", "erna", "firman", "pirman",
+            "dafina", "davina", "dapina", "devita", "defita", "depita",
+            "hilal", "yudi", "yudhi", "indra", "noval", "nofal", "naufal",
+            "nauval", "bila", "bhila", "caca", "chaca", "cacha", "chacha",
+            "pln", "listrik", "pam", "pdam"
+        ];
 
         // Memuat daftar Glossary dari memori penyimpanan lokal browser
         function loadGlossary() {
+            const glossaryVersion = 'v2';
+            const savedVersion = localStorage.getItem('excel_recap_glossary_version');
             const savedGlossary = localStorage.getItem('excel_recap_glossary');
-            if (savedGlossary) {
+
+            if (savedGlossary && savedVersion === glossaryVersion) {
                 glossaryListGlobal = JSON.parse(savedGlossary);
+            } else {
+                localStorage.setItem('excel_recap_glossary', JSON.stringify(glossaryListGlobal));
+                localStorage.setItem('excel_recap_glossary_version', glossaryVersion);
             }
             renderGlossaryUI();
         }
