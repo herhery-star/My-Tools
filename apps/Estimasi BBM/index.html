@@ -166,6 +166,123 @@ button.action{
 .price-table td:first-child,.price-table td:nth-child(2){text-align:left}
 .price-table td:nth-child(1),.price-table td:nth-child(2){text-align:left}
 .price-table .delete{color:var(--danger);cursor:pointer;font-weight:700}
+.option-setter{
+  margin:7px 0 9px;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:#f8fafc;
+}
+.option-setter-label{
+  font-size:11px;
+  font-weight:800;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+.option-setter-buttons{
+  display:flex;
+  gap:6px;
+}
+.option-setter-btn{
+  flex:1;
+  min-height:34px;
+  border:1px solid #cbd5e1;
+  border-radius:7px;
+  background:#fff;
+  cursor:pointer;
+  font-weight:800;
+}
+.option-setter-btn.selected{
+  border:2px solid #1570ef;
+  background:#eff8ff;
+  color:#175cd3;
+}
+.option-setter{
+  border-width:1.5px;
+}
+.option-setter-Pangkajene{
+  border-color:#2e7d32;
+  background:#f1f8f2;
+}
+.option-setter-Labakkang{
+  border-color:#1565c0;
+  background:#f0f6fd;
+}
+
+/* Pangkajene — green */
+.option-setter-Pangkajene .option-setter-btn.selected{
+  border-color:#2e7d32;
+  background:#e8f5e9;
+  color:#1b5e20;
+}
+.option-setter-Pangkajene .option-setter-btn.selected::after{
+  color:#2e7d32;
+}
+
+/* Labakkang — blue */
+.option-setter-Labakkang .option-setter-btn.selected{
+  border-color:#1565c0;
+  background:#e3f2fd;
+  color:#0d47a1;
+}
+.option-setter-Labakkang .option-setter-btn.selected::after{
+  color:#1565c0;
+}
+
+/* Reset always neutral so it is visually different from selection */
+.option-setter .option-reset-btn{
+  flex:0 0 72px;
+  color:#475467;
+  background:#fff;
+  border-color:#d0d5dd;
+}
+.option-setter .option-reset-btn:hover{
+  background:#f2f4f7;
+}
+.option-setter-status{
+  margin-top:6px;
+  font-size:11px;
+  color:var(--muted);
+}
+.report-option-selected{
+  font-weight:900;
+  border:2px solid #1570ef !important;
+}
+
+.master-code-card{margin-top:8px}
+.master-code-spbu-tabs{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--border)}
+.master-code-spbu-btn{
+  flex:1;min-height:34px;border:1px solid var(--border);border-radius:6px;
+  background:#f1f5f9;font-weight:800;cursor:pointer
+}
+.master-code-spbu-btn.active{background:#172033;color:#fff}
+.master-code-pangkajene{border-top:3px solid var(--green)}
+.master-code-labakkang{border-top:3px solid var(--blue)}
+.master-code-spbu-label{padding:8px;font-weight:800;font-size:12px}
+.master-code-pangkajene .master-code-spbu-label{color:var(--green)}
+.master-code-labakkang .master-code-spbu-label{color:var(--blue)}
+.master-code-table-wrap{overflow-x:auto}
+.master-code-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.master-code-table th,.master-code-table td{
+  border:1px solid var(--border);padding:6px 7px;height:32px
+}
+.master-code-table th{background:#f1f5f9;font-size:11px;text-align:left}
+.master-code-pangkajene .master-code-table th{background:var(--green-soft)}
+.master-code-labakkang .master-code-table th{background:var(--blue-soft)}
+.master-code-product{width:24%;font-weight:700}
+.master-code-value-cell{display:flex;align-items:center;gap:5px}
+.master-code-value{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-weight:700
+}
+.master-code-copy{
+  width:36px;height:28px;border:1px solid var(--border);border-radius:5px;
+  background:#fff;cursor:pointer;font-size:14px;flex:0 0 36px
+}
+.master-code-copy.copied{font-size:11px;font-weight:800}
+@media(max-width:760px){.master-code-table{min-width:680px}}
+
 .empty{color:var(--muted);text-align:center;padding:15px}
 @media(max-width:760px){
   body{font-size:12px}
@@ -179,52 +296,140 @@ button.action{
   .extra-fields{grid-template-columns:minmax(0,1fr) 130px}
 }
 
-/* Supabase connection */
-.connection-card{margin-bottom:8px}
-.connection-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border)}
-.connection-status{display:flex;align-items:center;gap:7px;font-weight:800}
-.status-dot{width:10px;height:10px;border-radius:50%;background:#94a3b8;display:inline-block}
-.status-online .status-dot{background:var(--green)}
-.status-offline .status-dot{background:var(--danger)}
-.status-sync .status-dot{background:#f59e0b}
-.connection-body{padding:8px 10px;display:none}
-.connection-body.open{display:block}
-.connection-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.connection-grid .full{grid-column:1/-1}
-.connection-grid label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px}
-.connection-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:7px}
-.connection-message{font-size:11px;color:var(--muted);margin-top:6px;white-space:pre-wrap}
-.auth-user{font-size:11px;color:var(--muted)}
-@media(max-width:760px){.connection-grid{grid-template-columns:1fr}.connection-grid .full{grid-column:auto}}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- =========================================================
+     FIREBASE REALTIME STATE LAYER — STEP 2
+     Scope: Form Estimasi + Master Harga
+     localStorage tetap menjadi local fallback/cache.
+     ========================================================= -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getDatabase, ref, onValue, set, onDisconnect } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCyBUAvl0fRyyo61chpaf48wcIIjCFwEOk",
+  authDomain: "estimasi-bbm-98328.firebaseapp.com",
+  databaseURL: "https://estimasi-bbm-98328-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "estimasi-bbm-98328",
+  storageBucket: "estimasi-bbm-98328.firebasestorage.app",
+  messagingSenderId: "1003950973199",
+  appId: "1:1003950973199:web:799b33d40ef2d9cb679e7a",
+  measurementId: "G-GD5CG8JBB9"
+};
+
+try {
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const state = {
+    enabled:true, connected:false, db,
+    onFormRemote:null, onPricesRemote:null,
+    pendingForm:null, pendingPrices:null,
+    formListening:false, pricesListening:false
+  };
+  window.ESTIMASI_FIREBASE = state;
+
+  // Real connection indicator.
+  onValue(ref(db,".info/connected"), snap => {
+    state.connected = snap.val() === true;
+    // Jika perubahan terjadi ketika koneksi belum siap, kirim ulang otomatis.
+    if(state.connected && state.pendingFormWrite){
+      const pending = state.pendingFormWrite;
+      state.pendingFormWrite = null;
+      state.publishForm(pending);
+    }
+    if(state.connected && state.pendingPricesWrite){
+      const pending = state.pendingPricesWrite;
+      state.pendingPricesWrite = null;
+      state.publishPrices(pending);
+    }
+    window.dispatchEvent(new CustomEvent("estimasi-firebase-status"));
+  });
+
+  // Form listener is owned by the Firebase module itself.
+  onValue(ref(db,"estimasi/current"), snap => {
+    if (!snap.exists()) return;
+    const value = snap.val();
+    if (typeof state.onFormRemote === "function") state.onFormRemote(value);
+    else state.pendingForm = value;
+    window.dispatchEvent(new CustomEvent("estimasi-firebase-form-received"));
+  }, err => {
+    console.error("Firebase Form listener error:", err);
+    state.formError = String(err?.message || err);
+    window.dispatchEvent(new CustomEvent("estimasi-firebase-status"));
+  });
+  state.formListening = true;
+
+  onValue(ref(db,"master/harga"), snap => {
+    if (!snap.exists()) return;
+    const value = snap.val();
+    if (typeof state.onPricesRemote === "function") state.onPricesRemote(value);
+    else state.pendingPrices = value;
+  }, err => {
+    console.error("Firebase Harga listener error:", err);
+    state.priceError = String(err?.message || err);
+    window.dispatchEvent(new CustomEvent("estimasi-firebase-status"));
+  });
+  state.pricesListening = true;
+
+  state.publishForm = async value => {
+    const payload = JSON.parse(JSON.stringify(value));
+    if (!state.connected) {
+      // Jangan buang perubahan hanya karena koneksi belum siap.
+      state.pendingFormWrite = payload;
+      console.warn("Firebase belum connected; Form diantrikan.");
+      window.dispatchEvent(new CustomEvent("estimasi-firebase-status"));
+      return false;
+    }
+    try {
+      await set(ref(db,"estimasi/current"), payload);
+      state.lastFormWrite = Date.now();
+      window.dispatchEvent(new CustomEvent("estimasi-firebase-form-written"));
+      return true;
+    } catch(err) {
+      console.error("Firebase Form write error:",err);
+      state.formError = String(err?.message || err);
+      window.dispatchEvent(new CustomEvent("estimasi-firebase-status"));
+      return false;
+    }
+  };
+
+  state.publishPrices = async value => {
+    const payload = JSON.parse(JSON.stringify(value));
+    if (!state.connected) {
+      state.pendingPricesWrite = payload;
+      return false;
+    }
+    try {
+      await set(ref(db,"master/harga"), payload);
+      return true;
+    } catch(err) {
+      console.error("Firebase Harga write error:",err);
+      state.priceError = String(err?.message || err);
+      window.dispatchEvent(new CustomEvent("estimasi-firebase-status"));
+      return false;
+    }
+  };
+
+  window.dispatchEvent(new CustomEvent("estimasi-firebase-ready"));
+} catch(err) {
+  console.error("Firebase initialization failed:",err);
+  window.ESTIMASI_FIREBASE = {enabled:false,connected:false,error:String(err?.message||err)};
+  window.dispatchEvent(new CustomEvent("estimasi-firebase-ready"));
+}
+</script>
+
 </head>
 <body>
 <div class="app">
 
-<div class="card connection-card">
-  <div class="connection-bar">
-    <div class="connection-status" id="connectionStatus"><span class="status-dot"></span><span id="connectionStatusText">BELUM TERHUBUNG</span></div>
-    <button class="action secondary" onclick="toggleConnection()" id="connectionToggle">KONFIGURASI</button>
-  </div>
-  <div class="connection-body" id="connectionBody">
-    <div class="connection-grid">
-      <div class="full"><label>SUPABASE PROJECT URL</label><input id="supabaseUrl" type="text" value="https://rrrpycfmugqqpsotays.supabase.co" readonly></div>
-      <div class="full"><label>PUBLISHABLE KEY</label><input id="supabaseKey" type="password" placeholder="Tempel sb_publishable_... di sini" autocomplete="off"></div>
-      <div><label>EMAIL LOGIN</label><input id="authEmail" type="email" placeholder="Email user Supabase"></div>
-      <div><label>PASSWORD</label><input id="authPassword" type="password" placeholder="Password user Supabase" autocomplete="current-password"></div>
-    </div>
-    <div class="connection-actions">
-      <button class="action primary" onclick="saveSupabaseConfig()">SIMPAN &amp; TES KONEKSI</button>
-      <button class="action secondary" onclick="loginSupabase()">LOGIN</button>
-      <button class="action secondary" onclick="logoutSupabase()">LOGOUT</button>
-      <button class="action secondary" onclick="loadSupabaseMaster()">AMBIL MASTER SUPABASE</button>
-    </div>
-    <div class="auth-user" id="authUser">Belum login.</div>
-    <div class="connection-message" id="connectionMessage">Publishable Key boleh digunakan di browser. Jangan masukkan Secret Key.</div>
-  </div>
+<div class="card" style="padding:7px 10px;font-size:11px;color:var(--muted);">
+  <strong style="color:var(--text)">Mode lokal:</strong>
+  Supabase dinonaktifkan. Terhubung ke Google Apps Script dan Google Sheets sebagai repository.
 </div>
-
+<div id="firebaseRealtimeStatus" style="font-size:11px;color:#64748b;text-align:center;padding:4px 0;">
+  Firebase realtime: memulai...
+</div>
 <div class="tabs">
   <button class="tab active" onclick="showTab('form',this)">Form Estimasi</button>
   <button class="tab" onclick="showTab('report',this)">Laporan</button>
@@ -243,6 +448,7 @@ button.action{
   <div id="formSpbus"></div>
   <div class="actions">
     <button class="action primary" onclick="showReport()">PREVIEW LAPORAN</button>
+    <button id="legacyGasSaveButton" class="action primary" style="display:none" disabled>SIMPAN KE GOOGLE SHEETS</button>
     <button class="action secondary" onclick="resetForm()">RESET</button>
   </div>
 </section>
@@ -264,7 +470,7 @@ button.action{
 <section id="prices" class="panel">
   <div class="card">
     <div class="title">MASTER HARGA BBM</div>
-    <div class="subtitle">Harga diinput dalam satuan 8 KL. Setelah LOGIN, master harga Supabase menjadi sumber harga aplikasi; cache lokal dipakai saat offline.</div>
+    <div class="subtitle">Harga diinput dalam satuan 8 KL. Harga tetap dapat diedit dari perangkat. Sumber data bersama: Firebase Realtime Database.</div>
     <div class="price-form">
       <div><label>TANGGAL BERLAKU</label><input id="priceDate" type="date"></div>
       <div><label>PRODUK</label><select id="priceProduct"></select></div>
@@ -278,137 +484,88 @@ button.action{
       <tbody id="priceRows"></tbody>
     </table>
   </div>
+
+  <div class="card master-code-card">
+    <div class="title">MASTER KODE</div>
+    <div class="subtitle">
+      Kode Produk, Ship To, dan Sold To. Klik tombol 📋 untuk menyalin nilai.
+    </div>
+    <div class="master-code-spbu-tabs">
+      <button type="button" class="master-code-spbu-btn active"
+              onclick="renderMasterCodes('pangkajene',this)">PANGKAJENE</button>
+      <button type="button" class="master-code-spbu-btn"
+              onclick="renderMasterCodes('labakkang',this)">LABAKKANG</button>
+    </div>
+    <div id="masterCodeRows"></div>
+  </div>
 </section>
 </div>
 
 <script>
-const SUPABASE_URL_DEFAULT="https://rrrpycfmugqqpsotays.supabase.co";
-let supabaseClient=null;
-let supabaseMasterLoaded=false;
-let supabaseProducts=[];
-let supabaseMappings=[];
+const FIREBASE_RT = { applyingRemote:false };
+
+function firebaseIsReady(){
+  return !!(window.ESTIMASI_FIREBASE && window.ESTIMASI_FIREBASE.enabled);
+}
+
+function firebaseApplyForm(remote){
+  if(!remote || typeof remote!=="object") return;
+  FIREBASE_RT.applyingRemote = true;
+  try{
+    data = normalizeFormState(remote);
+    localStorage.setItem("bbmForm",JSON.stringify(data));
+    document.getElementById("formDate").value=data.date||"";
+    document.getElementById("takeDate").value=data.takeDate||"";
+    renderForm(); renderReport();
+  }finally{ FIREBASE_RT.applyingRemote=false; }
+}
+
+function firebaseApplyPrices(remote){
+  if(!Array.isArray(remote)) return;
+  FIREBASE_RT.applyingRemote=true;
+  try{
+    prices=remote.map(x=>({date:String(x.date||""),product:String(x.product||""),price:Number(x.price||0)}))
+      .filter(x=>x.date&&x.product&&x.price>0);
+    localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+    renderPrices(); renderForm(); renderReport();
+  }finally{ FIREBASE_RT.applyingRemote=false; }
+}
+
+function startFirebaseBridge(){
+  const fb=window.ESTIMASI_FIREBASE;
+  if(!fb || !fb.enabled) return;
+  fb.onFormRemote=firebaseApplyForm;
+  fb.onPricesRemote=firebaseApplyPrices;
+  if(fb.pendingForm){ const v=fb.pendingForm; fb.pendingForm=null; firebaseApplyForm(v); }
+  if(fb.pendingPrices){ const v=fb.pendingPrices; fb.pendingPrices=null; firebaseApplyPrices(v); }
+  updateFirebaseStatus();
+}
+
+function firebasePublishForm(){
+  if(!firebaseIsReady() || FIREBASE_RT.applyingRemote) return;
+  window.ESTIMASI_FIREBASE.publishForm(data);
+}
+function firebasePublishPrices(){
+  if(!firebaseIsReady() || FIREBASE_RT.applyingRemote) return;
+  window.ESTIMASI_FIREBASE.publishPrices(prices);
+}
+
+function updateFirebaseStatus(){
+  const el=document.getElementById("firebaseRealtimeStatus"); if(!el)return;
+  const fb=window.ESTIMASI_FIREBASE;
+  if(!fb || !fb.enabled){el.textContent="Firebase realtime: tidak aktif";return;}
+  if(fb.formError){el.textContent="Firebase Form ERROR — cek koneksi/rules";return;}
+  el.textContent=fb.connected ? "Firebase realtime: TERHUBUNG ✓" : "Firebase realtime: memulai...";
+}
+window.addEventListener("estimasi-firebase-ready",startFirebaseBridge);
+window.addEventListener("estimasi-firebase-status",updateFirebaseStatus);
+
 
 let PRODUCTS=["Pertalite","Biosolar","Pertamax","Pertamax Turbo","Dexlite"];
 let SPBUS=[
- {id:"pangkajene",name:"SPBU-74.906.16 PANGKAJENE",color:"green",extra:[],supabaseId:1},
- {id:"labakkang",name:"SPBU-74.906.07 LABAKKANG",color:"blue",extra:["TF Dex PT Citatah (hari ini)"],supabaseId:2}
+ {id:"pangkajene",name:"SPBU-74.906.16 PANGKAJENE",color:"green",extra:[]},
+ {id:"labakkang",name:"SPBU-74.906.07 LABAKKANG",color:"blue",extra:["TF Dex PT Citatah (hari ini)"]}
 ];
-
-function setConnectionStatus(type,text){
- const el=document.getElementById("connectionStatus");
- el.className="connection-status "+(type?"status-"+type:"");
- document.getElementById("connectionStatusText").textContent=text;
-}
-function connectionMessage(msg){document.getElementById("connectionMessage").textContent=msg||""}
-function toggleConnection(){document.getElementById("connectionBody").classList.toggle("open")}
-function getSupabaseConfig(){
- const url=localStorage.getItem("supabaseUrl")||SUPABASE_URL_DEFAULT;
- const key=localStorage.getItem("supabasePublishableKey")||"";
- return {url,key};
-}
-function initSupabaseClient(){
- const cfg=getSupabaseConfig();
- document.getElementById("supabaseUrl").value=cfg.url;
- const key=cfg.key;
- if(!key){supabaseClient=null;setConnectionStatus("","BELUM TERHUBUNG");return false}
- if(!window.supabase){setConnectionStatus("offline","LIBRARY BELUM TERMUAT");return false}
- try{supabaseClient=window.supabase.createClient(cfg.url,key);return true}
- catch(e){supabaseClient=null;setConnectionStatus("offline","KONFIGURASI SALAH");connectionMessage(e.message);return false}
-}
-async function saveSupabaseConfig(){
- const url=document.getElementById("supabaseUrl").value.trim();
- const key=document.getElementById("supabaseKey").value.trim();
- if(!url||!key){alert("Project URL dan Publishable Key wajib diisi.");return}
- localStorage.setItem("supabaseUrl",url);
- localStorage.setItem("supabasePublishableKey",key);
- if(!initSupabaseClient())return;
- setConnectionStatus("sync","MENGUJI...");
- connectionMessage("Menghubungkan ke Supabase...");
- try{
-   // Pada tahap ini kita hanya memastikan URL + Publishable Key dapat
-   // membentuk Supabase client. Pemeriksaan jaringan dan Auth dilakukan
-   // saat LOGIN, sehingga error browser/CORS terlihat lebih jelas.
-   setConnectionStatus("online","CLIENT SIAP");
-   connectionMessage("Client Supabase berhasil dibuat. Silakan LOGIN untuk menguji koneksi jaringan dan Auth.");
- }catch(e){
-   setConnectionStatus("offline","KONEKSI GAGAL");
-   connectionMessage("Gagal terhubung: "+(e.message||e));
- }
-}
-function updateAuthUser(user){
- document.getElementById("authUser").textContent=user?"Login: "+(user.email||user.id):"Belum login.";
-}
-async function loginSupabase(){
- if(!supabaseClient && !initSupabaseClient()){alert("Simpan Project URL + Publishable Key terlebih dahulu.");return}
- const email=document.getElementById("authEmail").value.trim();
- const password=document.getElementById("authPassword").value;
- if(!email||!password){alert("Isi email dan password user Supabase.");return}
- setConnectionStatus("sync","LOGIN...");
- try{
-  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
-  if(error)throw error;
-  updateAuthUser(data.user);
-  setConnectionStatus("online","LOGIN BERHASIL");
-  connectionMessage("Login berhasil. Mengambil master Supabase...");
-  await loadSupabaseMaster(true);
- }catch(e){setConnectionStatus("offline","LOGIN GAGAL");connectionMessage("Login gagal: "+(e.message||e));}
-}
-async function logoutSupabase(){
- if(!supabaseClient)return;
- const {error}=await supabaseClient.auth.signOut();
- if(error){connectionMessage("Logout gagal: "+error.message);return}
- updateAuthUser(null);setConnectionStatus("","TERHUBUNG, BELUM LOGIN");connectionMessage("Logout berhasil.");
-}
-async function loadSupabaseMaster(silent=false){
- if(!supabaseClient && !initSupabaseClient()){if(!silent)alert("Konfigurasi Supabase belum disimpan.");return false}
- const {data:sessionData}=await supabaseClient.auth.getSession();
- if(!sessionData?.session?.user){
-   setConnectionStatus("offline","BELUM LOGIN");
-   connectionMessage("Master Supabase dilindungi RLS. Silakan LOGIN terlebih dahulu.");
-   if(!silent)alert("Silakan LOGIN terlebih dahulu untuk mengambil master Supabase.");
-   return false;
- }
- setConnectionStatus("sync","MENGAMBIL MASTER...");
- try{
-  const [spbuRes,prodRes,mapRes,priceRes]=await Promise.all([
-   supabaseClient.from("spbu_master").select("id,kode_spbu,nama_spbu,warna,aktif").eq("aktif",true).order("id"),
-   supabaseClient.from("produk_master").select("id,nama_produk,kode_produk,satuan,aktif").eq("aktif",true).order("id"),
-   supabaseClient.from("produk_transaksi_master").select("id,spbu_id,produk_id,ship_to,sold_to,aktif").eq("aktif",true),
-   supabaseClient.from("harga_bbm_history").select("id,produk_id,tanggal_berlaku,harga_8kl").order("tanggal_berlaku",{ascending:false})
-  ]);
-  for(const r of [spbuRes,prodRes,mapRes,priceRes])if(r.error)throw r.error;
-  const activeSpbus=spbuRes.data||[];
-  supabaseProducts=prodRes.data||[];
-  supabaseMappings=mapRes.data||[];
-  if(activeSpbus.length){
-    SPBUS=activeSpbus.map(x=>({
-      id:(x.kode_spbu||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||String(x.id),
-      name:(x.kode_spbu?x.kode_spbu+" ":"")+String(x.nama_spbu||"").toUpperCase(),
-      color:(x.warna||"").toLowerCase()==="biru"?"blue":"green",
-      extra:[], supabaseId:x.id
-    }));
-    const lab=SPBUS.find(x=>String(x.supabaseId)==="2" || x.name.includes("LABAKKANG"));
-    if(lab){
-      const existing=(typeof data!=="undefined" && data?.spbus?.[lab.id]) || null;
-      lab.extra=[existing?.extraLabel || "Komponen tambahan"];
-    }
-  }
-  if(supabaseProducts.length){PRODUCTS=supabaseProducts.map(p=>p.nama_produk);}
-  // Pastikan struktur data lokal mengikuti master SPBU terbaru.
-  SPBUS.forEach(s=>{
-    if(!data.spbus[s.id]) data.spbus[s.id]={saldo:0,shift1:0,shift2:0,setoran:0,extraLabel:"Komponen tambahan",extras:0,qty:[{},{},{}]};
-    for(let oi=0;oi<3;oi++) if(!data.spbus[s.id].qty[oi]) data.spbus[s.id].qty[oi]={};
-  });
-  const productNameById=Object.fromEntries(supabaseProducts.map(p=>[p.id,p.nama_produk]));
-  prices=(priceRes.data||[]).map(x=>({id:x.id,date:x.tanggal_berlaku,product:productNameById[x.produk_id],productId:x.produk_id,price:Number(x.harga_8kl)})).filter(x=>x.product);
-  localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
-  supabaseMasterLoaded=true;
-  setConnectionStatus("online","MASTER SUPABASE TERLOAD");
-  connectionMessage("Berhasil: "+activeSpbus.length+" SPBU, "+supabaseProducts.length+" produk, "+supabaseMappings.length+" mapping, "+prices.length+" riwayat harga.");
-  renderPrices();renderForm();renderReport();
-  return true;
- }catch(e){setConnectionStatus("offline","MASTER GAGAL DIMUAT");connectionMessage("Gagal mengambil master: "+(e.message||e)+"\nPastikan sudah LOGIN dan RLS policy SELECT sudah aktif.");return false;}
-}
 
 let prices=JSON.parse(localStorage.getItem("bbmPrices8KL")||"null");
 if(!prices){
@@ -433,23 +590,106 @@ if(!prices){
 }
 
 let data=JSON.parse(localStorage.getItem("bbmForm")||"null")||makeBlank();
+
+function normalizeFormState(raw){
+  const base=makeBlank();
+  if(!raw || typeof raw!=="object") return base;
+  base.date=typeof raw.date==="string" ? raw.date : base.date;
+  base.takeDate=typeof raw.takeDate==="string" ? raw.takeDate : "";
+  if(raw.selectedOptions && typeof raw.selectedOptions==="object") base.selectedOptions={...base.selectedOptions,...raw.selectedOptions};
+  if(raw.spbus && typeof raw.spbus==="object") {
+    SPBUS.forEach(sp=>{
+      const src=raw.spbus[sp.id];
+      if(!src || typeof src!=="object") return;
+      const dst=base.spbus[sp.id];
+      ["saldo","shift1","shift2","setoran","extras"].forEach(k=>{
+        if(src[k]!==undefined) dst[k]=Number(src[k])||0;
+      });
+      if(typeof src.extraLabel==="string") dst.extraLabel=src.extraLabel;
+      if(Array.isArray(src.qty)){
+        for(let oi=0;oi<3;oi++){
+          if(src.qty[oi] && typeof src.qty[oi]==="object") dst.qty[oi]={...src.qty[oi]};
+        }
+      }
+    });
+  }
+  return base;
+}
+
+data=normalizeFormState(data);
+
 // Kompatibilitas data prototype lama: setiap SPBU sekarang memiliki satu baris
 // komponen tambahan yang keterangannya dapat diedit dan nilainya bisa +/-.
+// Data lama belum mempunyai selectedOptions, jadi buat objeknya terlebih dahulu.
+if(!data.selectedOptions || typeof data.selectedOptions!=="object"){
+  data.selectedOptions={};
+}
+if(!data.spbus || typeof data.spbus!=="object"){
+  data.spbus={};
+}
+
 SPBUS.forEach(s=>{
   const x=data.spbus[s.id];
   if(x){
     if(typeof x.extraLabel!=="string") x.extraLabel="Komponen tambahan";
     if(typeof x.extras!=="number") x.extras=Number(x.extras)||0;
   }
+  if(typeof data.selectedOptions[s.id]!=="string"){
+    data.selectedOptions[s.id]="";
+  }
 });
 
 function makeBlank(){
- const x={date:"2026-09-11",takeDate:"",spbus:{}};
+ const x={date:"2026-09-11",takeDate:"",selectedOptions:{},spbus:{}};
  SPBUS.forEach(s=>{
    x.spbus[s.id]={saldo:0,shift1:0,shift2:0,setoran:0,extraLabel:"Komponen tambahan",extras:0,qty:[{},{},{}]};
+   x.selectedOptions[s.id]="";
  });
  return x;
 }
+
+/* ---------------------------------------------------------
+   PILIHAN OPSI
+   Semua 3 opsi tetap tersimpan.
+   Hanya selectedOptions yang berubah saat pengguna menetapkan
+   opsi yang akan dipakai.
+   --------------------------------------------------------- */
+if(!data.selectedOptions) data.selectedOptions={};
+SPBUS.forEach(s=>{
+  if(typeof data.selectedOptions[s.id] !== "string"){
+    data.selectedOptions[s.id]="";
+  }
+});
+
+function getSelectedOption(id){
+  return data.selectedOptions[id] || "";
+}
+
+function setSelectedOptionForSpbu(id, oi){
+  const option="Opsi-"+(Number(oi)+1);
+  data.selectedOptions[id]=option;
+  save();
+  renderForm();
+  renderReport();
+}
+
+function resetSelectedOptionForSpbu(id){
+  data.selectedOptions[id]="";
+  save();
+  renderForm();
+  renderReport();
+}
+
+/* =========================================================
+   BACKEND INTEGRATION — DISABLED / FIREBASE PREPARATION
+   ---------------------------------------------------------
+   Legacy Supabase and Google Apps Script communication has
+   been removed from the active application path.
+   The application remains fully local (localStorage) for now.
+   Firebase Realtime Database will be added as the temporary
+   shared-state layer in the next step.
+   ========================================================= */
+
 function fmt(n){return new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(Number(n)||0)}
 function parseDate(v){return v?new Date(v+"T00:00:00"):null}
 function effectivePrice(product,date){
@@ -459,37 +699,185 @@ function effectivePrice(product,date){
                   .sort((a,b)=>parseDate(b.date)-parseDate(a.date));
  return list.length?Number(list[0].price):0;
 }
-function save(){localStorage.setItem("bbmForm",JSON.stringify(data));localStorage.setItem("bbmPrices8KL",JSON.stringify(prices))}
-function showTab(id,btn){
- document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
- document.getElementById(id).classList.add("active");
- document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
- if(btn)btn.classList.add("active");
- if(id==="report")renderReport();
- if(id==="prices")renderPrices();
+function save(){
+  localStorage.setItem("bbmForm",JSON.stringify(data));
+  localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+  if(!FIREBASE_RT.applyingRemote) firebasePublishForm();
 }
-async function init(){
- initSupabaseClient();
- if(supabaseClient){
-   try{
-     const {data:sessionData}=await supabaseClient.auth.getSession();
-     updateAuthUser(sessionData?.session?.user||null);
-     if(sessionData?.session?.user){
-       setConnectionStatus("online","LOGIN TERSIMPAN");
-       await loadSupabaseMaster(true);
-     }else{
-       setConnectionStatus("","CLIENT SIAP");
-       connectionMessage("Supabase client siap. LOGIN diperlukan untuk membaca master.");
-     }
-   }catch(e){setConnectionStatus("offline","SUPABASE TIDAK DAPAT DIAKSES");connectionMessage(e.message||String(e));}
- }
- document.getElementById("formDate").value=data.date;
- document.getElementById("takeDate").value=data.takeDate||"";
- const sel=document.getElementById("priceProduct");
- sel.innerHTML=PRODUCTS.map(p=>`<option>${p}</option>`).join("");
- renderForm();
- renderPrices();
- renderReport();
+function showTab(id,btn){
+  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+  if(id==="report")renderReport();
+  if(id==="prices"){
+    renderPrices();
+    renderMasterCodes("pangkajene");
+  }
+}
+/* =========================================================
+   MASTER KODE
+   Kode ditampilkan di Tab Master Harga.
+   Struktur dibuat siap dipindahkan ke Google Sheets/GAS nanti.
+   ========================================================= */
+const MASTER_CODES = {
+  pangkajene:{
+    name:"SPBU-74.906.16 PANGKAJENE",
+    color:"pangkajene",
+    products:{
+      "Pertalite":{kode_produk:"A040900076",ship_to:"761712",sold_to:"811594"},
+      "Biosolar":{kode_produk:"A040900219",ship_to:"761712",sold_to:"811594"},
+      "Pertamax Turbo":{kode_produk:"A040900032",ship_to:"837443",sold_to:"811594"},
+      "Dexlite":{kode_produk:"A040900077",ship_to:"837443",sold_to:"811594"},
+      "Pertamax":{kode_produk:"A040900006",ship_to:"837443",sold_to:"811594"}
+    }
+  },
+  labakkang:{
+    name:"SPBU-74.906.07 LABAKKANG",
+    color:"labakkang",
+    products:{
+      "Pertalite":{kode_produk:"A040900076",ship_to:"916463",sold_to:"916462"},
+      "Biosolar":{kode_produk:"A040900219",ship_to:"916463",sold_to:"916462"},
+      "Pertamax Turbo":{kode_produk:"A040900032",ship_to:"916464",sold_to:"916462"},
+      "Dexlite":{kode_produk:"A040900077",ship_to:"916464",sold_to:"916462"},
+      "Pertamax":{kode_produk:"A040900006",ship_to:"916464",sold_to:"916462"}
+    }
+  }
+};
+
+function copyMasterCode(value,button){
+  const done=()=>{
+    const old=button.textContent;
+    button.textContent="✓";
+    button.classList.add("copied");
+    setTimeout(()=>{
+      button.textContent=old;
+      button.classList.remove("copied");
+    },900);
+  };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(String(value)).then(done)
+      .catch(()=>fallbackMasterCopy(value,done));
+  }else{
+    fallbackMasterCopy(value,done);
+  }
+}
+function fallbackMasterCopy(value,done){
+  const ta=document.createElement("textarea");
+  ta.value=String(value);
+  ta.style.position="fixed";
+  ta.style.left="-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try{document.execCommand("copy");done()}finally{ta.remove()}
+}
+function renderMasterCodes(spbuKey,button){
+  const master=MASTER_CODES[spbuKey];
+  const root=document.getElementById("masterCodeRows");
+  if(!master||!root)return;
+
+  document.querySelectorAll(".master-code-spbu-btn")
+    .forEach(b=>b.classList.remove("active"));
+  if(button)button.classList.add("active");
+
+  root.className="master-code-"+master.color;
+  root.innerHTML=`
+    <div class="master-code-spbu-label">${escapeHtml(master.name)}</div>
+    <div class="master-code-table-wrap">
+      <table class="master-code-table">
+        <thead><tr>
+          <th class="master-code-product">PRODUK</th>
+          <th>KODE PRODUK</th>
+          <th>SHIP TO</th>
+          <th>SOLD TO</th>
+        </tr></thead>
+        <tbody>
+          ${Object.entries(master.products).map(([product,item])=>`
+            <tr>
+              <td class="master-code-product">${escapeHtml(product)}</td>
+              <td><div class="master-code-value-cell">
+                <span class="master-code-value">${escapeHtml(item.kode_produk)}</span>
+                <button type="button" class="master-code-copy" title="Copy Kode Produk"
+                  onclick="copyMasterCode('${item.kode_produk}',this)">📋</button>
+              </div></td>
+              <td><div class="master-code-value-cell">
+                <span class="master-code-value">${escapeHtml(item.ship_to)}</span>
+                <button type="button" class="master-code-copy" title="Copy Ship To"
+                  onclick="copyMasterCode('${item.ship_to}',this)">📋</button>
+              </div></td>
+              <td><div class="master-code-value-cell">
+                <span class="master-code-value">${escapeHtml(item.sold_to)}</span>
+                <button type="button" class="master-code-copy" title="Copy Sold To"
+                  onclick="copyMasterCode('${item.sold_to}',this)">📋</button>
+              </div></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function loadMasterFromGas(){
+  try{
+    const result=await gasGet({action:"master"});
+    if(!result || !result.ok) return;
+
+    // Master Harga dari Google Sheets → local runtime cache/UI.
+    if(Array.isArray(result.harga) && result.harga.length){
+      const remotePrices=result.harga
+        .filter(x=>x.active!==false)
+        .map(x=>({
+          date:String(x.effective_date||""),
+          product:String(x.product||""),
+          price:Number(x.price_8kl||0)
+        }))
+        .filter(x=>x.date && x.product && x.price>0);
+      if(remotePrices.length){
+        prices=remotePrices;
+        localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+      }
+    }
+
+    // Master Kode dari Google Sheets → panel Master Harga.
+    if(Array.isArray(result.kode) && result.kode.length){
+      const rebuilt={};
+      result.kode.filter(x=>x.active!==false).forEach(x=>{
+        const id=String(x.spbu_id||"").toLowerCase();
+        if(!id)return;
+        if(!rebuilt[id]) rebuilt[id]={
+          name:String(x.spbu_name||id),
+          color:id==="pangkajene"?"pangkajene":"labakkang",
+          products:{}
+        };
+        rebuilt[id].products[String(x.product||"")]= {
+          kode_produk:String(x.kode_produk||""),
+          ship_to:String(x.ship_to||""),
+          sold_to:String(x.sold_to||"")
+        };
+      });
+      Object.assign(MASTER_CODES,rebuilt);
+    }
+
+    renderPrices();
+    renderMasterCodes("pangkajene");
+    renderForm();
+    renderReport();
+  }catch(err){
+    console.warn("Master GAS belum dapat dimuat:",err);
+  }
+}
+
+function init(){
+  if(!localStorage.getItem("ESTIMASI_SESSION_ID")) localStorage.setItem("ESTIMASI_SESSION_ID","TAB-"+Date.now());
+  document.getElementById("formDate").value=data.date;
+  document.getElementById("takeDate").value=data.takeDate||"";
+  const sel=document.getElementById("priceProduct");
+  sel.innerHTML=PRODUCTS.map(p=>`<option>${p}</option>`).join("");
+  renderForm();
+  renderPrices();
+  renderMasterCodes("pangkajene");
+  renderReport();
+  startFirebaseBridge();
 }
 function refreshAll(){
  data.date=document.getElementById("formDate").value;
@@ -541,6 +929,31 @@ function renderForm(){
       </tbody>
     </table>
     <div class="section-title">OPSI PEMBELIAN</div>
+
+    <div class="option-setter option-setter-${s.id}" aria-label="Penetapan opsi ${escapeHtml(s.name)}">
+      <div class="option-setter-label">TETAPKAN OPSI YANG DIPAKAI</div>
+      <div class="option-setter-buttons">
+        ${[0,1,2].map(oi=>{
+          const selected=getSelectedOption(s.id)==="Opsi-"+(oi+1);
+          return `<button type="button"
+                    class="option-setter-btn ${selected?'selected':''}"
+                    onclick="setSelectedOptionForSpbu('${s.id}',${oi})">
+                    OPSI-${oi+1}${selected?' ✓':''}
+                  </button>`;
+        }).join("")}
+        <button type="button"
+                class="option-setter-btn option-reset-btn"
+                onclick="resetSelectedOptionForSpbu('${s.id}')">
+          RESET
+        </button>
+      </div>
+      <div class="option-setter-status">
+        ${getSelectedOption(s.id)
+          ? `Dipilih: <strong>${getSelectedOption(s.id)}</strong>`
+          : "Belum ada opsi yang ditetapkan"}
+      </div>
+    </div>
+
     <table class="purchase-table">
       <thead><tr><th>PRODUK</th><th>OPSI-1</th><th>OPSI-2</th><th>OPSI-3</th></tr></thead>
       <tbody>
@@ -590,7 +1003,13 @@ function renderReport(){
       </table>
      </div>
      <div class="report-options">
-      ${opts.length?`<table><thead><tr><th>PRODUK</th>${opts.map(o=>`<th>OPSI-${o.oi+1}</th>`).join("")}</tr></thead><tbody>
+      ${opts.length?`<table><thead><tr><th>PRODUK</th>${opts.map(o=>{
+        const optName="Opsi-"+(o.oi+1);
+        const isSelected=getSelectedOption(s.id)===optName;
+        return `<th class="${isSelected?'report-option-selected':''}">
+          ${optName}${isSelected?' ✓ DIPILIH':''}
+        </th>`;
+      }).join("")}</tr></thead><tbody>
        ${PRODUCTS.filter(p=>opts.some(o=>o.rows.some(r=>r.p===p))).map(p=>`<tr><td>${p}</td>${opts.map(o=>{
           const r=o.rows.find(r=>r.p===p);
           return `<td>${r?`${fmt(r.q)} KL - Rp. ${fmt(r.val)}`:""}</td>`;
@@ -613,6 +1032,7 @@ function addPrice(){
  const price=num(document.getElementById("priceValue").value);
  if(!date||!product||price<=0){alert("Lengkapi tanggal, produk, dan harga.");return}
  prices.push({date,product,price});save();
+  if(!FIREBASE_RT.applyingRemote) firebasePublishPrices();
  document.getElementById("priceValue").value="";
  renderPrices();renderForm();renderReport();
 }
@@ -647,6 +1067,10 @@ function resetForm(){
 }
 init();
 applyScale();
+startFirebaseBridge();
+
 </script>
+
+
 </body>
 </html>
