@@ -265,6 +265,365 @@ label.fileBtn{
   .bottom button{min-height:42px}
   .sheet{max-height:96vh}
 }
+
+/* ===== 11.6" TABLET / LARGE SCREEN OPTIMIZATION ===== */
+@media (min-width: 700px) and (max-width: 1199px){
+  .app{
+    max-width:1400px;
+    padding:0 22px 108px;
+  }
+
+  header{
+    margin-left:-22px;
+    margin-right:-22px;
+    padding-left:22px;
+    padding-right:22px;
+  }
+
+  /* Use the tablet width instead of leaving the app artificially narrow. */
+  .card{
+    margin:14px 0;
+    padding:20px;
+    border-radius:20px;
+  }
+
+  .grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .action{
+    min-height:92px;
+    padding:14px;
+    border-radius:16px;
+  }
+
+  .action span{font-size:28px;margin-bottom:10px}
+  .action small{font-size:12px}
+
+  /* Give the editor substantially more horizontal room. */
+  .viewer{
+    width:100%;
+  }
+
+  .canvasWrap{
+    min-height:500px;
+    padding:18px;
+  }
+
+  #overlay{inset:18px}
+
+  #pdfCanvas{
+    max-width:100%;
+    max-height:none;
+  }
+
+  .toolbar{
+    gap:9px;
+    padding-top:12px;
+  }
+
+  .tool{
+    padding:10px 14px;
+    font-size:13px;
+  }
+
+  /* Bottom actions use the width rather than becoming two small floating buttons. */
+  .bottom{
+    padding-left:22px;
+    padding-right:22px;
+  }
+
+  .bottom button{
+    max-width:none;
+    min-height:52px;
+  }
+}
+
+/* ===== LANDSCAPE TABLET: split workspace ===== */
+@media (min-width: 800px) and (max-width: 1199px) and (orientation: landscape){
+  .app{
+    display:grid;
+    grid-template-columns:minmax(285px, .82fr) minmax(480px, 1.65fr);
+    gap:0 18px;
+    align-items:start;
+  }
+
+  header{grid-column:1/-1}
+
+  .app>.card:nth-of-type(1),
+  .app>.card:nth-of-type(2),
+  .app>.card:nth-of-type(4){
+    grid-column:1;
+  }
+
+  .app>.card:nth-of-type(3){
+    grid-column:2;
+    grid-row:2 / span 3;
+    position:sticky;
+    top:76px;
+  }
+
+  .app>.card:nth-of-type(4){
+    margin-bottom:0;
+  }
+
+  .canvasWrap{
+    min-height:calc(100vh - 245px);
+    max-height:calc(100vh - 245px);
+    overflow:auto;
+  }
+
+  #pdfCanvas{
+    max-height:calc(100vh - 285px);
+    width:auto;
+  }
+}
+
+/* ===== 11.6" CLASS / VERY WIDE TABLET ===== */
+@media (min-width: 1000px) and (max-width: 1300px){
+  .app{
+    max-width:1280px;
+    padding-left:24px;
+    padding-right:24px;
+  }
+
+  header{
+    margin-left:-24px;
+    margin-right:-24px;
+    padding-left:24px;
+    padding-right:24px;
+  }
+
+  .card{
+    padding:21px;
+  }
+
+  .app>.card:nth-of-type(3) .viewer{
+    min-height:0;
+  }
+
+  .canvasWrap{
+    min-height:560px;
+  }
+}
+
+/* ===== PORTRAIT 11.6" / TALL TABLET ===== */
+@media (min-width: 700px) and (max-width: 1199px) and (orientation: portrait){
+  .app{
+    max-width:980px;
+  }
+
+  .canvasWrap{
+    min-height:620px;
+  }
+
+  #pdfCanvas{
+    max-width:min(100%,760px);
+  }
+
+  .action{
+    min-height:96px;
+  }
+}
+
+
+/* ===== DOCUMENT-FIRST TABLET MODE ===== */
+@media (min-width:700px) and (max-width:1199px){
+  .app{
+    max-width:1400px;
+    padding:0 16px 96px;
+  }
+
+  header{
+    margin-left:-16px;
+    margin-right:-16px;
+    padding:9px 16px 8px;
+  }
+
+  .brand{font-size:17px}
+  .small{font-size:10px;margin-top:1px}
+
+  .card{
+    margin:9px 0;
+    padding:12px;
+    border-radius:15px;
+  }
+
+  h2{
+    font-size:13px;
+    margin-bottom:8px;
+  }
+
+  h2::before{height:14px;width:3px}
+
+  .grid{gap:7px}
+
+  .action{
+    min-height:60px;
+    padding:8px 10px;
+    border-radius:12px;
+  }
+
+  .action span{
+    display:inline-block;
+    font-size:19px;
+    margin:0 5px 0 0;
+    vertical-align:middle;
+  }
+
+  .action small{
+    display:inline;
+    font-size:10px;
+  }
+
+  .toolbar{
+    gap:6px;
+    padding:7px 0 1px;
+  }
+
+  .tool{
+    padding:7px 9px;
+    border-radius:9px;
+    font-size:11px;
+  }
+
+  .viewer{border-radius:14px}
+
+  .pagebar{
+    min-height:34px;
+    padding:5px 7px;
+    font-size:11px;
+  }
+
+  .pagebar button{
+    width:28px;
+    height:25px;
+    border-radius:7px;
+    font-size:18px;
+  }
+
+  .canvasWrap{
+    padding:7px;
+    min-height:0;
+  }
+
+  #overlay{inset:7px}
+
+  .selectionStatus,
+  #selectionStatus,
+  .status,
+  .note{
+    font-size:10px;
+    line-height:1.35;
+  }
+
+  .bottom{
+    padding:6px 12px calc(6px + env(safe-area-inset-bottom));
+    gap:6px;
+  }
+
+  .bottom button{
+    min-height:42px;
+    border-radius:11px;
+    font-size:12px;
+  }
+}
+
+/* Landscape tablet: give nearly all available vertical space to the document. */
+@media (min-width:800px) and (max-width:1199px) and (orientation:landscape){
+  .app{
+    display:grid;
+    grid-template-columns:230px minmax(0,1fr);
+    gap:0 12px;
+    align-items:start;
+  }
+
+  header{
+    grid-column:1/-1;
+  }
+
+  .app>.card:nth-of-type(1),
+  .app>.card:nth-of-type(2),
+  .app>.card:nth-of-type(4){
+    grid-column:1;
+  }
+
+  .app>.card:nth-of-type(3){
+    grid-column:2;
+    grid-row:2 / span 3;
+    margin-top:9px;
+  }
+
+  .app>.card:nth-of-type(1),
+  .app>.card:nth-of-type(2),
+  .app>.card:nth-of-type(4){
+    padding:10px;
+  }
+
+  .app>.card:nth-of-type(3){
+    padding:10px;
+  }
+
+  .app>.card:nth-of-type(1) .grid,
+  .app>.card:nth-of-type(2) .grid{
+    grid-template-columns:1fr;
+  }
+
+  .action{
+    min-height:49px;
+    text-align:left;
+  }
+
+  .canvasWrap{
+    height:calc(100vh - 145px);
+    max-height:calc(100vh - 145px);
+    min-height:0;
+    overflow:auto;
+    padding:5px;
+  }
+
+  #overlay{inset:5px}
+
+  #pdfCanvas{
+    max-width:100%;
+    max-height:calc(100vh - 160px);
+    width:auto;
+    height:auto;
+  }
+
+  .app>.card:nth-of-type(3) .status{
+    display:none;
+  }
+
+  .app>.card:nth-of-type(3) .toolbar{
+    padding-top:5px;
+  }
+
+  .app>.card:nth-of-type(4){
+    margin-top:7px;
+  }
+}
+
+/* Wide landscape tablet: slightly widen the document/editor column. */
+@media (min-width:1000px) and (max-width:1199px) and (orientation:landscape){
+  .app{
+    grid-template-columns:215px minmax(0,1fr);
+    gap:0 14px;
+  }
+}
+
+/* Portrait tablet: document remains the visual priority. */
+@media (min-width:700px) and (max-width:1199px) and (orientation:portrait){
+  .canvasWrap{
+    min-height:calc(100vh - 310px);
+  }
+
+  #pdfCanvas{
+    max-width:min(100%,820px);
+  }
+}
+
 </style>
 </head>
 <body>
