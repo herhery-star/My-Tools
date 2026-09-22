@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>My Drive Notebook v0.3</title>
+<style>
+:root{
+  --nav:#0f172a;--nav2:#172033;--blue:#2563eb;--blue2:#eff6ff;
+  --bg:#f3f6fa;--card:#fff;--text:#172033;--muted:#64748b;--line:#e2e8f0;
+  --ok:#15803d;--warn:#b45309;--danger:#b91c1c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:var(--bg)}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{height:100%;display:flex;flex-direction:column}
+.top{height:64px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--nav);color:#fff;flex:0 0 64px}
+.brand{font-weight:800;font-size:17px;white-space:nowrap}
+.brand small{display:block;font-size:10px;font-weight:500;color:#94a3b8;margin-top:1px}
+.account{font-size:12px;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.btn{border:1px solid #cbd5e1;background:#fff;color:var(--text);border-radius:10px;padding:9px 12px;cursor:pointer}
+.btn.dark{background:var(--nav2);border-color:#334155;color:#fff}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.soft{background:var(--blue2);border-color:#bfdbfe;color:#1d4ed8}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.main{flex:1;min-height:0;display:flex}
+.side{width:235px;background:#fff;border-right:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:9px}
+.side h3{margin:2px 0 3px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.side .btn{text-align:left}
+.path{font-size:11px;color:var(--muted);padding:9px 10px;background:#f8fafc;border-radius:9px;word-break:break-word}
+.cloud-note{padding:10px 11px;background:#f8fafc;border:1px solid var(--line);border-radius:11px;font-size:11px;line-height:1.5;color:var(--muted)}
+.cloud-note b{color:var(--text)}
+.content{flex:1;min-width:0;display:flex;flex-direction:column}
+.toolbar{min-height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:9px 12px}
+.search{flex:1;min-width:100px;max-width:430px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;background:#f8fafc}
+.search:focus{border-color:#93c5fd;background:#fff}
+.status-pill{font-size:11px;color:var(--ok);background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:6px 9px;white-space:nowrap}
+.files{flex:1;overflow:auto;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.file{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px;min-height:115px;cursor:pointer;transition:.12s;position:relative}
+.file:hover{border-color:#93c5fd;box-shadow:0 3px 12px rgba(15,23,42,.06)}
+.file.selected{border:2px solid var(--blue);padding:12px}
+.file .check{position:absolute;right:10px;top:9px;font-size:12px;color:var(--blue)}
+.icon{font-size:27px}.name{font-weight:700;font-size:14px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}
+.empty{height:100%;display:grid;place-items:center;color:var(--muted);text-align:center}
+.inspector{width:300px;background:#fff;border-left:1px solid var(--line);padding:15px;overflow:auto}
+.inspector h3{margin:0 0 5px;font-size:15px}
+.inspector .sub{font-size:11px;color:var(--muted);line-height:1.45}
+.inspector .section{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.kv{display:grid;grid-template-columns:88px 1fr;gap:7px;font-size:11px;margin:7px 0}
+.kv span:first-child{color:var(--muted)}
+.action-stack{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.action-stack .btn{font-size:12px}
+.bottom{height:42px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:8px;font-size:11px;color:var(--muted);flex:0 0 42px}
+.modal-bg{position:fixed;inset:0;background:rgba(2,6,23,.55);display:none;align-items:center;justify-content:center;z-index:100}
+.modal{width:min(690px,calc(100% - 28px));max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h2{margin:0 0 8px;font-size:19px}.modal p{color:var(--muted);font-size:13px;line-height:1.55}
+.field{margin:12px 0}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px}
+.note{padding:11px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;font-size:12px;color:#1e40af;line-height:1.5}
+.warning{padding:11px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:12px;color:#9a3412;line-height:1.5}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}
+.log{font-family:ui-monospace,monospace;font-size:11px;background:#0f172a;color:#dbeafe;padding:10px;border-radius:10px;white-space:pre-wrap;overflow:auto}
+@media(max-width:1050px){.inspector{width:250px}.side{width:210px}}
+@media(max-width:800px){.inspector{display:none}.side{width:190px}.grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}}
+@media(max-width:620px){.side{display:none}.top{height:58px;flex-basis:58px}.top .account{display:none}.toolbar{flex-wrap:wrap}.toolbar .search{order:-1;flex-basis:100%;max-width:none}.status-pill{display:none}.bottom{height:38px;flex-basis:38px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand">☁️ My Drive Notebook <small>Cloud-first workspace</small></div>
+  <div id="account" class="account">Belum terhubung</div>
+  <button class="btn dark" id="settingsBtn">⚙️ Setup</button>
+  <button class="btn blue" id="connectBtn">Hubungkan Google Drive</button>
+</header>
+
+<main class="main">
+  <aside class="side">
+    <h3>Google Drive</h3>
+    <button class="btn" id="rootBtn" disabled>🏠 My Drive</button>
+    <button class="btn" id="pickerBtn" disabled>📂 Pilih folder/file</button>
+    <button class="btn" id="refreshBtn" disabled>🔄 Cek versi terbaru</button>
+    <div class="path" id="path">Belum terhubung</div>
+    <div class="cloud-note">
+      <b>Drive = master.</b><br>
+      Aplikasi tidak menganggap file lokal sebagai sumber utama. Saat folder dibuka/di-refresh, metadata Drive diperiksa kembali.
+    </div>
+    <button class="btn soft" id="demoBtn">▶ Lihat demo UI</button>
+  </aside>
+
+  <section class="content">
+    <div class="toolbar">
+      <input id="search" class="search" placeholder="Cari file di folder saat ini..." disabled>
+      <span id="syncPill" class="status-pill">Belum sinkron</span>
+      <button class="btn" id="uploadBtn" disabled>⬆️ Upload</button>
+      <button class="btn" id="updateBtn" disabled>💾 Update</button>
+      <button class="btn" id="downloadBtn" disabled>⬇️ Download</button>
+    </div>
+    <div class="files" id="files">
+      <div class="empty"><div><div style="font-size:44px">☁️</div><b>Hubungkan Google Drive</b><br>untuk mulai bekerja.</div></div>
+    </div>
+  </section>
+
+  <aside class="inspector">
+    <h3>Workspace</h3>
+    <div class="sub">Panel ini akan menjadi tempat informasi dan tools file yang dipilih.</div>
+    <div class="section">
+      <b style="font-size:12px">File aktif</b>
+      <div id="inspectorEmpty" class="sub" style="margin-top:8px">Belum ada file dipilih.</div>
+      <div id="inspectorData" style="display:none">
+        <div id="inspectorName" style="font-weight:700;font-size:13px;margin-top:8px;word-break:break-word"></div>
+        <div id="inspectorMeta" class="sub" style="margin-top:4px"></div>
+        <div class="action-stack">
+          <button class="btn" id="openBtn">Buka</button>
+          <button class="btn" id="downloadBtn2">Download</button>
+          <button class="btn soft" id="updateBtn2">Update</button>
+          <button class="btn" id="detailsBtn">Detail</button>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <b style="font-size:12px">Rencana workspace</b>
+      <div class="sub" style="margin-top:8px;line-height:1.7">
+        📄 Dokumen<br>
+        📊 Excel / analisis<br>
+        ✏️ Excalidraw<br>
+        🤖 AI dokumen<br>
+        🔍 Pencarian isi file
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="bottom">
+  <span id="status">Siap.</span>
+  <span style="margin-left:auto">Google Drive master • metadata check • conflict-aware update • v0.3</span>
+</footer>
+</div>
+
+<div class="modal-bg" id="setupModal">
+<div class="modal">
+  <h2>⚙️ Pengaturan Google Drive</h2>
+  <p>Masukkan kredensial aplikasi web dari satu project Google Cloud. Client Secret tidak dimasukkan ke HTML.</p>
+  <div class="field"><label>OAuth 2.0 Client ID</label><input id="clientId" placeholder="xxxxx.apps.googleusercontent.com"></div>
+  <div class="field"><label>API Key</label><input id="apiKey" placeholder="AIza..."></div>
+  <div class="field"><label>Google Cloud Project Number / App ID</label><input id="appId" placeholder="123456789012"></div>
+  <div class="note"><b>Authorized JavaScript origin</b> harus sama dengan alamat aplikasi. Untuk uji lokal, jalankan melalui HTTP seperti <code>http://localhost:8000</code>, bukan <code>file://</code>.</div>
+  <div class="warning" style="margin-top:10px">Prototype ini memakai scope Drive yang luas. Untuk versi produksi nanti scope akan dipersempit sesuai kebutuhan.</div>
+  <div class="row"><button class="btn" id="closeSetup">Batal</button><button class="btn blue" id="saveSetup">Simpan</button></div>
+</div>
+</div>
+
+<div class="modal-bg" id="detailModal">
+<div class="modal">
+  <h2 id="detailTitle">Detail file</h2>
+  <div id="detailBody"></div>
+  <div class="row"><button class="btn" id="closeDetail">Tutup</button></div>
+</div>
+</div>
+
+<input type="file" id="fileInput" hidden>
+
+<script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+<script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+
+<script>
+const SCOPES = "https://www.googleapis.com/auth/drive";
+const DISCOVERY = "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
+const FOLDER_MIME = "application/vnd.google-apps.folder";
+const cfg = JSON.parse(localStorage.getItem("myDriveCfg") || "{}");
+
+let tokenClient=null, accessToken=null, currentFolder="root", currentFiles=[], selected=null;
+let gapiReady=false, gisReady=false, demoMode=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const icon=m=>{
+  if(m===FOLDER_MIME)return"📁";
+  if((m||"").includes("spreadsheet"))return"📊";
+  if((m||"").includes("pdf"))return"📕";
+  if((m||"").includes("image"))return"🖼️";
+  if((m||"").includes("document"))return"📄";
+  if((m||"").includes("zip"))return"🗜️";
+  return"📄";
+};
+const fmtDate=s=>s?new Date(s).toLocaleString("id-ID"):"—";
+const fmtSize=n=>{
+  if(!n)return"";
+  const x=+n;
+  if(x<1024)return x+" B";
+  if(x<1048576)return(x/1024).toFixed(1)+" KB";
+  if(x<1073741824)return(x/1048576).toFixed(1)+" MB";
+  return(x/1073741824).toFixed(1)+" GB";
+};
+function setStatus(s){$("status").textContent=s}
+function setConnectedUI(on){
+  ["rootBtn","pickerBtn","refreshBtn","search","uploadBtn"].forEach(id=>$(id).disabled=!on);
+}
+function openSetup(){
+  $("clientId").value=cfg.clientId||"";
+  $("apiKey").value=cfg.apiKey||"";
+  $("appId").value=cfg.appId||"";
+  $("setupModal").style.display="flex";
+}
+$("settingsBtn").onclick=openSetup;
+$("closeSetup").onclick=()=>$("setupModal").style.display="none";
+$("saveSetup").onclick=()=>{
+  localStorage.setItem("myDriveCfg",JSON.stringify({
+    clientId:$("clientId").value.trim(),
+    apiKey:$("apiKey").value.trim(),
+    appId:$("appId").value.trim()
+  }));
+  $("setupModal").style.display="none";
+  setStatus("Pengaturan tersimpan. Hubungkan Google Drive.");
+  initAuth();
+};
+
+function gapiLoaded(){
+  gapi.load("client",async()=>{
+    await gapi.client.load(DISCOVERY);
+    gapiReady=true;
+    if(gisReady)$("connectBtn").disabled=false;
+  });
+}
+function gisLoaded(){
+  gisReady=true;
+  if(gapiReady)$("connectBtn").disabled=false;
+  initAuth();
+}
+function initAuth(){
+  if(!cfg.clientId || !gisReady)return;
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:cfg.clientId,scope:SCOPES,
+    callback:async resp=>{
+      if(resp.error){setStatus("OAuth gagal: "+resp.error);return}
+      accessToken=resp.access_token;
+      gapi.client.setToken({access_token:accessToken});
+      demoMode=false;
+      $("account").textContent="Google Drive terhubung";
+      $("connectBtn").textContent="✓ Terhubung";
+      $("connectBtn").classList.remove("blue");$("connectBtn").classList.add("dark");
+      setConnectedUI(true);
+      setStatus("Terhubung. Memeriksa My Drive…");
+      await loadFolder("root","My Drive");
+    }
+  });
+}
+$("connectBtn").onclick=()=>{
+  if(demoMode){demoMode=false;clearDemo();return}
+  if(!cfg.clientId){openSetup();return}
+  if(!tokenClient)initAuth();
+  tokenClient.requestAccessToken({prompt:accessToken?"":"consent"});
+};
+
+async function api(path,opts={}){
+  const r=await fetch("https://www.googleapis.com/drive/v3/"+path,{
+    ...opts,headers:{Authorization:"Bearer "+accessToken,...(opts.headers||{})}
+  });
+  if(!r.ok)throw new Error(r.status+" "+await r.text());
+  return r.json();
+}
+
+async function loadFolder(folderId,name){
+  if(!accessToken)return;
+  currentFolder=folderId;
+  setStatus("Mengecek Google Drive…");
+  try{
+    const q=`'${folderId}' in parents and trashed = false`;
+    const data=await api("files?"+new URLSearchParams({
+      q,spaces:"drive",
+      fields:"files(id,name,mimeType,size,modifiedTime,webViewLink,iconLink,parents,capabilities(canEdit,canDownload))",
+      orderBy:"folder,name",pageSize:"1000"
+    }));
+    currentFiles=data.files||[];
+    selected=null;
+    $("path").textContent=name||"My Drive";
+    $("syncPill").textContent="✓ Drive diperiksa";
+    $("syncPill").style.color="var(--ok)";
+    renderFiles();
+    updateInspector();
+    setStatus(`✓ ${currentFiles.length} item • diperiksa ${new Date().toLocaleTimeString("id-ID")}`);
+  }catch(e){
+    $("syncPill").textContent="⚠ Gagal cek";
+    $("syncPill").style.color="var(--danger)";
+    setStatus("Gagal memuat: "+e.message);
+  }
+}
+
+function renderFiles(){
+  const term=$("search").value.toLowerCase().trim();
+  const arr=currentFiles.filter(f=>f.name.toLowerCase().includes(term));
+  if(!arr.length){
+    $("files").innerHTML='<div class="empty"><div><div style="font-size:40px">📭</div><b>Tidak ada file</b><br><span style="font-size:12px">Coba ubah kata pencarian atau buka folder lain.</span></div></div>';
+    return;
+  }
+  $("files").innerHTML='<div class="grid">'+arr.map(f=>`
+    <div class="file ${selected?.id===f.id?"selected":""}" data-id="${esc(f.id)}">
+      ${selected?.id===f.id?'<div class="check">● aktif</div>':''}
+      <div class="icon">${icon(f.mimeType)}</div>
+      <div class="name">${esc(f.name)}</div>
+      <div class="meta">${f.mimeType===FOLDER_MIME?"Folder":fmtSize(f.size)}<br>Update: ${fmtDate(f.modifiedTime)}</div>
+    </div>`).join("")+'</div>';
+  document.querySelectorAll(".file").forEach(el=>{
+    el.onclick=()=>selectFile(el.dataset.id);
+    el.ondblclick=()=>openSelected(el.dataset.id);
+  });
+  updateButtons();
+}
+
+function selectFile(id){
+  selected=currentFiles.find(f=>f.id===id)||null;
+  renderFiles();
+  updateInspector();
+}
+function updateButtons(){
+  const can=!!selected&&!demoMode;
+  $("downloadBtn").disabled=!can||selected.mimeType===FOLDER_MIME;
+  $("updateBtn").disabled=!can||selected.mimeType===FOLDER_MIME||selected.mimeType.startsWith("application/vnd.google-apps.");
+}
+function updateInspector(){
+  if(!selected){
+    $("inspectorEmpty").style.display="";
+    $("inspectorData").style.display="none";
+    return;
+  }
+  $("inspectorEmpty").style.display="none";
+  $("inspectorData").style.display="";
+  $("inspectorName").textContent=selected.name;
+  $("inspectorMeta").textContent=selected.mimeType===FOLDER_MIME?"Folder":fmtSize(selected.size);
+}
+async function openSelected(id){
+  const f=currentFiles.find(x=>x.id===id); if(!f)return;
+  if(f.mimeType===FOLDER_MIME){await loadFolder(f.id,f.name);return}
+  selected=f;renderFiles();updateInspector();
+  if(f.webViewLink)window.open(f.webViewLink,"_blank","noopener");
+  else showDetail(f);
+}
+function showDetail(f){
+  $("detailTitle").textContent=f.name;
+  $("detailBody").innerHTML=`
+    <div class="kv"><span>MIME</span><b style="word-break:break-word">${esc(f.mimeType)}</b></div>
+    <div class="kv"><span>Ukuran</span><b>${esc(fmtSize(f.size))}</b></div>
+    <div class="kv"><span>Diubah</span><b>${esc(fmtDate(f.modifiedTime))}</b></div>
+    <div class="kv"><span>ID</span><b style="word-break:break-all">${esc(f.id)}</b></div>
+    <div class="log">${esc(JSON.stringify(f,null,2))}</div>`;
+  $("detailModal").style.display="flex";
+}
+$("closeDetail").onclick=()=>$("detailModal").style.display="none";
+$("rootBtn").onclick=()=>loadFolder("root","My Drive");
+$("refreshBtn").onclick=()=>loadFolder(currentFolder,$("path").textContent);
+$("search").oninput=renderFiles;
+
+async function downloadSelected(){
+  if(!selected||demoMode)return;
+  try{
+    setStatus("Mengunduh versi terbaru dari Drive…");
+    const r=await fetch("https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(selected.id)+"?alt=media",{headers:{Authorization:"Bearer "+accessToken}});
+    if(!r.ok)throw new Error(r.status);
+    const blob=await r.blob();
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=selected.name;a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    setStatus("✓ Versi terbaru diunduh");
+  }catch(e){setStatus("Download gagal: "+e.message)}
+}
+$("downloadBtn").onclick=downloadSelected;
+$("downloadBtn2").onclick=downloadSelected;
+
+$("openBtn").onclick=()=>selected&&openSelected(selected.id);
+$("detailsBtn").onclick=()=>selected&&showDetail(selected);
+
+const fileInput=$("fileInput");
+let fileAction="upload";
+$("uploadBtn").onclick=()=>{fileAction="upload";fileInput.value="";fileInput.click()};
+$("updateBtn").onclick=()=>{if(!selected)return;fileAction="update";fileInput.value="";fileInput.click()};
+$("updateBtn2").onclick=()=>{if(!selected)return;fileAction="update";fileInput.value="";fileInput.click()};
+
+fileInput.onchange=async()=>{
+  const file=fileInput.files[0];
+  if(!file||!accessToken)return;
+  try{
+    if(fileAction==="update"&&selected){
+      setStatus("Mengecek apakah file di Drive berubah…");
+      const meta=await api("files/"+encodeURIComponent(selected.id)+"?fields=id,name,modifiedTime");
+      if(meta.modifiedTime!==selected.modifiedTime){
+        const ok=confirm("⚠️ File di Google Drive sudah berubah sejak terakhir diperiksa.\n\nTetap timpa dengan file yang Anda pilih?");
+        if(!ok){setStatus("Update dibatalkan.");return}
+      }
+      const r=await fetch("https://www.googleapis.com/upload/drive/v3/files/"+encodeURIComponent(selected.id)+"?uploadType=media",{
+        method:"PATCH",
+        headers:{Authorization:"Bearer "+accessToken,"Content-Type":file.type||"application/octet-stream"},
+        body:file
+      });
+      if(!r.ok)throw new Error(await r.text());
+      await loadFolder(currentFolder,$("path").textContent);
+      setStatus("✓ File berhasil diperbarui di Google Drive");
+    }else{
+      setStatus("Mengupload file baru…");
+      const meta={name:file.name,parents:[currentFolder]};
+      const boundary="drive_notebook_"+Date.now();
+      const body=new Blob([
+        "--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n",
+        JSON.stringify(meta),
+        "\r\n--"+boundary+"\r\nContent-Type: "+(file.type||"application/octet-stream")+"\r\n\r\n",
+        file,"\r\n--"+boundary+"--"
+      ]);
+      const r=await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",{
+        method:"POST",
+        headers:{Authorization:"Bearer "+accessToken,"Content-Type":"multipart/related; boundary="+boundary},
+        body
+      });
+      if(!r.ok)throw new Error(await r.text());
+      await loadFolder(currentFolder,$("path").textContent);
+      setStatus("✓ Upload selesai");
+    }
+  }catch(e){setStatus("Operasi gagal: "+e.message)}
+};
+
+async function loadPicker(){
+  if(window.google?.picker)return;
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement("script");
+    s.src="https://apis.google.com/js/api.js";
+    s.onload=()=>gapi.load("picker",resolve);
+    s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+$("pickerBtn").onclick=async()=>{
+  if(!accessToken||!cfg.apiKey||!cfg.appId){openSetup();return}
+  try{
+    await loadPicker();
+    const view=new google.picker.DocsView().setIncludeFolders(true).setSelectFolderEnabled(true);
+    const picker=new google.picker.PickerBuilder()
+      .setAppId(cfg.appId).setDeveloperKey(cfg.apiKey).setOAuthToken(accessToken)
+      .addView(view)
+      .setCallback(data=>{
+        if(data.action===google.picker.Action.PICKED){
+          const d=data.docs[0];
+          if(d.mimeType===FOLDER_MIME)loadFolder(d.id,d.name);
+          else{
+            selected=currentFiles.find(f=>f.id===d.id)||{id:d.id,name:d.name,mimeType:d.mimeType};
+            updateInspector();
+            showDetail(selected);
+          }
+        }
+      }).build();
+    picker.setVisible(true);
+  }catch(e){setStatus("Picker gagal dibuka: "+e.message)}
+};
+
+function demoData(){
+  return [
+    {id:"d1",name:"Laporan SPBU September.xlsx",mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",size:"2480000",modifiedTime:"2026-09-22T03:05:00Z",webViewLink:"#"},
+    {id:"d2",name:"Invoice BBM September.pdf",mimeType:"application/pdf",size:"1840000",modifiedTime:"2026-09-22T02:44:00Z",webViewLink:"#"},
+    {id:"d3",name:"Surat Jalan",mimeType:FOLDER_MIME,modifiedTime:"2026-09-21T13:22:00Z"},
+    {id:"d4",name:"Foto Invoice",mimeType:FOLDER_MIME,modifiedTime:"2026-09-20T10:11:00Z"},
+    {id:"d5",name:"Estimasi Pembelian BBM.xlsx",mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",size:"920000",modifiedTime:"2026-09-21T09:17:00Z",webViewLink:"#"},
+    {id:"d6",name:"Dokumen Operasional.docx",mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",size:"620000",modifiedTime:"2026-09-19T08:30:00Z",webViewLink:"#"}
+  ];
+}
+$("demoBtn").onclick=()=>{
+  demoMode=true;currentFiles=demoData();selected=null;
+  $("account").textContent="Mode demo — tidak mengubah Google Drive";
+  $("connectBtn").textContent="Keluar dari demo";
+  $("connectBtn").classList.remove("blue");$("connectBtn").classList.add("dark");
+  $("path").textContent="My Drive / Demo";
+  $("syncPill").textContent="Demo UI";
+  $("syncPill").style.color="var(--warn)";
+  $("search").disabled=false;
+  renderFiles();updateInspector();
+  setStatus("Mode demo aktif. Ini hanya tampilan dan tidak mengubah Drive.");
+};
+function clearDemo(){
+  demoMode=false;currentFiles=[];selected=null;
+  $("account").textContent="Belum terhubung";
+  $("connectBtn").textContent="Hubungkan Google Drive";
+  $("connectBtn").classList.remove("dark");$("connectBtn").classList.add("blue");
+  setConnectedUI(false);$("path").textContent="Belum terhubung";$("syncPill").textContent="Belum sinkron";
+  $("files").innerHTML='<div class="empty"><div><div style="font-size:44px">☁️</div><b>Hubungkan Google Drive</b><br>untuk mulai bekerja.</div></div>';
+  updateInspector();
+  setStatus("Siap.");
+}
+if(!cfg.clientId)setTimeout(openSetup,500);
+</script>
+</body>
+</html>
