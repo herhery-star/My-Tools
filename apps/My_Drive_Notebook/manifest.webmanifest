@@ -1,0 +1,9 @@
+{
+  "name": "My Drive Notebook",
+  "short_name": "Drive Notebook",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f8fc",
+  "theme_color": "#101828",
+  "description": "Tablet-first Google Drive workspace with controlled manual sync."
+}
