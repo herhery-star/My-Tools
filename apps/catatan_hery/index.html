@@ -89,6 +89,10 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
           <button class="sync-btn sync" onclick="syncFromGas(true)">🔄 SINKRONISASI</button>
           <div class="sync-help">GAS → Lokal · Ambil data terbaru</div>
         </div>
+        <div class="sync-action">
+          <button id="recoverBtn" class="sync-btn" onclick="recoverFromCache2()" disabled>↩ RECOVERY</button>
+          <div class="sync-help">Cache 2 → Cache 1 · Pulihkan backup</div>
+        </div>
       </div>
       <div id="syncStatus" class="sync-status">● Lokal siap · Belum tersinkron</div>
     </div>
@@ -124,13 +128,12 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyEbFoqfvEmQ5nX0UaFvUzgru4cqMEmZ74UVShESGF4HLf4f3mBffPMc2jEJgVp9q0/exec";
 const DB_NAME="CatatanHeryDB";
-const DB_VERSION=1;
+const DB_VERSION=2;
 const DB_STORE="app";
 const CACHE_KEY="state";
 const LS_KEY="catatanHeryV5";
 const OLD_LS_KEY="catatanHery";
 let gasSyncBusy=false, editingNoteId=null, editingCategoryId=null;
-let localCacheFound=false;
 let state={categories:[],notes:[],activeCategory:"SEMUA",deletedNoteIds:[],deletedCategoryIds:[]};
 let dbPromise=null;
 
@@ -177,41 +180,67 @@ function readLegacyState(){
   return normalizeState({categories:structuredClone(DEFAULT_CATEGORIES),notes:[],activeCategory:"SEMUA"});
 }
 async function loadStateAsync(){
-  // Cache lokal yang sudah ada harus dipakai langsung.
-  try{
-    const cached=normalizeState(await idbGet());
-    if(cached){ localCacheFound=true; return cached; }
-  }catch(e){console.warn("IndexedDB baca gagal",e)}
-
-  // Migrasi/fallback dari Local Storage. Jika ada data valid di sana,
-  // anggap perangkat sudah memiliki cache dan jangan bootstrap ulang.
-  let legacy=null;
-  try{legacy=readLegacyState()}catch(e){console.warn("Local Storage baca gagal",e)}
-  try{
-    const raw=localStorage.getItem(LS_KEY);
-    const parsed=raw?JSON.parse(raw):null;
-    if(parsed&&Array.isArray(parsed.categories)&&Array.isArray(parsed.notes)){
-      localCacheFound=true;
-      try{await idbSet(parsed)}catch(e){console.warn("Migrasi IndexedDB gagal",e)}
-      return normalizeState(parsed)||legacy;
-    }
-  }catch(e){}
-
-  // Tidak ada cache sama sekali: jangan simpan state kosong ke IndexedDB.
-  // init() akan melakukan bootstrap satu kali dari GAS.
+  try{const cached=normalizeState(await idbGet());if(cached)return cached}catch(e){console.warn("IndexedDB baca gagal",e)}
+  const legacy=readLegacyState();
+  try{await idbSet(legacy)}catch(e){}
   return legacy;
 }
-function persist(){
+async function saveCache1(){
   const snapshot=structuredClone(state);
-  idbSet(snapshot).catch(e=>console.warn("Cache lokal gagal disimpan",e));
-  // fallback/migration safety: keep a lightweight localStorage copy too
+  await idbSet(snapshot,CACHE_KEY);
   try{localStorage.setItem(LS_KEY,JSON.stringify(snapshot))}catch(e){}
-  if(!gasSyncBusy)setSyncStatus("dirty")
+}
+async function backupCache1ToCache2(reason=""){
+  const snapshot=structuredClone(state);
+  snapshot.__backupAt=new Date().toISOString();
+  snapshot.__backupReason=reason;
+  await idbSet(snapshot,"cache2");
+  try{localStorage.setItem("catatanHeryCache2",JSON.stringify(snapshot))}catch(e){}
+  updateRecoveryButton();
+}
+async function hasCache2(){
+  try{if(await idbGet("cache2"))return true}catch(e){}
+  try{return !!localStorage.getItem("catatanHeryCache2")}catch(e){return false}
+}
+async function getCache2(){
+  try{const x=await idbGet("cache2");if(x)return normalizeState(x)}catch(e){}
+  try{return normalizeState(JSON.parse(localStorage.getItem("catatanHeryCache2")||"null"))}catch(e){return null}
+}
+async function updateRecoveryButton(){
+  const b=document.getElementById("recoverBtn");if(!b)return;
+  b.disabled=!(await hasCache2());
+}
+async function recoverFromCache2(){
+  if(gasSyncBusy)return;
+  const backup=await getCache2();
+  if(!backup){alert("Cache 2 belum tersedia.");return}
+  const stamp=backup.__backupAt?formatTime(backup.__backupAt):"-";
+  if(!confirm("Pulihkan Cache 2?\n\nBackup: "+stamp+"\n\nData lokal sekarang akan diganti oleh backup."))return;
+  gasSyncBusy=true;setSyncStatus("syncing","◌ Memulihkan Cache 2...");
+  try{
+    const current=structuredClone(state);
+    current.__backupAt=new Date().toISOString();
+    current.__backupReason="Sebelum recovery";
+    await idbSet(current,"cache2");
+    try{localStorage.setItem("catatanHeryCache2",JSON.stringify(current))}catch(e){}
+    delete backup.__backupAt;delete backup.__backupReason;
+    state=normalizeState(backup);
+    await saveCache1();
+    renderNotes();renderSettings();
+    setSyncStatus("dirty","✓ Recovery berhasil · Cache 2 menjadi Cache 1");
+    updateRecoveryButton();
+  }catch(e){console.warn(e);setSyncStatus("error","⚠ Recovery gagal")}
+  finally{gasSyncBusy=false}
+}
+function persist(){
+  saveCache1().catch(e=>console.warn("Cache lokal gagal disimpan",e));
+  if(!gasSyncBusy)setSyncStatus("dirty");
 }
 async function markLocalClean(message){
-  try{await idbSet(structuredClone(state))}catch(e){console.warn(e)}
-  try{localStorage.setItem(LS_KEY,JSON.stringify(state));localStorage.setItem("catatanHeryLastSync",new Date().toISOString())}catch(e){}
+  await saveCache1();
+  try{localStorage.setItem("catatanHeryLastSync",new Date().toISOString())}catch(e){}
   setSyncStatus("ok",message||"✓ Tersinkron · Data lokal terbaru");
+  updateRecoveryButton();
 }
 function isoTime(){return new Date().toISOString()}
 function gasTime(v){const d=new Date(v||0);return isNaN(d.getTime())?new Date(0):d}
@@ -237,27 +266,36 @@ function findRemoteConflicts(remote){
 }
 async function saveLocalToGas(){
   if(gasSyncBusy)return;
-  gasSyncBusy=true;setSyncStatus("syncing","◌ Memeriksa data GAS sebelum SAVE...");
+  gasSyncBusy=true;setSyncStatus("syncing","◌ Memeriksa GAS...");
   try{
     const remote=await gasGet({action:"GET_ALL"});
     const conflicts=findRemoteConflicts(remote);
     if(conflicts.length){
       const lines=conflicts.slice(0,8).map(x=>`• ${x.type}: ${x.name}\n  Lokal: ${formatTime(x.local)} | GAS: ${formatTime(x.remote)}`).join("\n");
       const more=conflicts.length>8?`\n... dan ${conflicts.length-8} lainnya.`:"";
-      const ok=confirm(`⚠ DATA GAS LEBIH BARU\n\n${lines}${more}\n\nSAVE lokal berpotensi menimpa data yang lebih baru di GAS.\n\nOK = tetap SAVE, Batal = batalkan SAVE.`);
-      if(!ok){setSyncStatus("dirty","• SAVE dibatalkan · Data GAS lebih baru");return;}
+      if(!confirm(`⚠ DATA GAS LEBIH BARU\n\n${lines}${more}\n\nSAVE lokal berpotensi menimpa data yang lebih baru di GAS.\n\nOK = tetap SAVE, Batal = batalkan SAVE.`)){
+        setSyncStatus("dirty","• SAVE dibatalkan · Data GAS lebih baru");return;
+      }
     }
-    for(const c of state.categories) await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(c)});
-    for(const n of state.notes) await gasPost({action:"SAVE_NOTE",data:noteForGas(n)});
-    for(const id of state.deletedNoteIds||[]) await gasPost({action:"DELETE_NOTE",id});
-    for(const id of state.deletedCategoryIds||[]) await gasPost({action:"DELETE_CATEGORY",id});
-    state.deletedNoteIds=[];state.deletedCategoryIds=[];
-    const now=isoTime();
-    state.categories.forEach(c=>c.updatedAt=now);
-    state.notes.forEach(n=>n.updatedAt=now);
-    await markLocalClean("✓ Tersimpan ke GAS · Lokal diperbarui");
-  }catch(e){console.warn("SAVE GAS gagal",e);setSyncStatus("error","⚠ SAVE gagal · Data lokal tetap digunakan")}
-  finally{gasSyncBusy=false}
+    setSyncStatus("syncing","◌ Mengirim perubahan ke GAS...");
+    await gasPost({
+      action:"SAVE_ALL",
+      categories:state.categories.map(categoryForGas),
+      notes:state.notes.map(noteForGas),
+      deletedNoteIds:state.deletedNoteIds||[],
+      deletedCategoryIds:state.deletedCategoryIds||[]
+    });
+    const verified=await gasGet({action:"GET_ALL"});
+    state.categories=(verified.categories||[]).map(c=>({...categoryFromGas(c),updatedAt:c.updated_at||isoTime()})).filter(c=>c.active!==false);
+    state.notes=(verified.notes||[]).map(n=>({...noteFromGas(n),updatedAt:n.updated_at||isoTime()})).filter(n=>n.active!==false);
+    state.deletedNoteIds=[];state.deletedCategoryIds=[];state.activeCategory="SEMUA";
+    await markLocalClean("✓ SAVE berhasil · GAS terverifikasi");
+    renderNotes();renderSettings();
+  }catch(e){
+    console.warn("SAVE GAS gagal",e);
+    setSyncStatus("error","⚠ SAVE gagal · Data lokal tetap digunakan");
+    alert("SAVE ke GAS gagal.\n\nData lokal tetap aman.\n\nDetail: "+(e.message||e));
+  }finally{gasSyncBusy=false;updateRecoveryButton()}
 }
 function setSyncStatus(status,text){const e=document.getElementById("syncStatus");if(!e)return;e.className="sync-status";if(status==="ok"){e.classList.add("ok");e.textContent=text||"✓ Tersinkron · Data lokal terbaru"}else if(status==="syncing"){e.classList.add("syncing");e.textContent=text||"◌ Menyinkronkan..."}else if(status==="error"){e.classList.add("error");e.textContent=text||"⚠ Belum tersinkron · Data lokal tetap digunakan"}else if(status==="dirty"){e.classList.add("dirty");e.textContent=text||"• Ada perubahan lokal yang belum di-SAVE"}else e.textContent=text||"● Lokal siap · Belum tersinkron"}
 function switchTab(tab){document.getElementById("notesTab").classList.toggle("active",tab==="notes");document.getElementById("settingsTab").classList.toggle("active",tab==="settings");document.getElementById("tabNotes").classList.toggle("active",tab==="notes");document.getElementById("tabSettings").classList.toggle("active",tab==="settings");if(tab==="settings")renderSettings()}
@@ -304,58 +342,39 @@ async function saveCategoryToGas(c){setSyncStatus("syncing");try{await gasPost({
 async function deleteCategoryFromGas(id){setSyncStatus("syncing");try{await gasPost({action:"DELETE_CATEGORY",id});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
 async function syncFromGas(manual=false){
   if(gasSyncBusy)return;
-  if(manual && !confirm("SINKRONISASI akan mengganti data lokal dengan data terbaru dari GAS.\n\nPerubahan lokal yang belum di-SAVE akan hilang.\n\nLanjutkan?"))return;
+  if(manual && !confirm("SINKRONISASI akan mengganti Cache 1 dengan data GAS.\n\nCache 1 lama akan dibackup ke Cache 2 terlebih dahulu.\n\nLanjutkan?"))return;
   gasSyncBusy=true;setSyncStatus("syncing","◌ Mengambil data terbaru dari GAS...");
   try{
     const r=await gasGet({action:"GET_ALL"});
     const rc=(r.categories||[]).map(c=>({...categoryFromGas(c),updatedAt:c.updated_at||isoTime()})).filter(c=>c.active!==false);
     const rn=(r.notes||[]).map(n=>({...noteFromGas(n),updatedAt:n.updated_at||isoTime()})).filter(n=>n.active!==false);
-    if(!rc.length && !rn.length && (state.categories.length||state.notes.length)){
+    if(!rc.length&&!rn.length&&(state.categories.length||state.notes.length)){
       setSyncStatus("error","⚠ GAS kosong · Data lokal tidak ditimpa");return;
     }
-    state.categories=rc;
-    state.notes=rn;
+    await backupCache1ToCache2("Sebelum SINKRONISASI");
+    state.categories=rc;state.notes=rn;
     state.deletedNoteIds=[];state.deletedCategoryIds=[];state.activeCategory="SEMUA";
-    persist();renderNotes();renderSettings();
-    await markLocalClean("✓ Data lokal diperbarui dari GAS");
-  }catch(e){console.warn("GAS sync gagal",e);setSyncStatus("error","⚠ Sinkronisasi gagal · Data lokal tetap digunakan")}
-  finally{gasSyncBusy=false}
+    await markLocalClean("✓ Sinkronisasi selesai · Backup tersedia");
+    renderNotes();renderSettings();
+  }catch(e){
+    console.warn("GAS sync gagal",e);
+    setSyncStatus("error","⚠ Sinkronisasi gagal · Data lokal tetap digunakan");
+  }finally{gasSyncBusy=false;updateRecoveryButton()}
 }
 
 document.getElementById("notes").addEventListener("click",e=>{const b=e.target.closest("button[data-action]");if(!b)return;const id=b.dataset.id;if(b.dataset.action==="copy")copyCell(id,Number(b.dataset.col),b);else if(b.dataset.action==="edit")editNote(id);else if(b.dataset.action==="delete")deleteNote(id);else if(b.dataset.action==="up")moveNote(id,-1);else if(b.dataset.action==="down")moveNote(id,1)})
 document.getElementById("notes").addEventListener("change",e=>{const b=e.target.closest("select[data-action=order]");if(b)chooseNoteOrder(b.dataset.id,b.value)})
-
-async function bootstrapFromGas(){
-  gasSyncBusy=true;
-  setSyncStatus("syncing","◌ Mengambil data awal dari GAS...");
-  try{
-    const r=await gasGet({action:"GET_ALL",v:Date.now()});
-    const rc=(r.categories||[]).map(c=>({...categoryFromGas(c),updatedAt:c.updated_at||isoTime()})).filter(c=>c.active!==false);
-    const rn=(r.notes||[]).map(n=>({...noteFromGas(n),updatedAt:n.updated_at||isoTime()})).filter(n=>n.active!==false);
-    state={categories:rc.length?rc:structuredClone(DEFAULT_CATEGORIES),notes:rn,activeCategory:"SEMUA",deletedNoteIds:[],deletedCategoryIds:[]};
-    await idbSet(structuredClone(state));
-    try{localStorage.setItem(LS_KEY,JSON.stringify(state));localStorage.setItem("catatanHeryLastSync",new Date().toISOString())}catch(e){}
-    setSyncStatus("ok","✓ Data awal dimuat dari GAS");
-    return true;
-  }catch(e){
-    console.warn("Bootstrap GAS gagal",e);
-    setSyncStatus("error","⚠ Data awal GAS gagal dimuat · Cek koneksi");
-    return false;
-  }finally{gasSyncBusy=false}
-}
 
 (async function init(){
   const f=localStorage.getItem("catatanHeryFont")||"16";
   document.getElementById("fontSize").value=f;setFontSize(f);
   try{
     state=await loadStateAsync();
-    if(!localCacheFound){
-      await bootstrapFromGas();
-    }
     renderNotes();renderSettings();
     const last=localStorage.getItem("catatanHeryLastSync");
     if(last)setSyncStatus("ok","✓ Data lokal · Sinkron terakhir "+formatTime(last));
     else setSyncStatus("dirty","● Data lokal · Belum pernah sinkron");
+    updateRecoveryButton();
   }catch(e){
     console.error(e);
     state=readLegacyState();renderNotes();renderSettings();
