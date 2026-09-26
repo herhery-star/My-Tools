@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#172033">
+<title>CATATAN HERY</title>
+<style>
+:root{
+  --navy:#172033; --navy2:#26344d; --bg:#f3f6f9; --card:#fff; --soft:#eef3f7;
+  --border:#cbd5e1; --text:#172033; --muted:#64748b; --green:#15803d; --red:#dc2626;
+  --radius:12px; --font-size:16px;
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;font-size:var(--font-size)}
+button,input,textarea,select{font:inherit} button{cursor:pointer}
+.app{width:min(1180px,100%);margin:auto;padding:8px}
+.header{background:var(--navy);color:#fff;border-radius:14px 14px 0 0;padding:15px 16px 13px;box-shadow:0 2px 8px rgba(15,23,42,.12)}
+.header h1{margin:0;text-align:center;font-size:clamp(21px,3vw,30px);letter-spacing:.5px}
+.header-sub{text-align:center;margin-top:4px;color:#dbe4f0;font-size:.76em}
+.tabs{display:flex;background:#fff;border:1px solid var(--border);border-top:0;padding:0 6px}
+.tab-btn{flex:1;border:0;background:transparent;color:#64748b;min-height:43px;padding:8px 12px;font-size:12px;font-weight:600;letter-spacing:.15px;border-bottom:2px solid transparent}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:700}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.toolbar{background:#fff;border:1px solid var(--border);border-top:0;padding:8px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.search{flex:1 1 280px;min-width:180px;border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:#fff}
+.tool-btn{border:1px solid var(--border);background:var(--soft);color:var(--text);border-radius:8px;min-height:38px;padding:7px 11px;font-weight:700}
+.tool-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tool-btn.danger{color:var(--red)}
+.font-control{display:flex;align-items:center;gap:5px;color:#64748b;font-size:11px;white-space:nowrap}
+.font-control select{border:1px solid var(--border);border-radius:7px;padding:7px;background:#fff;font-size:12px}
+.categories{display:flex;gap:5px;overflow-x:auto;padding:7px 0;scrollbar-width:thin}
+.cat-btn{flex:0 0 auto;border:1px solid var(--border);background:#fff;color:#475569;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;min-height:40px}
+.cat-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.notes-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 1px 7px}
+.notes-title{font-weight:900}.notes-count{color:var(--muted);font-size:11px}
+.list-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.category-block + .category-block{border-top:8px solid var(--bg)}
+.category-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;background:var(--navy);color:#fff}
+.category-heading-title{font-weight:900;letter-spacing:.2px}.category-heading-count{font-size:10px;background:#fff;color:var(--navy);border-radius:12px;padding:3px 8px;font-weight:800}
+.note-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}.note-table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:760px}
+.note-table th,.note-table td{border-bottom:1px solid #e3e9ef;padding:8px 9px;vertical-align:middle}.note-table th{background:#f1f5f9;color:#475569;font-size:10px;text-align:left;font-weight:700;white-space:nowrap}.note-table tr:last-child td{border-bottom:0}.note-table tbody tr:hover{background:#fafcff}
+.col-no{width:50px;text-align:center!important}.col-action{width:154px;min-width:154px}
+.note-value-wrap{display:inline-flex;align-items:center;gap:1ch;max-width:100%;width:max-content;vertical-align:middle}.note-value{flex:0 1 auto;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-weight:800;line-height:1.35}
+.note-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.35}.note-muted{color:var(--muted);font-size:.78em}
+.row-actions{display:flex;justify-content:flex-end;gap:4px;flex-wrap:nowrap;white-space:nowrap}.icon-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:15px}.icon-btn.delete{color:var(--red)}
+.copy-btn{width:36px;min-width:36px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:7px;background:#f8fafc;font-size:17px;font-weight:900}.copy-btn.copied{background:#ecfdf5;border-color:#86efac;color:var(--green)}
+.empty{background:#fff;border:1px dashed var(--border);border-radius:var(--radius);padding:28px 16px;text-align:center;color:var(--muted)}
+/* SETTINGS */
+.settings{padding-top:8px}.setting-section{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:9px;overflow:hidden}.setting-head{padding:10px 12px;background:#f1f5f9;border-bottom:1px solid var(--border);font-size:13px;font-weight:800}.setting-body{padding:12px}.category-list{display:grid;gap:7px}.category-item{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e2e8f0;border-radius:9px;padding:9px 10px}.category-item-name{font-weight:700}.category-item-meta{font-size:10px;color:var(--muted)}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:10px;font-weight:700;color:var(--muted)}.field input,.field textarea,.field select{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px;background:#fff}.field textarea{min-height:75px;resize:vertical}
+.column-editor{overflow:auto}.column-table{width:100%;border-collapse:collapse;min-width:600px}.column-table th,.column-table td{border-bottom:1px solid #e2e8f0;padding:7px;text-align:left}.column-table th{font-size:10px;color:#64748b;background:#f8fafc}.column-table input{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px}.check-cell{text-align:center;width:70px}.column-remove{border:0;background:transparent;color:var(--red);font-size:17px}.setting-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:10px}.hint{font-size:10px;color:#64748b;line-height:1.45}
+.footer{text-align:center;color:#94a3b8;font-size:10px;line-height:1.2;padding:5px 0 2px;min-height:17px;opacity:.9}.footer.ok{color:#7c9b86}.footer.syncing{color:#8b7a52}.footer.error{color:#a97878}
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:flex-end;justify-content:center;z-index:20}.modal-backdrop.show{display:flex}.modal{width:min(820px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:16px 16px 0 0;padding:15px;box-shadow:0 -6px 25px rgba(15,23,42,.18)}.modal h2{margin:0 0 12px;font-size:19px}
+@media(max-width:700px){.app{padding:5px}.setup-grid{grid-template-columns:1fr}.toolbar{padding:7px}.font-control{width:auto}.note-table{min-width:760px}.note-table th,.note-table td{padding:7px 8px}}
+@media(min-width:1000px){.modal-backdrop{align-items:center}.modal{border-radius:16px}}
+</style>
+
+<style>
+/* Copy icon follows the copied text with exactly one character of visual space. */
+.copy-btn { margin-left:0 !important; flex:0 0 36px; }
+.order-select{height:30px;min-width:42px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:11px;text-align:center;padding:2px}.order-btn{font-size:14px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header"><h1>CATATAN HERY</h1><div class="header-sub">Data tersusun per kategori dan dapat disesuaikan sesuai kebutuhan</div></header>
+  <nav class="tabs" aria-label="Navigasi utama">
+    <button id="tabNotes" class="tab-btn active" onclick="switchTab('notes')">📋 CATATAN</button>
+    <button id="tabSettings" class="tab-btn" onclick="switchTab('settings')">⚙ SETTING</button>
+  </nav>
+
+  <section id="notesTab" class="tab-panel active">
+    <div class="toolbar">
+      <input id="search" class="search" type="search" placeholder="Cari isi catatan..." oninput="renderNotes()">
+      <button class="tool-btn primary" onclick="openAdd()">＋ TAMBAH CATATAN</button>
+      <div class="font-control"><span>FONT</span><select id="fontSize" onchange="setFontSize(this.value)"><option value="14">Kecil</option><option value="16" selected>Normal</option><option value="18">Besar</option><option value="20">Sangat besar</option></select></div>
+    </div>
+    <nav id="categories" class="categories" aria-label="Filter kategori"></nav>
+    <div class="notes-head"><div id="notesTitle" class="notes-title">SEMUA CATATAN</div><div id="notesCount" class="notes-count"></div></div>
+    <main id="notes" class="list-wrap"></main>
+    <div class="footer" id="syncStatus">● Lokal tersimpan · Google Sheet belum terhubung</div>
+  </section>
+
+  <section id="settingsTab" class="tab-panel settings">
+    <div class="setting-section"><div class="setting-head">KATEGORI</div><div class="setting-body">
+      <div class="category-list" id="settingCategoryList"></div>
+      <div class="setting-actions"><button class="tool-btn primary" onclick="openCategoryEditor()">＋ TAMBAH KATEGORI</button></div>
+    </div></div>
+    <div class="setting-section"><div class="setting-head">TAMPILAN</div><div class="setting-body"><div class="hint">Pengaturan font di sini mengubah ukuran data pada Tab Catatan. Filter dan kontrol tetap lebih kecil agar fokus tetap pada isi data.</div></div></div>
+    <div class="setting-section"><div class="setting-head">SINKRONISASI</div><div class="setting-body"><div class="hint" id="gasInfo">Google Sheet / GAS digunakan sebagai penyimpanan utama dan backup. Tampilan lokal tetap tersedia saat koneksi gagal.</div><div class="setting-actions"><button class="tool-btn" onclick="syncFromGas(true)">↻ SINKRONKAN SEKARANG</button></div></div></div>
+  </section>
+</div>
+
+<div id="noteModal" class="modal-backdrop" onclick="closeBackdrop(event,'noteModal')"><section class="modal">
+  <h2 id="noteModalTitle">Tambah Catatan</h2><div id="noteForm"></div>
+  <div class="setting-actions"><button class="tool-btn" onclick="closeModal('noteModal')">BATAL</button><button class="tool-btn primary" onclick="saveNote()">SIMPAN</button></div>
+</section></div>
+
+<div id="categoryModal" class="modal-backdrop" onclick="closeBackdrop(event,'categoryModal')"><section class="modal">
+  <h2 id="categoryModalTitle">Tambah Kategori</h2>
+  <div class="setup-grid"><div class="field full"><label>NAMA KATEGORI</label><input id="categoryName" placeholder="Contoh: KODE"></div></div>
+  <div class="field" style="margin-top:10px"><label>KOLOM DATA — hingga 6 kolom</label><div class="column-editor"><table class="column-table"><thead><tr><th style="width:45px">NO</th><th>NAMA HEADER</th><th class="check-cell">COPY</th><th style="width:45px"> </th></tr></thead><tbody id="columnRows"></tbody></table></div></div>
+  <div class="setting-actions"><button class="tool-btn" onclick="addColumnRow()">＋ TAMBAH KOLOM</button></div>
+  <div class="hint" style="margin-top:8px">COPY ditempel langsung di samping nilai pada kolom yang dipilih. Tidak semua kolom harus memiliki tombol COPY. Tampilan mendukung hingga 6 kolom dan akan bergeser horizontal bila layar tidak cukup lebar.</div>
+  <div class="setting-actions"><button class="tool-btn" onclick="closeModal('categoryModal')">BATAL</button><button class="tool-btn primary" onclick="saveCategory()">SIMPAN KATEGORI</button></div>
+</section></div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyEbFoqfvEmQ5nX0UaFvUzgru4cqMEmZ74UVShESGF4HLf4f3mBffPMc2jEJgVp9q0/exec";
+const LS_KEY="catatanHeryV5";
+const OLD_LS_KEY="catatanHery";
+let gasSyncBusy=false, editingNoteId=null, editingCategoryId=null;
+
+const DEFAULT_CATEGORIES=[
+  {id:"kode",name:"KODE",columns:[{header:"Produk",copy:false},{header:"Kode Produk",copy:true},{header:"Keterangan",copy:false}]},
+  {id:"rekening",name:"REKENING",columns:[{header:"Bank",copy:false},{header:"Nomor Rekening",copy:true},{header:"Pemilik",copy:true}]},
+  {id:"lainnya",name:"LAINNYA",columns:[{header:"Judul",copy:false},{header:"Isi",copy:true}]}
+];
+
+function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
+function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#039;")}
+function loadState(){
+  let s=null; try{s=JSON.parse(localStorage.getItem(LS_KEY)||"null")}catch(e){}
+  if(s && Array.isArray(s.categories) && Array.isArray(s.notes)) return s;
+  let old=null; try{old=JSON.parse(localStorage.getItem(OLD_LS_KEY)||"null")}catch(e){}
+  if(old && Array.isArray(old.notes)){
+    const cats=[...DEFAULT_CATEGORIES];
+    (old.categories||[]).forEach(name=>{const n=String(name).toUpperCase();if(n!=="KODE"&&n!=="REKENING"&&n!=="LAINNYA")cats.push({id:slug(n),name:n,columns:[{header:"Judul",copy:false},{header:"Nilai / Isi",copy:true},{header:"Keterangan",copy:false}]})});
+    const notes=old.notes.map(n=>({id:n.id||uuid(),categoryId:findCatId(cats,n.category),data:[n.title||"",n.value||"",n.desc||""]}));
+    s={categories:cats,notes,activeCategory:old.activeCategory||"SEMUA"};
+  }else s={categories:structuredClone(DEFAULT_CATEGORIES),notes:[],activeCategory:"SEMUA"};
+  localStorage.setItem(LS_KEY,JSON.stringify(s)); return s;
+}
+function slug(s){return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||uuid()}
+function findCatId(cats,name){const x=cats.find(c=>c.name===String(name||"").toUpperCase());return x?x.id:(cats.find(c=>c.name==="LAINNYA")||cats[0]).id}
+let state=loadState();
+function persist(){localStorage.setItem(LS_KEY,JSON.stringify(state));if(!gasSyncBusy)setSyncStatus("local")}
+function setSyncStatus(status,text){const e=document.getElementById("syncStatus");if(!e)return;e.className="footer";if(status==="ok"){e.classList.add("ok");e.textContent=text||"● Tersinkron · Google Sheet"}else if(status==="syncing"){e.classList.add("syncing");e.textContent=text||"◌ Menyinkronkan..."}else if(status==="error"){e.classList.add("error");e.textContent=text||"⚠ Belum tersinkron · tersimpan lokal"}else e.textContent=text||"● Lokal tersimpan · Google Sheet belum terhubung"}
+function switchTab(tab){document.getElementById("notesTab").classList.toggle("active",tab==="notes");document.getElementById("settingsTab").classList.toggle("active",tab==="settings");document.getElementById("tabNotes").classList.toggle("active",tab==="notes");document.getElementById("tabSettings").classList.toggle("active",tab==="settings");if(tab==="settings")renderSettings()}
+function getCat(id){return state.categories.find(c=>c.id===id)}
+function getVisibleNotes(){const q=(document.getElementById("search").value||"").trim().toLowerCase();return state.notes.filter(n=>{const catOK=state.activeCategory==="SEMUA"||n.categoryId===state.activeCategory;const c=getCat(n.categoryId);const text=[c?.name||"",...(n.data||[])].join(" ").toLowerCase();return catOK&&(!q||text.includes(q))})}
+function renderCategories(){const root=document.getElementById("categories");const cats=[{id:"SEMUA",name:"Semua"},...state.categories];root.innerHTML=cats.map(c=>`<button class="cat-btn ${state.activeCategory===c.id?"active":""}" onclick="selectCategory('${esc(c.id)}')">${esc(c.name)}</button>`).join("")}
+function getCategoryNotes(categoryId){return state.notes.filter(n=>n.categoryId===categoryId)}
+function saveOrderToGas(categoryId){const ordered=getCategoryNotes(categoryId);return gasPost({action:"SET_CATEGORY_ORDER",category_id:categoryId,orders:ordered.map((n,i)=>({id:n.id,order:i+1}))}).then(()=>true).catch(e=>{console.warn("GAS ORDER gagal",e);setSyncStatus("error");return false})}
+function reorderNote(id,targetIndex){const n=state.notes.find(x=>x.id===id);if(!n)return;const catId=n.categoryId;const arr=getCategoryNotes(catId);const from=arr.findIndex(x=>x.id===id);let to=Math.max(0,Math.min(arr.length-1,targetIndex));if(from===to)return;const moved=arr.splice(from,1)[0];arr.splice(to,0,moved);let pos=0;state.notes=state.notes.map(x=>x.categoryId===catId?arr[pos++]:x);persist();renderNotes();saveOrderToGas(catId)}
+function moveNote(id,delta){const n=state.notes.find(x=>x.id===id);if(!n)return;const arr=getCategoryNotes(n.categoryId);const i=arr.findIndex(x=>x.id===id);reorderNote(id,i+delta)}
+function chooseNoteOrder(id,value){reorderNote(id,Number(value)-1)}
+function renderNotes(){renderCategories();const visible=getVisibleNotes();const label=state.activeCategory==="SEMUA"?"SEMUA CATATAN":(getCat(state.activeCategory)?.name||"");document.getElementById("notesTitle").textContent=label;document.getElementById("notesCount").textContent=visible.length+" catatan";const root=document.getElementById("notes");if(!visible.length){root.innerHTML=`<div class="empty">Belum ada catatan pada kategori/pencarian ini.<br><button class="tool-btn primary" style="margin-top:10px" onclick="openAdd()">＋ Tambah Catatan</button></div>`;return}
+  const groups=state.activeCategory==="SEMUA"?state.categories.map(c=>({category:c,items:visible.filter(n=>n.categoryId===c.id)})).filter(g=>g.items.length):[{category:getCat(state.activeCategory),items:visible}];
+  root.innerHTML=groups.map(g=>renderCategoryTable(g.category,g.items)).join("")}
+function renderCategoryTable(cat,items){const ordered=getCategoryNotes(cat.id);return `<section class="category-block"><div class="category-heading"><div class="category-heading-title">${esc(cat.name)}</div><div class="category-heading-count">${items.length}</div></div><div class="note-table-wrap"><table class="note-table"><thead><tr><th class="col-no">NO</th>${cat.columns.map(c=>`<th>${esc(c.header)}</th>`).join("")}<th class="col-action">AKSI</th></tr></thead><tbody>${items.map(n=>{const i=ordered.findIndex(x=>x.id===n.id);const total=ordered.length;return `<tr><td class="col-no"><select class="order-select" data-action="order" data-id="${esc(n.id)}" title="Pilih nomor urut">${Array.from({length:total},(_,k)=>`<option value="${k+1}" ${k===i?"selected":""}>${k+1}</option>`).join("")}</select></td>${cat.columns.map((c,j)=>{const val=n.data?.[j]||"";return `<td>${c.copy?`<div class="note-value-wrap"><div class="note-value">${esc(val)}</div><button class="copy-btn" type="button" data-action="copy" data-id="${esc(n.id)}" data-col="${j}" title="Salin ${esc(c.header)}" aria-label="Salin ${esc(c.header)}">⧉</button></div>`:`<div class="note-text">${val?esc(val):`<span class="note-muted">—</span>`}</div>`}</td>`}).join("")}<td class="col-action"><div class="row-actions"><button type="button" class="icon-btn order-btn" data-action="up" data-id="${esc(n.id)}" title="Naik satu tingkat" ${i===0?"disabled":""}>↑</button><button type="button" class="icon-btn order-btn" data-action="down" data-id="${esc(n.id)}" title="Turun satu tingkat" ${i===total-1?"disabled":""}>↓</button><button type="button" class="icon-btn" data-action="edit" data-id="${esc(n.id)}" title="Edit">✎</button><button type="button" class="icon-btn delete" data-action="delete" data-id="${esc(n.id)}" title="Hapus">×</button></div></td></tr>`}).join("")}</tbody></table></div></section>`}
+function selectCategory(id){state.activeCategory=id;persist();renderNotes()}
+function openAdd(){editingNoteId=null;document.getElementById("noteModalTitle").textContent="Tambah Catatan";renderNoteForm();openModal("noteModal")}
+function renderNoteForm(){const cat=state.activeCategory!=="SEMUA"?getCat(state.activeCategory):state.categories[0];if(!cat)return;document.getElementById("noteForm").innerHTML=`<div class="setup-grid"><div class="field full"><label>KATEGORI</label><select id="noteCategory" onchange="renderNoteFormFields()">${state.categories.map(c=>`<option value="${esc(c.id)}" ${c.id===cat.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div></div><div id="noteFields" class="setup-grid" style="margin-top:9px"></div>`;renderNoteFormFields()}
+function renderNoteFormFields(){const cat=getCat(document.getElementById("noteCategory").value);const n=editingNoteId?state.notes.find(x=>x.id===editingNoteId):null;document.getElementById("noteFields").innerHTML=cat.columns.map((c,i)=>`<div class="field ${cat.columns.length===1?"full":""}"><label>${esc(c.header)}${c.copy?" · COPY": ""}</label><textarea id="noteData${i}" placeholder="Isi ${esc(c.header)}">${esc(n?.data?.[i]||"")}</textarea></div>`).join("")}
+function saveNote(){const cat=getCat(document.getElementById("noteCategory").value);if(!cat)return;const data=cat.columns.map((c,i)=>document.getElementById("noteData"+i).value.trim());if(data.every(v=>!v)){alert("Isi minimal satu kolom.");return}let n=editingNoteId?state.notes.find(x=>x.id===editingNoteId):null;if(!n){n={id:uuid(),categoryId:cat.id,data};state.notes.push(n)}else{const oldCat=n.categoryId;n.categoryId=cat.id;n.data=data;if(oldCat!==cat.id){state.notes=state.notes.filter(x=>x.id!==n.id);state.notes.push(n);saveOrderToGas(oldCat);saveOrderToGas(cat.id)}}persist();closeModal("noteModal");renderNotes();renderSettings();saveNoteToGas(n);if(!editingNoteId)saveOrderToGas(cat.id)}
+function editNote(id){editingNoteId=id;const n=state.notes.find(x=>x.id===id);if(!n)return;document.getElementById("noteModalTitle").textContent="Edit Catatan";renderNoteForm();document.getElementById("noteCategory").value=n.categoryId;renderNoteFormFields();openModal("noteModal")}
+function deleteNote(id){const n=state.notes.find(x=>x.id===id);if(!n)return;if(!confirm("Hapus catatan ini?"))return;state.notes=state.notes.filter(x=>x.id!==id);persist();renderNotes();deleteNoteFromGas(id)}
+async function copyCell(id,col,button){const n=state.notes.find(x=>x.id===id);if(!n)return;const value=String(n.data?.[col]||"");const done=()=>{button.textContent="✓";button.classList.add("copied");setTimeout(()=>{button.textContent="⧉";button.classList.remove("copied")},900)};try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value);done()}else fallbackCopy(value,done)}catch(e){fallbackCopy(value,done)}}
+function fallbackCopy(value,done){const ta=document.createElement("textarea");ta.value=value;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done()}finally{ta.remove()}}
+function renderSettings(){const root=document.getElementById("settingCategoryList");root.innerHTML=state.categories.map(c=>`<div class="category-item"><div><div class="category-item-name">${esc(c.name)}</div><div class="category-item-meta">${c.columns.length} kolom · ${c.columns.filter(x=>x.copy).length} copy</div></div><div><button class="icon-btn" onclick="openCategoryEditor('${esc(c.id)}')">✎</button><button class="icon-btn delete" onclick="deleteCategory('${esc(c.id)}')">×</button></div></div>`).join("")}
+function openCategoryEditor(id=""){editingCategoryId=id||null;const c=id?getCat(id):null;document.getElementById("categoryModalTitle").textContent=c?"Edit Kategori":"Tambah Kategori";document.getElementById("categoryName").value=c?.name||"";document.getElementById("columnRows").innerHTML="";(c?.columns||[{header:"",copy:false}]).forEach(x=>addColumnRow(x.header,x.copy));openModal("categoryModal")}
+function addColumnRow(header="",copy=false){const body=document.getElementById("columnRows");if(body.children.length>=6){alert("Maksimal 6 kolom.");return}const i=body.children.length;const tr=document.createElement("tr");tr.innerHTML=`<td>${i+1}</td><td><input class="col-header" value="${esc(header)}" placeholder="Nama header"></td><td class="check-cell"><input class="col-copy" type="checkbox" ${copy?"checked":""}></td><td><button class="column-remove" type="button" onclick="this.closest('tr').remove();renumberColumns()">×</button></td>`;body.appendChild(tr)}
+function renumberColumns(){[...document.querySelectorAll("#columnRows tr")].forEach((tr,i)=>tr.firstElementChild.textContent=i+1)}
+function saveCategory(){const name=document.getElementById("categoryName").value.trim().toUpperCase();const rows=[...document.querySelectorAll("#columnRows tr")];const columns=rows.map(r=>({header:r.querySelector(".col-header").value.trim(),copy:r.querySelector(".col-copy").checked})).filter(x=>x.header);if(!name||columns.length<1){alert("Nama kategori dan minimal satu kolom wajib diisi.");return}if(columns.length>6){alert("Maksimal 6 kolom.");return;}const duplicate=state.categories.some(c=>c.name===name&&c.id!==editingCategoryId);if(duplicate){alert("Nama kategori sudah ada.");return}let c=editingCategoryId?getCat(editingCategoryId):null;if(c){c.name=name;c.columns=columns}else{c={id:slug(name)+"-"+Date.now(),name,columns};state.categories.push(c)}state.activeCategory=c.id;persist();closeModal("categoryModal");renderNotes();renderSettings();saveCategoryToGas(c)}
+function deleteCategory(id){if(state.categories.length<=1){alert("Minimal harus ada satu kategori.");return}const c=getCat(id);if(!c)return;if(state.notes.some(n=>n.categoryId===id)){alert("Kategori masih memiliki catatan. Pindahkan/hapus catatannya terlebih dahulu.");return}if(!confirm(`Hapus kategori ${c.name}?`))return;state.categories=state.categories.filter(x=>x.id!==id);state.activeCategory="SEMUA";persist();renderNotes();renderSettings();deleteCategoryFromGas(id)}
+function openModal(id){document.getElementById(id).classList.add("show")};function closeModal(id){document.getElementById(id).classList.remove("show")};function closeBackdrop(e,id){if(e.target.id===id)closeModal(id)}
+function setFontSize(v){document.documentElement.style.setProperty("--font-size",v+"px");localStorage.setItem("catatanHeryFont",v)}
+
+async function gasGet(params={}){const qs=new URLSearchParams(params).toString();const r=await fetch(GAS_URL+(qs?"?"+qs:""),{cache:"no-store"});if(!r.ok)throw Error("GAS HTTP "+r.status);const d=await r.json();if(d.success===false)throw Error(d.error||"GAS GET gagal");return d}
+async function gasPost(payload){const r=await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),cache:"no-store"});if(!r.ok)throw Error("GAS HTTP "+r.status);const d=await r.json();if(d.success===false)throw Error(d.error||"GAS POST gagal");return d}
+function categoryForGas(c){return {id:c.id,name:c.name,columns:c.columns,active:true}}
+function noteForGas(n){const arr=getCategoryNotes(n.categoryId);return {id:n.id,category_id:n.categoryId,data:n.data,order:arr.findIndex(x=>x.id===n.id)+1}}
+function categoryFromGas(c){return {id:String(c.id),name:String(c.name),columns:Array.isArray(c.columns)?c.columns.map(x=>({header:String(x.header||""),copy:!!x.copy})):[],active:c.active!==false}}
+function noteFromGas(n){return {id:String(n.id),categoryId:String(n.category_id),data:Array.isArray(n.data)?n.data.map(x=>String(x??"")):[],order:Number(n.order)||0}}
+async function saveNoteToGas(n){setSyncStatus("syncing");try{await gasPost({action:"SAVE_NOTE",data:noteForGas(n)});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
+async function setNoteOrderToGas(id,order){try{await gasPost({action:"SET_NOTE_ORDER",id:String(id),order:Number(order)});return true}catch(e){console.warn(e);return false}}
+async function deleteNoteFromGas(id){setSyncStatus("syncing");try{await gasPost({action:"DELETE_NOTE",id});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
+async function saveCategoryToGas(c){setSyncStatus("syncing");try{await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(c)});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
+async function deleteCategoryFromGas(id){setSyncStatus("syncing");try{await gasPost({action:"DELETE_CATEGORY",id});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
+async function syncFromGas(manual=false){if(gasSyncBusy)return;gasSyncBusy=true;setSyncStatus("syncing");try{const r=await gasGet({action:"GET_ALL"});const rc=(r.categories||[]).map(categoryFromGas);const rn=(r.notes||[]).map(noteFromGas);if(rc.length){state.categories=rc.filter(c=>c.active!==false);const valid=rn.filter(n=>state.categories.some(c=>c.id===n.categoryId));const grouped=state.categories.flatMap(c=>valid.filter(n=>n.categoryId===c.id).sort((a,b)=>(a.order||0)-(b.order||0)));state.notes=grouped;state.activeCategory="SEMUA";persist()}else{for(const c of state.categories)await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(c)});for(const n of state.notes)await gasPost({action:"SAVE_NOTE",data:noteForGas(n)})}renderNotes();renderSettings();setSyncStatus("ok")}catch(e){console.warn("GAS sync gagal",e);setSyncStatus("error")}finally{gasSyncBusy=false}}
+
+document.getElementById("notes").addEventListener("click",e=>{const b=e.target.closest("button[data-action]");if(!b)return;const id=b.dataset.id;if(b.dataset.action==="copy")copyCell(id,Number(b.dataset.col),b);else if(b.dataset.action==="edit")editNote(id);else if(b.dataset.action==="delete")deleteNote(id);else if(b.dataset.action==="up")moveNote(id,-1);else if(b.dataset.action==="down")moveNote(id,1)})
+document.getElementById("notes").addEventListener("change",e=>{const b=e.target.closest("select[data-action=order]");if(b)chooseNoteOrder(b.dataset.id,b.value)})
+
+(function init(){const f=localStorage.getItem("catatanHeryFont")||"16";document.getElementById("fontSize").value=f;setFontSize(f);renderNotes();renderSettings();syncFromGas(false)})();
+</script>
+</body>
+</html>
