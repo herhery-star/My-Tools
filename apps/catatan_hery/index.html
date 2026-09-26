@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#172033">
+<link rel="manifest" href="./manifest.json">
 <title>CATATAN HERY</title>
 <style>
 :root{
@@ -51,6 +52,8 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
 .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:10px;font-weight:700;color:var(--muted)}.field input,.field textarea,.field select{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px;background:#fff}.field textarea{min-height:75px;resize:vertical}
 .column-editor{overflow:auto}.column-table{width:100%;border-collapse:collapse;min-width:600px}.column-table th,.column-table td{border-bottom:1px solid #e2e8f0;padding:7px;text-align:left}.column-table th{font-size:10px;color:#64748b;background:#f8fafc}.column-table input{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px}.check-cell{text-align:center;width:70px}.column-remove{border:0;background:transparent;color:var(--red);font-size:17px}.setting-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:10px}.hint{font-size:10px;color:#64748b;line-height:1.45}
 .footer{text-align:center;color:#94a3b8;font-size:10px;line-height:1.2;padding:5px 0 2px;min-height:17px;opacity:.9}.footer.ok{color:#7c9b86}.footer.syncing{color:#8b7a52}.footer.error{color:#a97878}
+.sync-panel{background:#fff;border:1px solid var(--border);border-top:0;padding:8px 10px 7px}.sync-actions{display:flex;gap:18px;align-items:flex-start;justify-content:flex-start;flex-wrap:wrap}.sync-action{display:flex;align-items:baseline;gap:7px}.sync-btn{border:0;background:transparent;padding:2px 0;font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap}.sync-btn.save{color:#334155}.sync-btn.sync{color:#334155}.sync-help{font-size:9px;color:#94a3b8;line-height:1.2;white-space:nowrap}.sync-status{margin-top:5px;font-size:9px;color:#94a3b8;line-height:1.2}.sync-status.ok{color:#7c9b86}.sync-status.syncing{color:#8b7a52}.sync-status.error{color:#a97878}.sync-status.dirty{color:#9a7b45}
+@media(max-width:700px){.sync-actions{gap:12px}.sync-action{gap:5px}.sync-help{font-size:8px}}
 .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:flex-end;justify-content:center;z-index:20}.modal-backdrop.show{display:flex}.modal{width:min(820px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:16px 16px 0 0;padding:15px;box-shadow:0 -6px 25px rgba(15,23,42,.18)}.modal h2{margin:0 0 12px;font-size:19px}
 @media(max-width:700px){.app{padding:5px}.setup-grid{grid-template-columns:1fr}.toolbar{padding:7px}.font-control{width:auto}.note-table{min-width:760px}.note-table th,.note-table td{padding:7px 8px}}
 @media(min-width:1000px){.modal-backdrop{align-items:center}.modal{border-radius:16px}}
@@ -76,10 +79,22 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
       <button class="tool-btn primary" onclick="openAdd()">＋ TAMBAH CATATAN</button>
       <div class="font-control"><span>FONT</span><select id="fontSize" onchange="setFontSize(this.value)"><option value="14">Kecil</option><option value="16" selected>Normal</option><option value="18">Besar</option><option value="20">Sangat besar</option></select></div>
     </div>
+    <div class="sync-panel">
+      <div class="sync-actions">
+        <div class="sync-action">
+          <button class="sync-btn save" onclick="saveLocalToGas()">💾 SAVE</button>
+          <div class="sync-help">Lokal → GAS · Simpan perubahan</div>
+        </div>
+        <div class="sync-action">
+          <button class="sync-btn sync" onclick="syncFromGas(true)">🔄 SINKRONISASI</button>
+          <div class="sync-help">GAS → Lokal · Ambil data terbaru</div>
+        </div>
+      </div>
+      <div id="syncStatus" class="sync-status">● Lokal siap · Belum tersinkron</div>
+    </div>
     <nav id="categories" class="categories" aria-label="Filter kategori"></nav>
     <div class="notes-head"><div id="notesTitle" class="notes-title">SEMUA CATATAN</div><div id="notesCount" class="notes-count"></div></div>
     <main id="notes" class="list-wrap"></main>
-    <div class="footer" id="syncStatus">● Lokal tersimpan · Google Sheet belum terhubung</div>
   </section>
 
   <section id="settingsTab" class="tab-panel settings">
@@ -88,7 +103,7 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
       <div class="setting-actions"><button class="tool-btn primary" onclick="openCategoryEditor()">＋ TAMBAH KATEGORI</button></div>
     </div></div>
     <div class="setting-section"><div class="setting-head">TAMPILAN</div><div class="setting-body"><div class="hint">Pengaturan font di sini mengubah ukuran data pada Tab Catatan. Filter dan kontrol tetap lebih kecil agar fokus tetap pada isi data.</div></div></div>
-    <div class="setting-section"><div class="setting-head">SINKRONISASI</div><div class="setting-body"><div class="hint" id="gasInfo">Google Sheet / GAS digunakan sebagai penyimpanan utama dan backup. Tampilan lokal tetap tersedia saat koneksi gagal.</div><div class="setting-actions"><button class="tool-btn" onclick="syncFromGas(true)">↻ SINKRONKAN SEKARANG</button></div></div></div>
+    <div class="setting-section"><div class="setting-head">SINKRONISASI</div><div class="setting-body"><div class="hint" id="gasInfo">Google Sheet / GAS digunakan sebagai sumber data pusat. SAVE mengirim lokal ke GAS; SINKRONISASI mengganti lokal dengan data GAS terbaru.</div><div class="setting-actions"><button class="tool-btn" onclick="syncFromGas(true)">↻ SINKRONKAN SEKARANG</button></div></div></div>
   </section>
 </div>
 
@@ -108,42 +123,130 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyEbFoqfvEmQ5nX0UaFvUzgru4cqMEmZ74UVShESGF4HLf4f3mBffPMc2jEJgVp9q0/exec";
+const DB_NAME="CatatanHeryDB";
+const DB_VERSION=1;
+const DB_STORE="app";
+const CACHE_KEY="state";
 const LS_KEY="catatanHeryV5";
 const OLD_LS_KEY="catatanHery";
 let gasSyncBusy=false, editingNoteId=null, editingCategoryId=null;
+let state={categories:[],notes:[],activeCategory:"SEMUA",deletedNoteIds:[],deletedCategoryIds:[]};
+let dbPromise=null;
 
 const DEFAULT_CATEGORIES=[
   {id:"kode",name:"KODE",columns:[{header:"Produk",copy:false},{header:"Kode Produk",copy:true},{header:"Keterangan",copy:false}]},
   {id:"rekening",name:"REKENING",columns:[{header:"Bank",copy:false},{header:"Nomor Rekening",copy:true},{header:"Pemilik",copy:true}]},
   {id:"lainnya",name:"LAINNYA",columns:[{header:"Judul",copy:false},{header:"Isi",copy:true}]}
 ];
-
 function uuid(){return crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
 function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#039;")}
-function loadState(){
-  let s=null; try{s=JSON.parse(localStorage.getItem(LS_KEY)||"null")}catch(e){}
-  if(s && Array.isArray(s.categories) && Array.isArray(s.notes)) return s;
-  let old=null; try{old=JSON.parse(localStorage.getItem(OLD_LS_KEY)||"null")}catch(e){}
-  if(old && Array.isArray(old.notes)){
-    const cats=[...DEFAULT_CATEGORIES];
-    (old.categories||[]).forEach(name=>{const n=String(name).toUpperCase();if(n!=="KODE"&&n!=="REKENING"&&n!=="LAINNYA")cats.push({id:slug(n),name:n,columns:[{header:"Judul",copy:false},{header:"Nilai / Isi",copy:true},{header:"Keterangan",copy:false}]})});
-    const notes=old.notes.map(n=>({id:n.id||uuid(),categoryId:findCatId(cats,n.category),data:[n.title||"",n.value||"",n.desc||""]}));
-    s={categories:cats,notes,activeCategory:old.activeCategory||"SEMUA"};
-  }else s={categories:structuredClone(DEFAULT_CATEGORIES),notes:[],activeCategory:"SEMUA"};
-  localStorage.setItem(LS_KEY,JSON.stringify(s)); return s;
-}
 function slug(s){return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||uuid()}
 function findCatId(cats,name){const x=cats.find(c=>c.name===String(name||"").toUpperCase());return x?x.id:(cats.find(c=>c.name==="LAINNYA")||cats[0]).id}
-let state=loadState();
-function persist(){localStorage.setItem(LS_KEY,JSON.stringify(state));if(!gasSyncBusy)setSyncStatus("local")}
-function setSyncStatus(status,text){const e=document.getElementById("syncStatus");if(!e)return;e.className="footer";if(status==="ok"){e.classList.add("ok");e.textContent=text||"● Tersinkron · Google Sheet"}else if(status==="syncing"){e.classList.add("syncing");e.textContent=text||"◌ Menyinkronkan..."}else if(status==="error"){e.classList.add("error");e.textContent=text||"⚠ Belum tersinkron · tersimpan lokal"}else e.textContent=text||"● Lokal tersimpan · Google Sheet belum terhubung"}
+function normalizeState(s){
+  if(!s||!Array.isArray(s.categories)||!Array.isArray(s.notes)) return null;
+  if(!Array.isArray(s.deletedNoteIds))s.deletedNoteIds=[];
+  if(!Array.isArray(s.deletedCategoryIds))s.deletedCategoryIds=[];
+  if(!s.activeCategory)s.activeCategory="SEMUA";
+  const fallback=localStorage.getItem("catatanHeryLastSync")||"1970-01-01T00:00:00.000Z";
+  s.categories.forEach(c=>{if(!c.updatedAt)c.updatedAt=fallback});
+  s.notes.forEach(n=>{if(!n.updatedAt)n.updatedAt=fallback});
+  return s;
+}
+function openDB(){
+  if(dbPromise)return dbPromise;
+  dbPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){reject(new Error("IndexedDB tidak tersedia"));return}
+    const r=indexedDB.open(DB_NAME,DB_VERSION);
+    r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(DB_STORE))db.createObjectStore(DB_STORE)};
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error("IndexedDB gagal"));
+  });return dbPromise;
+}
+async function idbGet(key=CACHE_KEY){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readonly");const q=tx.objectStore(DB_STORE).get(key);q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error)})}
+async function idbSet(value,key=CACHE_KEY){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readwrite");tx.objectStore(DB_STORE).put(value,key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
+async function idbDelete(key=CACHE_KEY){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readwrite");tx.objectStore(DB_STORE).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
+function readLegacyState(){
+  let s=null;try{s=JSON.parse(localStorage.getItem(LS_KEY)||"null")}catch(e){}
+  if(s&&Array.isArray(s.categories)&&Array.isArray(s.notes))return normalizeState(s);
+  let old=null;try{old=JSON.parse(localStorage.getItem(OLD_LS_KEY)||"null")}catch(e){}
+  if(old&&Array.isArray(old.notes)){
+    const cats=[...structuredClone(DEFAULT_CATEGORIES)];
+    (old.categories||[]).forEach(name=>{const n=String(name).toUpperCase();if(!["KODE","REKENING","LAINNYA"].includes(n))cats.push({id:slug(n),name:n,columns:[{header:"Judul",copy:false},{header:"Nilai / Isi",copy:true},{header:"Keterangan",copy:false}]})});
+    return normalizeState({categories:cats,notes:old.notes.map(n=>({id:n.id||uuid(),categoryId:findCatId(cats,n.category),data:[n.title||"",n.value||"",n.desc||""],updatedAt:old.updatedAt||new Date().toISOString()})),activeCategory:old.activeCategory||"SEMUA"});
+  }
+  return normalizeState({categories:structuredClone(DEFAULT_CATEGORIES),notes:[],activeCategory:"SEMUA"});
+}
+async function loadStateAsync(){
+  try{const cached=normalizeState(await idbGet());if(cached)return cached}catch(e){console.warn("IndexedDB baca gagal",e)}
+  const legacy=readLegacyState();
+  try{await idbSet(legacy)}catch(e){console.warn("IndexedDB tulis awal gagal",e)}
+  return legacy;
+}
+function persist(){
+  const snapshot=structuredClone(state);
+  idbSet(snapshot).catch(e=>console.warn("Cache lokal gagal disimpan",e));
+  // fallback/migration safety: keep a lightweight localStorage copy too
+  try{localStorage.setItem(LS_KEY,JSON.stringify(snapshot))}catch(e){}
+  if(!gasSyncBusy)setSyncStatus("dirty")
+}
+async function markLocalClean(message){
+  try{await idbSet(structuredClone(state))}catch(e){console.warn(e)}
+  try{localStorage.setItem(LS_KEY,JSON.stringify(state));localStorage.setItem("catatanHeryLastSync",new Date().toISOString())}catch(e){}
+  setSyncStatus("ok",message||"✓ Tersinkron · Data lokal terbaru");
+}
+function isoTime(){return new Date().toISOString()}
+function gasTime(v){const d=new Date(v||0);return isNaN(d.getTime())?new Date(0):d}
+function formatTime(v){const d=new Date(v);if(isNaN(d.getTime()))return "-";return d.toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}
+function slug(s){return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||uuid()}
+function findCatId(cats,name){const x=cats.find(c=>c.name===String(name||"").toUpperCase());return x?x.id:(cats.find(c=>c.name==="LAINNYA")||cats[0]).id}
+function findRemoteConflicts(remote){
+  const remoteCats=new Map((remote.categories||[]).map(c=>[String(c.id),c]));
+  const remoteNotes=new Map((remote.notes||[]).map(n=>[String(n.id),n]));
+  const conflicts=[];
+  state.categories.forEach(c=>{
+    const r=remoteCats.get(String(c.id));
+    if(r && gasTime(r.updated_at)>gasTime(c.updatedAt)) conflicts.push({type:"Kategori",name:c.name,local:c.updatedAt,remote:r.updated_at});
+  });
+  state.notes.forEach(n=>{
+    const r=remoteNotes.get(String(n.id));
+    if(r && gasTime(r.updated_at)>gasTime(n.updatedAt)){
+      const cat=getCat(n.categoryId);
+      conflicts.push({type:"Catatan",name:(n.data||[])[0]||cat?.name||n.id,local:n.updatedAt,remote:r.updated_at});
+    }
+  });
+  return conflicts;
+}
+async function saveLocalToGas(){
+  if(gasSyncBusy)return;
+  gasSyncBusy=true;setSyncStatus("syncing","◌ Memeriksa data GAS sebelum SAVE...");
+  try{
+    const remote=await gasGet({action:"GET_ALL"});
+    const conflicts=findRemoteConflicts(remote);
+    if(conflicts.length){
+      const lines=conflicts.slice(0,8).map(x=>`• ${x.type}: ${x.name}\n  Lokal: ${formatTime(x.local)} | GAS: ${formatTime(x.remote)}`).join("\n");
+      const more=conflicts.length>8?`\n... dan ${conflicts.length-8} lainnya.`:"";
+      const ok=confirm(`⚠ DATA GAS LEBIH BARU\n\n${lines}${more}\n\nSAVE lokal berpotensi menimpa data yang lebih baru di GAS.\n\nOK = tetap SAVE, Batal = batalkan SAVE.`);
+      if(!ok){setSyncStatus("dirty","• SAVE dibatalkan · Data GAS lebih baru");return;}
+    }
+    for(const c of state.categories) await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(c)});
+    for(const n of state.notes) await gasPost({action:"SAVE_NOTE",data:noteForGas(n)});
+    for(const id of state.deletedNoteIds||[]) await gasPost({action:"DELETE_NOTE",id});
+    for(const id of state.deletedCategoryIds||[]) await gasPost({action:"DELETE_CATEGORY",id});
+    state.deletedNoteIds=[];state.deletedCategoryIds=[];
+    const now=isoTime();
+    state.categories.forEach(c=>c.updatedAt=now);
+    state.notes.forEach(n=>n.updatedAt=now);
+    await markLocalClean("✓ Tersimpan ke GAS · Lokal diperbarui");
+  }catch(e){console.warn("SAVE GAS gagal",e);setSyncStatus("error","⚠ SAVE gagal · Data lokal tetap digunakan")}
+  finally{gasSyncBusy=false}
+}
+function setSyncStatus(status,text){const e=document.getElementById("syncStatus");if(!e)return;e.className="sync-status";if(status==="ok"){e.classList.add("ok");e.textContent=text||"✓ Tersinkron · Data lokal terbaru"}else if(status==="syncing"){e.classList.add("syncing");e.textContent=text||"◌ Menyinkronkan..."}else if(status==="error"){e.classList.add("error");e.textContent=text||"⚠ Belum tersinkron · Data lokal tetap digunakan"}else if(status==="dirty"){e.classList.add("dirty");e.textContent=text||"• Ada perubahan lokal yang belum di-SAVE"}else e.textContent=text||"● Lokal siap · Belum tersinkron"}
 function switchTab(tab){document.getElementById("notesTab").classList.toggle("active",tab==="notes");document.getElementById("settingsTab").classList.toggle("active",tab==="settings");document.getElementById("tabNotes").classList.toggle("active",tab==="notes");document.getElementById("tabSettings").classList.toggle("active",tab==="settings");if(tab==="settings")renderSettings()}
 function getCat(id){return state.categories.find(c=>c.id===id)}
 function getVisibleNotes(){const q=(document.getElementById("search").value||"").trim().toLowerCase();return state.notes.filter(n=>{const catOK=state.activeCategory==="SEMUA"||n.categoryId===state.activeCategory;const c=getCat(n.categoryId);const text=[c?.name||"",...(n.data||[])].join(" ").toLowerCase();return catOK&&(!q||text.includes(q))})}
 function renderCategories(){const root=document.getElementById("categories");const cats=[{id:"SEMUA",name:"Semua"},...state.categories];root.innerHTML=cats.map(c=>`<button class="cat-btn ${state.activeCategory===c.id?"active":""}" onclick="selectCategory('${esc(c.id)}')">${esc(c.name)}</button>`).join("")}
 function getCategoryNotes(categoryId){return state.notes.filter(n=>n.categoryId===categoryId)}
-function saveOrderToGas(categoryId){const ordered=getCategoryNotes(categoryId);return gasPost({action:"SET_CATEGORY_ORDER",category_id:categoryId,orders:ordered.map((n,i)=>({id:n.id,order:i+1}))}).then(()=>true).catch(e=>{console.warn("GAS ORDER gagal",e);setSyncStatus("error");return false})}
-function reorderNote(id,targetIndex){const n=state.notes.find(x=>x.id===id);if(!n)return;const catId=n.categoryId;const arr=getCategoryNotes(catId);const from=arr.findIndex(x=>x.id===id);let to=Math.max(0,Math.min(arr.length-1,targetIndex));if(from===to)return;const moved=arr.splice(from,1)[0];arr.splice(to,0,moved);let pos=0;state.notes=state.notes.map(x=>x.categoryId===catId?arr[pos++]:x);persist();renderNotes();saveOrderToGas(catId)}
+function saveOrderToGas(categoryId){return Promise.resolve(true)}
+function reorderNote(id,targetIndex){const n=state.notes.find(x=>x.id===id);if(!n)return;const catId=n.categoryId;const arr=getCategoryNotes(catId);const from=arr.findIndex(x=>x.id===id);let to=Math.max(0,Math.min(arr.length-1,targetIndex));if(from===to)return;const moved=arr.splice(from,1)[0];arr.splice(to,0,moved);let pos=0;const now=isoTime();state.notes=state.notes.map(x=>{if(x.categoryId===catId){const v=arr[pos++];v.updatedAt=now;return v}return x});persist();renderNotes()}
 function moveNote(id,delta){const n=state.notes.find(x=>x.id===id);if(!n)return;const arr=getCategoryNotes(n.categoryId);const i=arr.findIndex(x=>x.id===id);reorderNote(id,i+delta)}
 function chooseNoteOrder(id,value){reorderNote(id,Number(value)-1)}
 function renderNotes(){renderCategories();const visible=getVisibleNotes();const label=state.activeCategory==="SEMUA"?"SEMUA CATATAN":(getCat(state.activeCategory)?.name||"");document.getElementById("notesTitle").textContent=label;document.getElementById("notesCount").textContent=visible.length+" catatan";const root=document.getElementById("notes");if(!visible.length){root.innerHTML=`<div class="empty">Belum ada catatan pada kategori/pencarian ini.<br><button class="tool-btn primary" style="margin-top:10px" onclick="openAdd()">＋ Tambah Catatan</button></div>`;return}
@@ -154,17 +257,17 @@ function selectCategory(id){state.activeCategory=id;persist();renderNotes()}
 function openAdd(){editingNoteId=null;document.getElementById("noteModalTitle").textContent="Tambah Catatan";renderNoteForm();openModal("noteModal")}
 function renderNoteForm(){const cat=state.activeCategory!=="SEMUA"?getCat(state.activeCategory):state.categories[0];if(!cat)return;document.getElementById("noteForm").innerHTML=`<div class="setup-grid"><div class="field full"><label>KATEGORI</label><select id="noteCategory" onchange="renderNoteFormFields()">${state.categories.map(c=>`<option value="${esc(c.id)}" ${c.id===cat.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div></div><div id="noteFields" class="setup-grid" style="margin-top:9px"></div>`;renderNoteFormFields()}
 function renderNoteFormFields(){const cat=getCat(document.getElementById("noteCategory").value);const n=editingNoteId?state.notes.find(x=>x.id===editingNoteId):null;document.getElementById("noteFields").innerHTML=cat.columns.map((c,i)=>`<div class="field ${cat.columns.length===1?"full":""}"><label>${esc(c.header)}${c.copy?" · COPY": ""}</label><textarea id="noteData${i}" placeholder="Isi ${esc(c.header)}">${esc(n?.data?.[i]||"")}</textarea></div>`).join("")}
-function saveNote(){const cat=getCat(document.getElementById("noteCategory").value);if(!cat)return;const data=cat.columns.map((c,i)=>document.getElementById("noteData"+i).value.trim());if(data.every(v=>!v)){alert("Isi minimal satu kolom.");return}let n=editingNoteId?state.notes.find(x=>x.id===editingNoteId):null;if(!n){n={id:uuid(),categoryId:cat.id,data};state.notes.push(n)}else{const oldCat=n.categoryId;n.categoryId=cat.id;n.data=data;if(oldCat!==cat.id){state.notes=state.notes.filter(x=>x.id!==n.id);state.notes.push(n);saveOrderToGas(oldCat);saveOrderToGas(cat.id)}}persist();closeModal("noteModal");renderNotes();renderSettings();saveNoteToGas(n);if(!editingNoteId)saveOrderToGas(cat.id)}
+function saveNote(){const cat=getCat(document.getElementById("noteCategory").value);if(!cat)return;const data=cat.columns.map((c,i)=>document.getElementById("noteData"+i).value.trim());if(data.every(v=>!v)){alert("Isi minimal satu kolom.");return}let n=editingNoteId?state.notes.find(x=>x.id===editingNoteId):null;const now=isoTime();if(!n){n={id:uuid(),categoryId:cat.id,data,updatedAt:now};state.notes.push(n)}else{n.categoryId=cat.id;n.data=data;n.updatedAt=now}persist();closeModal("noteModal");renderNotes();renderSettings();}
 function editNote(id){editingNoteId=id;const n=state.notes.find(x=>x.id===id);if(!n)return;document.getElementById("noteModalTitle").textContent="Edit Catatan";renderNoteForm();document.getElementById("noteCategory").value=n.categoryId;renderNoteFormFields();openModal("noteModal")}
-function deleteNote(id){const n=state.notes.find(x=>x.id===id);if(!n)return;if(!confirm("Hapus catatan ini?"))return;state.notes=state.notes.filter(x=>x.id!==id);persist();renderNotes();deleteNoteFromGas(id)}
+function deleteNote(id){const n=state.notes.find(x=>x.id===id);if(!n)return;if(!confirm("Hapus catatan ini?"))return;state.notes=state.notes.filter(x=>x.id!==id);state.deletedNoteIds=state.deletedNoteIds||[];if(!state.deletedNoteIds.includes(id))state.deletedNoteIds.push(id);persist();renderNotes();}
 async function copyCell(id,col,button){const n=state.notes.find(x=>x.id===id);if(!n)return;const value=String(n.data?.[col]||"");const done=()=>{button.textContent="✓";button.classList.add("copied");setTimeout(()=>{button.textContent="⧉";button.classList.remove("copied")},900)};try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value);done()}else fallbackCopy(value,done)}catch(e){fallbackCopy(value,done)}}
 function fallbackCopy(value,done){const ta=document.createElement("textarea");ta.value=value;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done()}finally{ta.remove()}}
 function renderSettings(){const root=document.getElementById("settingCategoryList");root.innerHTML=state.categories.map(c=>`<div class="category-item"><div><div class="category-item-name">${esc(c.name)}</div><div class="category-item-meta">${c.columns.length} kolom · ${c.columns.filter(x=>x.copy).length} copy</div></div><div><button class="icon-btn" onclick="openCategoryEditor('${esc(c.id)}')">✎</button><button class="icon-btn delete" onclick="deleteCategory('${esc(c.id)}')">×</button></div></div>`).join("")}
 function openCategoryEditor(id=""){editingCategoryId=id||null;const c=id?getCat(id):null;document.getElementById("categoryModalTitle").textContent=c?"Edit Kategori":"Tambah Kategori";document.getElementById("categoryName").value=c?.name||"";document.getElementById("columnRows").innerHTML="";(c?.columns||[{header:"",copy:false}]).forEach(x=>addColumnRow(x.header,x.copy));openModal("categoryModal")}
 function addColumnRow(header="",copy=false){const body=document.getElementById("columnRows");if(body.children.length>=6){alert("Maksimal 6 kolom.");return}const i=body.children.length;const tr=document.createElement("tr");tr.innerHTML=`<td>${i+1}</td><td><input class="col-header" value="${esc(header)}" placeholder="Nama header"></td><td class="check-cell"><input class="col-copy" type="checkbox" ${copy?"checked":""}></td><td><button class="column-remove" type="button" onclick="this.closest('tr').remove();renumberColumns()">×</button></td>`;body.appendChild(tr)}
 function renumberColumns(){[...document.querySelectorAll("#columnRows tr")].forEach((tr,i)=>tr.firstElementChild.textContent=i+1)}
-function saveCategory(){const name=document.getElementById("categoryName").value.trim().toUpperCase();const rows=[...document.querySelectorAll("#columnRows tr")];const columns=rows.map(r=>({header:r.querySelector(".col-header").value.trim(),copy:r.querySelector(".col-copy").checked})).filter(x=>x.header);if(!name||columns.length<1){alert("Nama kategori dan minimal satu kolom wajib diisi.");return}if(columns.length>6){alert("Maksimal 6 kolom.");return;}const duplicate=state.categories.some(c=>c.name===name&&c.id!==editingCategoryId);if(duplicate){alert("Nama kategori sudah ada.");return}let c=editingCategoryId?getCat(editingCategoryId):null;if(c){c.name=name;c.columns=columns}else{c={id:slug(name)+"-"+Date.now(),name,columns};state.categories.push(c)}state.activeCategory=c.id;persist();closeModal("categoryModal");renderNotes();renderSettings();saveCategoryToGas(c)}
-function deleteCategory(id){if(state.categories.length<=1){alert("Minimal harus ada satu kategori.");return}const c=getCat(id);if(!c)return;if(state.notes.some(n=>n.categoryId===id)){alert("Kategori masih memiliki catatan. Pindahkan/hapus catatannya terlebih dahulu.");return}if(!confirm(`Hapus kategori ${c.name}?`))return;state.categories=state.categories.filter(x=>x.id!==id);state.activeCategory="SEMUA";persist();renderNotes();renderSettings();deleteCategoryFromGas(id)}
+function saveCategory(){const name=document.getElementById("categoryName").value.trim().toUpperCase();const rows=[...document.querySelectorAll("#columnRows tr")];const columns=rows.map(r=>({header:r.querySelector(".col-header").value.trim(),copy:r.querySelector(".col-copy").checked})).filter(x=>x.header);if(!name||columns.length<1){alert("Nama kategori dan minimal satu kolom wajib diisi.");return}if(columns.length>6){alert("Maksimal 6 kolom.");return;}const duplicate=state.categories.some(c=>c.name===name&&c.id!==editingCategoryId);if(duplicate){alert("Nama kategori sudah ada.");return}let c=editingCategoryId?getCat(editingCategoryId):null;const now=isoTime();if(c){c.name=name;c.columns=columns;c.updatedAt=now}else{c={id:slug(name)+"-"+Date.now(),name,columns,updatedAt:now};state.categories.push(c)}state.activeCategory=c.id;persist();closeModal("categoryModal");renderNotes();renderSettings();}
+function deleteCategory(id){if(state.categories.length<=1){alert("Minimal harus ada satu kategori.");return}const c=getCat(id);if(!c)return;if(state.notes.some(n=>n.categoryId===id)){alert("Kategori masih memiliki catatan. Pindahkan/hapus catatannya terlebih dahulu.");return}if(!confirm(`Hapus kategori ${c.name}?`))return;state.categories=state.categories.filter(x=>x.id!==id);state.deletedCategoryIds=state.deletedCategoryIds||[];if(!state.deletedCategoryIds.includes(id))state.deletedCategoryIds.push(id);state.activeCategory="SEMUA";persist();renderNotes();renderSettings();}
 function openModal(id){document.getElementById(id).classList.add("show")};function closeModal(id){document.getElementById(id).classList.remove("show")};function closeBackdrop(e,id){if(e.target.id===id)closeModal(id)}
 function setFontSize(v){document.documentElement.style.setProperty("--font-size",v+"px");localStorage.setItem("catatanHeryFont",v)}
 
@@ -181,80 +284,51 @@ async function saveCategoryToGas(c){setSyncStatus("syncing");try{await gasPost({
 async function deleteCategoryFromGas(id){setSyncStatus("syncing");try{await gasPost({action:"DELETE_CATEGORY",id});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
 async function syncFromGas(manual=false){
   if(gasSyncBusy)return;
-  gasSyncBusy=true;setSyncStatus("syncing");
+  if(manual && !confirm("SINKRONISASI akan mengganti data lokal dengan data terbaru dari GAS.\n\nPerubahan lokal yang belum di-SAVE akan hilang.\n\nLanjutkan?"))return;
+  gasSyncBusy=true;setSyncStatus("syncing","◌ Mengambil data terbaru dari GAS...");
   try{
-    // Ambil repository terlebih dahulu. Jika endpoint GET_ALL belum tersedia
-    // pada deployment GAS lama, gunakan GET_CATEGORIES + GET_NOTES sebagai fallback.
-    let r;
-    try{
-      r=await gasGet({action:"GET_ALL"});
-    }catch(firstError){
-      console.warn("GET_ALL gagal, mencoba endpoint terpisah",firstError);
-      const [catsRes,notesRes]=await Promise.all([
-        gasGet({action:"GET_CATEGORIES"}),
-        gasGet({action:"GET_NOTES"})
-      ]);
-      r={categories:catsRes.data||[],notes:notesRes.data||[]};
+    const r=await gasGet({action:"GET_ALL"});
+    const rc=(r.categories||[]).map(c=>({...categoryFromGas(c),updatedAt:c.updated_at||isoTime()})).filter(c=>c.active!==false);
+    const rn=(r.notes||[]).map(n=>({...noteFromGas(n),updatedAt:n.updated_at||isoTime()})).filter(n=>n.active!==false);
+    if(!rc.length && !rn.length && (state.categories.length||state.notes.length)){
+      setSyncStatus("error","⚠ GAS kosong · Data lokal tidak ditimpa");return;
     }
-    const rc=(r.categories||[]).map(categoryFromGas).filter(c=>c.active!==false);
-    const rn=(r.notes||[]).map(noteFromGas);
-
-    // Jangan pernah menghapus data lokal hanya karena repository belum lengkap.
-    // Pada koneksi pertama, data lokal dipertahankan lalu dikirim ke GAS.
-    if(!rc.length){
-      for(const c of state.categories) await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(c)});
-      for(const n of state.notes) await gasPost({action:"SAVE_NOTE",data:noteForGas(n)});
-    }else{
-      // Cocokkan kategori berdasarkan ID, lalu nama sebagai fallback.
-      // Ini mencegah catatan lokal hilang ketika ID kategori lama berbeda.
-      const remoteById=new Map(rc.map(c=>[c.id,c]));
-      const remoteByName=new Map(rc.map(c=>[c.name.toUpperCase(),c]));
-      const mergedCategories=[...rc];
-      const idMap=new Map();
-
-      for(const localCat of state.categories){
-        const match=remoteById.get(localCat.id)||remoteByName.get(localCat.name.toUpperCase());
-        if(match){idMap.set(localCat.id,match.id)}
-        else{
-          // Kategori lokal yang belum ada di GAS tetap dipertahankan dan akan di-upload.
-          mergedCategories.push(localCat);
-          idMap.set(localCat.id,localCat.id);
-          await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(localCat)});
-        }
-      }
-
-      const remoteNotes=rn.map(n=>({...n,categoryId:idMap.get(n.categoryId)||n.categoryId}));
-      const remoteNoteIds=new Set(remoteNotes.map(n=>n.id));
-      const localNotes=state.notes.map(n=>({...n,categoryId:idMap.get(n.categoryId)||n.categoryId}));
-
-      // Remote menjadi sumber untuk catatan yang memang sudah ada di server.
-      // Catatan lokal yang belum ada di server tidak boleh hilang; upload.
-      const mergedNotes=[...remoteNotes];
-      for(const local of localNotes){
-        if(!remoteNoteIds.has(local.id)){
-          mergedNotes.push(local);
-          await gasPost({action:"SAVE_NOTE",data:noteForGas(local)});
-        }
-      }
-
-      // Hanya kategori aktif yang digunakan di tampilan.
-      state.categories=mergedCategories.filter(c=>c.active!==false);
-      state.notes=state.categories.flatMap(c=>mergedNotes
-        .filter(n=>n.categoryId===c.id)
-        .sort((a,b)=>(a.order||0)-(b.order||0)));
-      if(!state.activeCategory || (state.activeCategory!=="SEMUA"&&!state.categories.some(c=>c.id===state.activeCategory))) state.activeCategory="SEMUA";
-      persist();
-    }
-
-    renderNotes();renderSettings();setSyncStatus("ok");
-  }catch(e){console.warn("GAS sync gagal",e);setSyncStatus("error")}
+    state.categories=rc;
+    state.notes=rn;
+    state.deletedNoteIds=[];state.deletedCategoryIds=[];state.activeCategory="SEMUA";
+    persist();renderNotes();renderSettings();
+    await markLocalClean("✓ Data lokal diperbarui dari GAS");
+  }catch(e){console.warn("GAS sync gagal",e);setSyncStatus("error","⚠ Sinkronisasi gagal · Data lokal tetap digunakan")}
   finally{gasSyncBusy=false}
 }
 
 document.getElementById("notes").addEventListener("click",e=>{const b=e.target.closest("button[data-action]");if(!b)return;const id=b.dataset.id;if(b.dataset.action==="copy")copyCell(id,Number(b.dataset.col),b);else if(b.dataset.action==="edit")editNote(id);else if(b.dataset.action==="delete")deleteNote(id);else if(b.dataset.action==="up")moveNote(id,-1);else if(b.dataset.action==="down")moveNote(id,1)})
 document.getElementById("notes").addEventListener("change",e=>{const b=e.target.closest("select[data-action=order]");if(b)chooseNoteOrder(b.dataset.id,b.value)})
 
-(function init(){const f=localStorage.getItem("catatanHeryFont")||"16";document.getElementById("fontSize").value=f;setFontSize(f);renderNotes();renderSettings();syncFromGas(false)})();
+(async function init(){
+  const f=localStorage.getItem("catatanHeryFont")||"16";
+  document.getElementById("fontSize").value=f;setFontSize(f);
+  try{
+    state=await loadStateAsync();
+    renderNotes();renderSettings();
+    const last=localStorage.getItem("catatanHeryLastSync");
+    if(last)setSyncStatus("ok","✓ Data lokal · Sinkron terakhir "+formatTime(last));
+    else setSyncStatus("dirty","● Data lokal · Belum pernah sinkron");
+  }catch(e){
+    console.error(e);
+    state=readLegacyState();renderNotes();renderSettings();
+    setSyncStatus("error","⚠ Cache lokal gagal dibaca · Data cadangan digunakan");
+  }
+})();
+</script>
+
+<script id="catatan-hery-sw">
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js", {scope:"./"})
+      .catch(err => console.warn("Service Worker:", err));
+  });
+}
 </script>
 </body>
 </html>
