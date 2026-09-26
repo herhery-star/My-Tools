@@ -30,7 +30,7 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
 .font-control{display:flex;align-items:center;gap:5px;color:#64748b;font-size:11px;white-space:nowrap}
 .font-control select{border:1px solid var(--border);border-radius:7px;padding:7px;background:#fff;font-size:12px}
 .categories{display:flex;gap:5px;overflow-x:auto;padding:7px 0;scrollbar-width:thin}
-.cat-btn{flex:0 0 auto;border:1px solid var(--border);background:#fff;color:#475569;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;min-height:40px}
+.cat-btn{flex:0 0 auto;border:1px solid var(--border);background:#fff;color:#64748b;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;min-height:36px}
 .cat-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .notes-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 1px 7px}
 .notes-title{font-weight:900}.notes-count{color:var(--muted);font-size:11px}
@@ -40,10 +40,10 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
 .category-heading-title{font-weight:900;letter-spacing:.2px}.category-heading-count{font-size:10px;background:#fff;color:var(--navy);border-radius:12px;padding:3px 8px;font-weight:800}
 .note-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}.note-table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:760px}
 .note-table th,.note-table td{border-bottom:1px solid #e3e9ef;padding:8px 9px;vertical-align:middle}.note-table th{background:#f1f5f9;color:#475569;font-size:10px;text-align:left;font-weight:700;white-space:nowrap}.note-table tr:last-child td{border-bottom:0}.note-table tbody tr:hover{background:#fafcff}
-.col-no{width:50px;text-align:center!important}.col-action{width:154px;min-width:154px}
+.col-no{width:56px;text-align:center!important}.col-action{width:180px;min-width:180px}
 .note-value-wrap{display:inline-flex;align-items:center;gap:1ch;max-width:100%;width:max-content;vertical-align:middle}.note-value{flex:0 1 auto;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-weight:800;line-height:1.35}
 .note-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.35}.note-muted{color:var(--muted);font-size:.78em}
-.row-actions{display:flex;justify-content:flex-end;gap:4px;flex-wrap:nowrap;white-space:nowrap}.icon-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:15px}.icon-btn.delete{color:var(--red)}
+.row-actions{display:flex;justify-content:flex-end;gap:4px;flex-wrap:nowrap;white-space:nowrap}.icon-btn{width:34px;height:32px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:15px}.icon-btn.delete{color:var(--red)}
 .copy-btn{width:36px;min-width:36px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:7px;background:#f8fafc;font-size:17px;font-weight:900}.copy-btn.copied{background:#ecfdf5;border-color:#86efac;color:var(--green)}
 .empty{background:#fff;border:1px dashed var(--border);border-radius:var(--radius);padding:28px 16px;text-align:center;color:var(--muted)}
 /* SETTINGS */
@@ -57,9 +57,9 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
 </style>
 
 <style>
-/* Copy icon follows the copied text with exactly one character of visual space. */
+/* v12: copy icon stays beside the value; filters remain visually smaller than data. */
 .copy-btn { margin-left:0 !important; flex:0 0 36px; }
-.order-select{height:30px;min-width:42px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:11px;text-align:center;padding:2px}.order-btn{font-size:14px;font-weight:800}
+.order-select{height:30px;min-width:42px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:11px;text-align:center;padding:2px}.order-btn{font-size:14px;font-weight:800;flex:0 0 34px}
 </style>
 </head>
 <body>
@@ -179,7 +179,77 @@ async function setNoteOrderToGas(id,order){try{await gasPost({action:"SET_NOTE_O
 async function deleteNoteFromGas(id){setSyncStatus("syncing");try{await gasPost({action:"DELETE_NOTE",id});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
 async function saveCategoryToGas(c){setSyncStatus("syncing");try{await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(c)});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
 async function deleteCategoryFromGas(id){setSyncStatus("syncing");try{await gasPost({action:"DELETE_CATEGORY",id});setSyncStatus("ok")}catch(e){console.warn(e);setSyncStatus("error")}}
-async function syncFromGas(manual=false){if(gasSyncBusy)return;gasSyncBusy=true;setSyncStatus("syncing");try{const r=await gasGet({action:"GET_ALL"});const rc=(r.categories||[]).map(categoryFromGas);const rn=(r.notes||[]).map(noteFromGas);if(rc.length){state.categories=rc.filter(c=>c.active!==false);const valid=rn.filter(n=>state.categories.some(c=>c.id===n.categoryId));const grouped=state.categories.flatMap(c=>valid.filter(n=>n.categoryId===c.id).sort((a,b)=>(a.order||0)-(b.order||0)));state.notes=grouped;state.activeCategory="SEMUA";persist()}else{for(const c of state.categories)await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(c)});for(const n of state.notes)await gasPost({action:"SAVE_NOTE",data:noteForGas(n)})}renderNotes();renderSettings();setSyncStatus("ok")}catch(e){console.warn("GAS sync gagal",e);setSyncStatus("error")}finally{gasSyncBusy=false}}
+async function syncFromGas(manual=false){
+  if(gasSyncBusy)return;
+  gasSyncBusy=true;setSyncStatus("syncing");
+  try{
+    // Ambil repository terlebih dahulu. Jika endpoint GET_ALL belum tersedia
+    // pada deployment GAS lama, gunakan GET_CATEGORIES + GET_NOTES sebagai fallback.
+    let r;
+    try{
+      r=await gasGet({action:"GET_ALL"});
+    }catch(firstError){
+      console.warn("GET_ALL gagal, mencoba endpoint terpisah",firstError);
+      const [catsRes,notesRes]=await Promise.all([
+        gasGet({action:"GET_CATEGORIES"}),
+        gasGet({action:"GET_NOTES"})
+      ]);
+      r={categories:catsRes.data||[],notes:notesRes.data||[]};
+    }
+    const rc=(r.categories||[]).map(categoryFromGas).filter(c=>c.active!==false);
+    const rn=(r.notes||[]).map(noteFromGas);
+
+    // Jangan pernah menghapus data lokal hanya karena repository belum lengkap.
+    // Pada koneksi pertama, data lokal dipertahankan lalu dikirim ke GAS.
+    if(!rc.length){
+      for(const c of state.categories) await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(c)});
+      for(const n of state.notes) await gasPost({action:"SAVE_NOTE",data:noteForGas(n)});
+    }else{
+      // Cocokkan kategori berdasarkan ID, lalu nama sebagai fallback.
+      // Ini mencegah catatan lokal hilang ketika ID kategori lama berbeda.
+      const remoteById=new Map(rc.map(c=>[c.id,c]));
+      const remoteByName=new Map(rc.map(c=>[c.name.toUpperCase(),c]));
+      const mergedCategories=[...rc];
+      const idMap=new Map();
+
+      for(const localCat of state.categories){
+        const match=remoteById.get(localCat.id)||remoteByName.get(localCat.name.toUpperCase());
+        if(match){idMap.set(localCat.id,match.id)}
+        else{
+          // Kategori lokal yang belum ada di GAS tetap dipertahankan dan akan di-upload.
+          mergedCategories.push(localCat);
+          idMap.set(localCat.id,localCat.id);
+          await gasPost({action:"SAVE_CATEGORY",data:categoryForGas(localCat)});
+        }
+      }
+
+      const remoteNotes=rn.map(n=>({...n,categoryId:idMap.get(n.categoryId)||n.categoryId}));
+      const remoteNoteIds=new Set(remoteNotes.map(n=>n.id));
+      const localNotes=state.notes.map(n=>({...n,categoryId:idMap.get(n.categoryId)||n.categoryId}));
+
+      // Remote menjadi sumber untuk catatan yang memang sudah ada di server.
+      // Catatan lokal yang belum ada di server tidak boleh hilang; upload.
+      const mergedNotes=[...remoteNotes];
+      for(const local of localNotes){
+        if(!remoteNoteIds.has(local.id)){
+          mergedNotes.push(local);
+          await gasPost({action:"SAVE_NOTE",data:noteForGas(local)});
+        }
+      }
+
+      // Hanya kategori aktif yang digunakan di tampilan.
+      state.categories=mergedCategories.filter(c=>c.active!==false);
+      state.notes=state.categories.flatMap(c=>mergedNotes
+        .filter(n=>n.categoryId===c.id)
+        .sort((a,b)=>(a.order||0)-(b.order||0)));
+      if(!state.activeCategory || (state.activeCategory!=="SEMUA"&&!state.categories.some(c=>c.id===state.activeCategory))) state.activeCategory="SEMUA";
+      persist();
+    }
+
+    renderNotes();renderSettings();setSyncStatus("ok");
+  }catch(e){console.warn("GAS sync gagal",e);setSyncStatus("error")}
+  finally{gasSyncBusy=false}
+}
 
 document.getElementById("notes").addEventListener("click",e=>{const b=e.target.closest("button[data-action]");if(!b)return;const id=b.dataset.id;if(b.dataset.action==="copy")copyCell(id,Number(b.dataset.col),b);else if(b.dataset.action==="edit")editNote(id);else if(b.dataset.action==="delete")deleteNote(id);else if(b.dataset.action==="up")moveNote(id,-1);else if(b.dataset.action==="down")moveNote(id,1)})
 document.getElementById("notes").addEventListener("change",e=>{const b=e.target.closest("select[data-action=order]");if(b)chooseNoteOrder(b.dataset.id,b.value)})
