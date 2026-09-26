@@ -128,7 +128,7 @@ button,input,textarea,select{font:inherit} button{cursor:pointer}
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyEbFoqfvEmQ5nX0UaFvUzgru4cqMEmZ74UVShESGF4HLf4f3mBffPMc2jEJgVp9q0/exec";
 const DB_NAME="CatatanHeryDB";
-const DB_VERSION=2;
+const DB_VERSION=3;
 const DB_STORE="app";
 const CACHE_KEY="state";
 const LS_KEY="catatanHeryV5";
@@ -179,69 +179,106 @@ function readLegacyState(){
   }
   return normalizeState({categories:structuredClone(DEFAULT_CATEGORIES),notes:[],activeCategory:"SEMUA"});
 }
-async function loadStateAsync(){
-  try{const cached=normalizeState(await idbGet());if(cached)return cached}catch(e){console.warn("IndexedDB baca gagal",e)}
-  const legacy=readLegacyState();
-  try{await idbSet(legacy)}catch(e){}
-  return legacy;
+async function getLocalCache1(){
+  // Primary: IndexedDB. Fallback: Local Storage.
+  try{
+    const x=await idbGet(CACHE_KEY);
+    if(x && Array.isArray(x.categories) && Array.isArray(x.notes)) return normalizeState(x);
+  }catch(e){console.warn("Cache 1 IndexedDB:",e)}
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){
+      const x=JSON.parse(raw);
+      if(x && Array.isArray(x.categories) && Array.isArray(x.notes)) return normalizeState(x);
+    }
+  }catch(e){console.warn("Cache 1 LocalStorage:",e)}
+  return null;
 }
+
+async function loadStateAsync(){
+  const cached=await getLocalCache1();
+  if(cached) return cached;
+
+  // Only used when there is genuinely no Cache 1.
+  return readLegacyState();
+}
+
 async function saveCache1(){
   const snapshot=structuredClone(state);
-  await idbSet(snapshot,CACHE_KEY);
-  try{localStorage.setItem(LS_KEY,JSON.stringify(snapshot))}catch(e){}
+  const stored={...snapshot,__cacheInitialized:true,__cacheSavedAt:new Date().toISOString()};
+  try{await idbSet(stored,CACHE_KEY)}catch(e){console.warn("Cache 1 IDB save:",e)}
+  try{localStorage.setItem(LS_KEY,JSON.stringify(stored))}catch(e){console.warn("Cache 1 LS save:",e)}
 }
+
 async function backupCache1ToCache2(reason=""){
   const snapshot=structuredClone(state);
-  snapshot.__backupAt=new Date().toISOString();
-  snapshot.__backupReason=reason;
-  await idbSet(snapshot,"cache2");
-  try{localStorage.setItem("catatanHeryCache2",JSON.stringify(snapshot))}catch(e){}
+  const stored={...snapshot,__backupAt:new Date().toISOString(),__backupReason:reason};
+  try{await idbSet(stored,"cache2")}catch(e){console.warn("Cache 2 IDB:",e)}
+  try{localStorage.setItem("catatanHeryCache2",JSON.stringify(stored))}catch(e){}
   updateRecoveryButton();
 }
+
 async function hasCache2(){
   try{if(await idbGet("cache2"))return true}catch(e){}
   try{return !!localStorage.getItem("catatanHeryCache2")}catch(e){return false}
 }
+
 async function getCache2(){
-  try{const x=await idbGet("cache2");if(x)return normalizeState(x)}catch(e){}
+  try{
+    const x=await idbGet("cache2");
+    if(x)return normalizeState(x);
+  }catch(e){}
   try{return normalizeState(JSON.parse(localStorage.getItem("catatanHeryCache2")||"null"))}catch(e){return null}
 }
+
 async function updateRecoveryButton(){
-  const b=document.getElementById("recoverBtn");if(!b)return;
-  b.disabled=!(await hasCache2());
+  const b=document.getElementById("recoverBtn");
+  if(b)b.disabled=!(await hasCache2());
 }
+
 async function recoverFromCache2(){
   if(gasSyncBusy)return;
   const backup=await getCache2();
   if(!backup){alert("Cache 2 belum tersedia.");return}
   const stamp=backup.__backupAt?formatTime(backup.__backupAt):"-";
   if(!confirm("Pulihkan Cache 2?\n\nBackup: "+stamp+"\n\nData lokal sekarang akan diganti oleh backup."))return;
-  gasSyncBusy=true;setSyncStatus("syncing","◌ Memulihkan Cache 2...");
+
+  gasSyncBusy=true;
+  setSyncStatus("syncing","◌ Memulihkan Cache 2...");
   try{
-    const current=structuredClone(state);
-    current.__backupAt=new Date().toISOString();
-    current.__backupReason="Sebelum recovery";
+    const current={...structuredClone(state),__backupAt:new Date().toISOString(),__backupReason:"Sebelum recovery"};
     await idbSet(current,"cache2");
     try{localStorage.setItem("catatanHeryCache2",JSON.stringify(current))}catch(e){}
-    delete backup.__backupAt;delete backup.__backupReason;
+
+    delete backup.__backupAt;
+    delete backup.__backupReason;
     state=normalizeState(backup);
     await saveCache1();
-    renderNotes();renderSettings();
+
+    renderNotes();
+    renderSettings();
     setSyncStatus("dirty","✓ Recovery berhasil · Cache 2 menjadi Cache 1");
     updateRecoveryButton();
-  }catch(e){console.warn(e);setSyncStatus("error","⚠ Recovery gagal")}
-  finally{gasSyncBusy=false}
+  }catch(e){
+    console.warn("Recovery:",e);
+    setSyncStatus("error","⚠ Recovery gagal");
+  }finally{
+    gasSyncBusy=false;
+  }
 }
+
 function persist(){
-  saveCache1().catch(e=>console.warn("Cache lokal gagal disimpan",e));
+  saveCache1().catch(e=>console.warn("Cache lokal:",e));
   if(!gasSyncBusy)setSyncStatus("dirty");
 }
+
 async function markLocalClean(message){
   await saveCache1();
   try{localStorage.setItem("catatanHeryLastSync",new Date().toISOString())}catch(e){}
   setSyncStatus("ok",message||"✓ Tersinkron · Data lokal terbaru");
   updateRecoveryButton();
 }
+
 function isoTime(){return new Date().toISOString()}
 function gasTime(v){const d=new Date(v||0);return isNaN(d.getTime())?new Date(0):d}
 function formatTime(v){const d=new Date(v);if(isNaN(d.getTime()))return "-";return d.toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}
@@ -367,18 +404,69 @@ document.getElementById("notes").addEventListener("change",e=>{const b=e.target.
 
 (async function init(){
   const f=localStorage.getItem("catatanHeryFont")||"16";
-  document.getElementById("fontSize").value=f;setFontSize(f);
+  document.getElementById("fontSize").value=f;
+  setFontSize(f);
+
   try{
-    state=await loadStateAsync();
-    renderNotes();renderSettings();
-    const last=localStorage.getItem("catatanHeryLastSync");
-    if(last)setSyncStatus("ok","✓ Data lokal · Sinkron terakhir "+formatTime(last));
-    else setSyncStatus("dirty","● Data lokal · Belum pernah sinkron");
+    // STEP 1 — read Cache 1 first.
+    const cached=await getLocalCache1();
+
+    if(cached){
+      // Existing device: NEVER wait for GAS just to display local data.
+      state=cached;
+      renderNotes();
+      renderSettings();
+      const last=localStorage.getItem("catatanHeryLastSync");
+      if(last)setSyncStatus("ok","✓ Data lokal · Sinkron terakhir "+formatTime(last));
+      else setSyncStatus("dirty","● Data lokal · Belum pernah sinkron");
+      updateRecoveryButton();
+      return;
+    }
+
+    // STEP 2 — genuinely new device: show the UI, then bootstrap once from GAS.
+    state=readLegacyState();
+    renderNotes();
+    renderSettings();
+    setSyncStatus("syncing","◌ Memuat data awal...");
+    updateRecoveryButton();
+
+    try{
+      const r=await gasGet({action:"GET_ALL"});
+      const rc=(r.categories||[])
+        .map(c=>({...categoryFromGas(c),updatedAt:c.updated_at||isoTime()}))
+        .filter(c=>c.active!==false);
+      const rn=(r.notes||[])
+        .map(n=>({...noteFromGas(n),updatedAt:n.updated_at||isoTime()}))
+        .filter(n=>n.active!==false);
+
+      if(rc.length || rn.length){
+        state.categories=rc.length?rc:defaultCategories();
+        state.notes=rn;
+        state.deletedNoteIds=[];
+        state.deletedCategoryIds=[];
+        state.activeCategory="SEMUA";
+        await saveCache1();
+        try{localStorage.setItem("catatanHeryLastSync",new Date().toISOString())}catch(e){}
+        renderNotes();
+        renderSettings();
+        setSyncStatus("ok","✓ Data awal GAS tersimpan di Cache 1");
+      }else{
+        await saveCache1();
+        setSyncStatus("ok","✓ Cache 1 dibuat · GAS belum berisi data");
+      }
+    }catch(e){
+      console.warn("Bootstrap GAS:",e);
+      // No GAS? Keep the local/legacy state and do not destroy it.
+      await saveCache1();
+      setSyncStatus("error","⚠ GAS tidak tersedia · data lokal tetap digunakan");
+    }
     updateRecoveryButton();
   }catch(e){
-    console.error(e);
-    state=readLegacyState();renderNotes();renderSettings();
-    setSyncStatus("error","⚠ Cache lokal gagal dibaca · Data cadangan digunakan");
+    console.error("Startup:",e);
+    state=readLegacyState();
+    renderNotes();
+    renderSettings();
+    setSyncStatus("error","⚠ Cache lokal gagal dibaca · data cadangan digunakan");
   }
 })();
 </script>
