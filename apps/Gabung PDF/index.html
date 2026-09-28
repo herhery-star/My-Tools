@@ -33,6 +33,118 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #475569; }
+        /* Compact & proportional document list */
+        #fileListTable {
+            table-layout: fixed;
+            width: 100%;
+        }
+        #fileListTable th,
+        #fileListTable td {
+            font-size: 10px;
+            line-height: 1.15;
+            vertical-align: middle;
+        }
+        #fileListTable thead th {
+            font-size: 9px;
+            line-height: 1.05;
+            letter-spacing: .025em;
+            white-space: nowrap;
+            padding: 9px 6px;
+        }
+        #fileListTable thead th:nth-child(1) { width: 10%; }
+        #fileListTable thead th:nth-child(2) { width: 39%; }
+        #fileListTable thead th:nth-child(3) { width: 8%; }
+        #fileListTable thead th:nth-child(4) { width: 27%; }
+        #fileListTable thead th:nth-child(5) { width: 16%; }
+
+        #fileListTable tbody td {
+            padding: 8px 6px;
+        }
+        #fileListTable tbody td:nth-child(2) {
+            overflow: hidden;
+        }
+        #fileListTable tbody td:nth-child(2) .file-name-label {
+            display: inline-block;
+            max-width: calc(100% - 32px);
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #fileListTable tbody td:nth-child(4) {
+            overflow: hidden;
+        }
+        #fileListTable .size-badge {
+            display: block;
+            width: fit-content;
+            max-width: 100%;
+            font-size: 9px;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        #fileListTable .size-meta {
+            display: block;
+            font-size: 9px;
+            line-height: 1.05;
+            white-space: nowrap;
+            color: #94a3b8;
+        }
+        #fileListTable .file-type {
+            font-size: 8px;
+            line-height: 1;
+            padding: 2px 4px;
+            vertical-align: middle;
+        }
+        #fileListTable .order-number {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+        }
+        #fileListTable .action-group {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 1px;
+            white-space: nowrap;
+        }
+        #fileListTable .action-group button {
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            border-radius: 5px;
+        }
+        #fileListTable .action-group button i {
+            pointer-events: none;
+        }
+        @media (max-width: 700px) {
+            #fileListTable thead th,
+            #fileListTable tbody td {
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+            #fileListTable thead th {
+                font-size: 8px;
+            }
+            #fileListTable tbody td {
+                font-size: 9px;
+            }
+            #fileListTable .size-meta {
+                font-size: 8px;
+            }
+            #fileListTable .action-group button {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
         /* Page Organizer */
         .page-card { user-select:none; cursor:grab; transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease; }
         .page-card.dragging { opacity:.45; transform:scale(.97); }
@@ -109,10 +221,10 @@
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 font-semibold uppercase sticky top-0 z-10">
                                 <tr>
-                                    <th class="p-2.5 w-10">Urutan</th>
+                                    <th class="p-2.5">Urutan</th>
                                     <th class="p-2.5">Nama File</th>
                                     <th class="p-2.5 text-center">Hal</th>
-                                    <th class="p-2.5">Ukuran Asli Halaman</th>
+                                    <th class="p-2.5">Ukuran Asli</th>
                                     <th class="p-2.5 text-right">Aksi</th>
                                 </tr>
                             </thead>
@@ -753,23 +865,28 @@
                 const typeIcon = fileObj.kind === 'image' ? 'fa-image' : 'fa-file-pdf';
 
                 tr.innerHTML = `
-                    <td class="p-2.5 font-bold text-slate-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-grip-vertical cursor-grab text-slate-300"></i> ${idx + 1}
+                    <td class="p-2.5 font-bold text-slate-400">
+                        <span class="order-number">
+                            <i class="fa-solid fa-grip-vertical cursor-grab text-slate-300"></i>
+                            <span>${idx + 1}</span>
+                        </span>
                     </td>
-                    <td class="p-2.5 font-medium truncate max-w-[220px]" title="${escapeHtml(fileObj.file.name)}">
+                    <td class="p-2.5 font-medium" title="${escapeHtml(fileObj.file.name)}">
                         <i class="fa-solid ${typeIcon} mr-1 ${fileObj.kind === 'image' ? 'text-emerald-500' : 'text-rose-500'}"></i>
-                        ${escapeHtml(fileObj.file.name)}
-                        <span class="ml-1 text-[9px] bg-slate-100 dark:bg-slate-800 px-1 rounded">${typeLabel}</span>
+                        <span class="file-name-label">${escapeHtml(fileObj.file.name)}</span>
+                        <span class="file-type bg-slate-100 dark:bg-slate-800 px-1 rounded">${typeLabel}</span>
                     </td>
                     <td class="p-2.5 text-center font-bold">${fileObj.numPages}</td>
                     <td class="p-2.5">
-                        <span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px]">${dominantSize}</span>
-                        <span class="text-[10px] text-slate-400 block">${firstPageMm}</span>
+                        <span class="size-badge bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded">${dominantSize}</span>
+                        <span class="size-meta">${firstPageMm}</span>
                     </td>
-                    <td class="p-2.5 text-right space-x-1">
-                        <button onclick="moveFile(${idx}, -1)" class="p-1 text-slate-400 hover:text-slate-600" title="Naik"><i class="fa-solid fa-arrow-up"></i></button>
-                        <button onclick="moveFile(${idx}, 1)" class="p-1 text-slate-400 hover:text-slate-600" title="Turun"><i class="fa-solid fa-arrow-down"></i></button>
-                        <button onclick="removeFile(${idx})" class="p-1 text-rose-500 hover:text-rose-700" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                    <td class="p-2.5 text-right">
+                        <span class="action-group">
+                            <button onclick="moveFile(${idx}, -1)" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800" title="Naik"><i class="fa-solid fa-arrow-up"></i></button>
+                            <button onclick="moveFile(${idx}, 1)" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800" title="Turun"><i class="fa-solid fa-arrow-down"></i></button>
+                            <button onclick="removeFile(${idx})" class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                        </span>
                     </td>
                 `;
 
