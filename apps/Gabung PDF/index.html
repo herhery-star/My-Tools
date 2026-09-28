@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Page Size Normalizer & Merger</title>
+    <title>PDF & Image Page Size Normalizer & Merger</title>
     <!-- Tailwind CSS CDN for Utility Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -51,8 +51,8 @@
                     <i class="fa-solid fa-file-pdf text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight">PDF Normalizer & Merger</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Penyeragam Ukuran Halaman PDF Vektor & Penggabung Dokumen</p>
+                    <h1 class="font-bold text-lg leading-tight">PDF & Image Normalizer & Merger</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Penyeragam Ukuran Halaman PDF & Gambar serta Penggabung Dokumen</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -71,17 +71,17 @@
 
         <!-- File Upload Area -->
         <section id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 text-center bg-white dark:bg-slate-950 transition hover:border-brand-500 cursor-pointer relative">
-            <input type="file" id="fileInput" multiple accept=".pdf" class="hidden">
+            <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.gif,image/jpeg,image/png,image/webp,image/bmp,image/gif" class="hidden">
             <div class="flex flex-col items-center justify-center space-y-3">
                 <div class="w-16 h-16 bg-brand-50 dark:bg-brand-950/50 text-brand-600 rounded-full flex items-center justify-center text-2xl">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                 </div>
                 <div>
-                    <p class="text-base font-semibold">Tarik & Lepaskan File PDF di Sini</p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Dapat memilih banyak file sekaligus (.pdf)</p>
+                    <p class="text-base font-semibold">Tarik & Lepaskan PDF / Gambar di Sini</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Dapat memilih banyak file sekaligus: PDF, JPG, JPEG, PNG, WebP, BMP, GIF</p>
                 </div>
                 <button onclick="document.getElementById('fileInput').click()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg shadow-sm transition flex items-center gap-2">
-                    <i class="fa-solid fa-plus"></i> Tambah PDF
+                    <i class="fa-solid fa-plus"></i> Tambah File
                 </button>
             </div>
         </section>
@@ -121,7 +121,7 @@
                                 <tr id="emptyTableNotice">
                                     <td colspan="5" class="text-center py-12 text-slate-400 dark:text-slate-600">
                                         <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
-                                        Belum ada file PDF yang ditambahkan.
+                                        Belum ada file PDF / gambar yang ditambahkan.
                                     </td>
                                 </tr>
                             </tbody>
@@ -135,7 +135,7 @@
                         <i class="fa-solid fa-circle-info text-brand-600"></i> Detail Halaman Dokumen
                     </h3>
                     <div id="pageInfoDetail" class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg min-h-[60px] flex items-center">
-                        Pilih atau klik file PDF di atas untuk melihat analisis ukuran individual per halaman.
+                        Pilih atau klik file di atas untuk melihat analisis ukuran individual per halaman.
                     </div>
                 </div>
                 <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
@@ -249,7 +249,7 @@
                 <!-- Action Button & Execution Area -->
                 <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
                     <button id="processBtn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 rounded-xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> NORMALIZE & MERGE PDF
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> NORMALIZE & MERGE PDF / IMAGE
                     </button>
 
                     <!-- Progress Indicator Box -->
@@ -318,7 +318,7 @@
 
         // Application Global State
         const state = {
-            files: [], // Array of loaded file objects { id, file, pdfJsDoc, numPages, pageSpecs: [] }
+            files: [], // { id, file, kind:'pdf'|'image', pdfJsDoc?, arrayBuffer, numPages, pageSpecs:[], imageInfo? }
             pageOrder: [], // [{ key, fileId, pageNumber }]
             activePreviewIndex: 0,
             isProcessing: false
@@ -367,7 +367,7 @@
 
         // Set Default Dynamic Filename with Current Date
         const todayStr = new Date().toISOString().split('T')[0];
-        outputFileName.value = `PDF_Normalized_A4_${todayStr}.pdf`;
+        outputFileName.value = `PDF_Image_Normalized_A4_${todayStr}.pdf`;
         updatePageOrderUI();
 
         // File Drag & Drop Listeners
@@ -571,47 +571,138 @@
         function closePageOrganizer(){pageOrganizerModal.classList.add('hidden');document.body.classList.remove('overflow-hidden');}
         openPageOrganizerBtn.onclick=openPageOrganizer; closePageOrganizerBtn.onclick=closePageOrganizer; donePageOrganizerBtn.onclick=closePageOrganizer; pageOrganizerModal.onclick=e=>{if(e.target===pageOrganizerModal)closePageOrganizer();}; resetPageOrderBtn.onclick=()=>{buildDefaultPageOrder();};
 
-        // Process Incoming Files
+        // ========================= MULTI-FORMAT INPUT =========================
+        const IMAGE_EXTENSIONS = new Set(['jpg','jpeg','png','webp','bmp','gif']);
+        const IMAGE_MIME_TYPES = new Set(['image/jpeg','image/png','image/webp','image/bmp','image/gif']);
+
+        function getExtension(name) {
+            const m = String(name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
+            return m ? m[1] : '';
+        }
+
+        function isPdfFile(file) {
+            return file.type === 'application/pdf' || getExtension(file.name) === 'pdf';
+        }
+
+        function isImageFile(file) {
+            const ext = getExtension(file.name);
+            return IMAGE_MIME_TYPES.has(file.type) || IMAGE_EXTENSIONS.has(ext);
+        }
+
+        function imageToDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Gagal membaca file gambar.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadImageElement(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Browser tidak dapat membaca gambar ini.'));
+                img.src = src;
+            });
+        }
+
+        async function getImageInfo(file) {
+            const dataUrl = await imageToDataURL(file);
+            const img = await loadImageElement(dataUrl);
+            return {
+                dataUrl,
+                widthPx: img.naturalWidth || img.width,
+                heightPx: img.naturalHeight || img.height,
+                orientation: (img.naturalWidth || img.width) > (img.naturalHeight || img.height)
+                    ? 'Landscape' : 'Portrait'
+            };
+        }
+
+        function makeImagePageSpec(imageInfo) {
+            // Preview/display uses a 96 DPI interpretation for pixel dimensions.
+            // The actual output PDF is fit proportionally to the selected target page.
+            const widthMm = imageInfo.widthPx * 25.4 / 96;
+            const heightMm = imageInfo.heightPx * 25.4 / 96;
+            return [{
+                pageNumber: 1,
+                widthPts: textMM_TO_PTS(widthMm),
+                heightPts: textMM_TO_PTS(heightMm),
+                widthMm: widthMm.toFixed(1),
+                heightMm: heightMm.toFixed(1),
+                orientation: imageInfo.orientation,
+                standardMatch: matchStandardPaperSize(widthMm, heightMm)
+            }];
+        }
+
         async function handleIncomingFiles(fileList) {
-            const validFiles = fileList.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+            const validFiles = fileList.filter(f => isPdfFile(f) || isImageFile(f));
+
             if (validFiles.length === 0) {
-                alert('Tolong pilih file dengan format PDF!');
+                alert('Tolong pilih file PDF atau gambar (JPG, JPEG, PNG, WebP, BMP, GIF)!');
                 return;
             }
 
             for (const file of validFiles) {
                 try {
-                    // IMPORTANT: PDF.js may transfer/detach the ArrayBuffer sent to its worker.
-                    // Keep a separate copy for pdf-lib so it remains usable during processing.
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdfJsArrayBuffer = arrayBuffer.slice(0);
-                    const pdfJsDoc = await pdfjsLib.getDocument({ data: pdfJsArrayBuffer }).promise;
-                    const numPages = pdfJsDoc.numPages;
-                    const pageSpecs = [];
+                    if (isPdfFile(file)) {
+                        // IMPORTANT: Keep a separate copy for PDF.js and pdf-lib.
+                        const arrayBuffer = await file.arrayBuffer();
+                        const pdfJsArrayBuffer = arrayBuffer.slice(0);
+                        const pdfJsDoc = await pdfjsLib.getDocument({ data: pdfJsArrayBuffer }).promise;
+                        const numPages = pdfJsDoc.numPages;
+                        const pageSpecs = [];
 
-                    // Extract True Page Dimensions from CropBox / MediaBox
-                    for (let i = 1; i <= numPages; i++) {
-                        const page = await pdfJsDoc.getPage(i);
-                        const viewport = page.getViewport({ scale: 1.0 });
-                        const widthMm = ptsToMM(viewport.width);
-                        const heightMm = ptsToMM(viewport.height);
-                        pageSpecs.push({
-                            pageNumber: i,
-                            widthPts: viewport.width,
-                            heightPts: viewport.height,
-                            widthMm: widthMm.toFixed(1),
-                            heightMm: heightMm.toFixed(1),
-                            orientation: widthMm > heightMm ? 'Landscape' : 'Portrait',
-                            standardMatch: matchStandardPaperSize(widthMm, heightMm)
-                        });
+                        for (let i = 1; i <= numPages; i++) {
+                            const page = await pdfJsDoc.getPage(i);
+                            const viewport = page.getViewport({ scale: 1.0 });
+                            const widthMm = ptsToMM(viewport.width);
+                            const heightMm = ptsToMM(viewport.height);
+
+                            pageSpecs.push({
+                                pageNumber: i,
+                                widthPts: viewport.width,
+                                heightPts: viewport.height,
+                                widthMm: widthMm.toFixed(1),
+                                heightMm: heightMm.toFixed(1),
+                                orientation: widthMm > heightMm ? 'Landscape' : 'Portrait',
+                                standardMatch: matchStandardPaperSize(widthMm, heightMm)
+                            });
+                        }
+
+                        const fileObj = {
+                            id: Math.random().toString(36).substr(2, 9),
+                            file,
+                            kind: 'pdf',
+                            arrayBuffer,
+                            pdfJsDoc,
+                            numPages,
+                            pageSpecs
+                        };
+
+                        state.files.push(fileObj);
+                        appendPagesForFile(fileObj);
+
+                    } else {
+                        // Image = one logical page.
+                        const imageInfo = await getImageInfo(file);
+                        const fileObj = {
+                            id: Math.random().toString(36).substr(2, 9),
+                            file,
+                            kind: 'image',
+                            arrayBuffer: await file.arrayBuffer(),
+                            imageInfo,
+                            numPages: 1,
+                            pageSpecs: makeImagePageSpec(imageInfo)
+                        };
+
+                        state.files.push(fileObj);
+                        appendPagesForFile(fileObj);
                     }
 
-                    const fileObj = { id: Math.random().toString(36).substr(2, 9), file, arrayBuffer, pdfJsDoc, numPages, pageSpecs };
-                    state.files.push(fileObj);
-                    appendPagesForFile(fileObj);
-
                 } catch (err) {
-                    alert(`Gagal membaca PDF "${file.name}": ${err.message}. Memutus proses untuk file ini.`);
+                    alert(`Gagal membaca "${file.name}": ${err.message}. File ini dilewati.`);
+                    console.error(err);
                 }
             }
 
@@ -641,11 +732,11 @@
                     <tr id="emptyTableNotice">
                         <td colspan="5" class="text-center py-12 text-slate-400 dark:text-slate-600">
                             <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
-                            Belum ada file PDF yang ditambahkan.
+                            Belum ada file PDF / gambar yang ditambahkan.
                         </td>
                     </tr>`;
                 clearAllBtn.classList.add('hidden');
-                pageInfoDetail.textContent = 'Pilih atau klik file PDF di atas untuk melihat analisis ukuran individual per halaman.';
+                pageInfoDetail.textContent = 'Pilih atau klik file di atas untuk melihat analisis ukuran individual per halaman.';
                 return;
             }
 
@@ -658,12 +749,18 @@
 
                 const dominantSize = fileObj.pageSpecs[0]?.standardMatch || 'Custom';
                 const firstPageMm = `${fileObj.pageSpecs[0]?.widthMm} × ${fileObj.pageSpecs[0]?.heightMm} mm`;
+                const typeLabel = fileObj.kind === 'image' ? 'IMAGE' : 'PDF';
+                const typeIcon = fileObj.kind === 'image' ? 'fa-image' : 'fa-file-pdf';
 
                 tr.innerHTML = `
                     <td class="p-2.5 font-bold text-slate-400 flex items-center gap-1.5">
                         <i class="fa-solid fa-grip-vertical cursor-grab text-slate-300"></i> ${idx + 1}
                     </td>
-                    <td class="p-2.5 font-medium truncate max-w-[160px]" title="${fileObj.file.name}">${fileObj.file.name}</td>
+                    <td class="p-2.5 font-medium truncate max-w-[220px]" title="${escapeHtml(fileObj.file.name)}">
+                        <i class="fa-solid ${typeIcon} mr-1 ${fileObj.kind === 'image' ? 'text-emerald-500' : 'text-rose-500'}"></i>
+                        ${escapeHtml(fileObj.file.name)}
+                        <span class="ml-1 text-[9px] bg-slate-100 dark:bg-slate-800 px-1 rounded">${typeLabel}</span>
+                    </td>
                     <td class="p-2.5 text-center font-bold">${fileObj.numPages}</td>
                     <td class="p-2.5">
                         <span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded text-[10px]">${dominantSize}</span>
@@ -723,7 +820,7 @@
 
         // Show Per-Page Details
         function showPageDetails(fileObj) {
-            let html = `<div class="w-full space-y-1"><p class="font-bold text-slate-700 dark:text-slate-200">${fileObj.file.name}:</p><div class="max-h-24 overflow-y-auto space-y-1">`;
+            let html = `<div class="w-full space-y-1"><p class="font-bold text-slate-700 dark:text-slate-200">${escapeHtml(fileObj.file.name)} <span class="text-[9px] uppercase text-slate-400">(${fileObj.kind})</span>:</p><div class="max-h-24 overflow-y-auto space-y-1">`;
             fileObj.pageSpecs.forEach((spec) => {
                 html += `<div class="flex justify-between text-[11px] border-b border-slate-100 dark:border-slate-800 pb-0.5">
                     <span>Halaman ${spec.pageNumber}</span>
@@ -799,14 +896,35 @@
             }
 
             const activeDoc = state.files[state.activePreviewIndex];
-            const page = await activeDoc.pdfJsDoc.getPage(1);
-            const viewport = page.getViewport({ scale: 0.5 });
 
-            // Render Original
-            origCanvas.width = viewport.width;
-            origCanvas.height = viewport.height;
-            const ctxOrig = origCanvas.getContext('2d');
-            await page.render({ canvasContext: ctxOrig, viewport: viewport }).promise;
+            // Render Original: PDF page or image.
+            let originalWidthPx = 0;
+            let originalHeightPx = 0;
+
+            if (activeDoc.kind === 'pdf') {
+                const page = await activeDoc.pdfJsDoc.getPage(1);
+                const viewport = page.getViewport({ scale: 0.5 });
+                originalWidthPx = viewport.width;
+                originalHeightPx = viewport.height;
+
+                origCanvas.width = viewport.width;
+                origCanvas.height = viewport.height;
+                const ctxOrig = origCanvas.getContext('2d');
+                await page.render({ canvasContext: ctxOrig, viewport: viewport }).promise;
+            } else {
+                const img = await loadImageElement(activeDoc.imageInfo.dataUrl);
+                const maxW = 360;
+                const maxH = 360;
+                const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+                originalWidthPx = Math.max(1, Math.round(img.naturalWidth * scale));
+                originalHeightPx = Math.max(1, Math.round(img.naturalHeight * scale));
+
+                origCanvas.width = originalWidthPx;
+                origCanvas.height = originalHeightPx;
+                const ctxOrig = origCanvas.getContext('2d');
+                ctxOrig.clearRect(0, 0, origCanvas.width, origCanvas.height);
+                ctxOrig.drawImage(img, 0, 0, originalWidthPx, originalHeightPx);
+            }
 
             const origSpec = activeDoc.pageSpecs[0];
             origMeta.textContent = `${origSpec.widthMm} × ${origSpec.heightMm} mm (${origSpec.standardMatch})`;
@@ -834,9 +952,9 @@
             const availW = targetCanvas.width - (marginPx * 2);
             const availH = targetCanvas.height - (marginPx * 2);
 
-            let scale = Math.min(availW / viewport.width, availH / viewport.height);
-            let drawW = viewport.width * scale;
-            let drawH = viewport.height * scale;
+            let scale = Math.min(availW / originalWidthPx, availH / originalHeightPx);
+            let drawW = originalWidthPx * scale;
+            let drawH = originalHeightPx * scale;
 
             if (scaleMode.value === 'STRETCH') {
                 drawW = availW;
@@ -856,7 +974,7 @@
         // Core Normalization & Merging Processing Function
         processBtn.addEventListener('click', async () => {
             if (state.files.length === 0) {
-                alert('Silahkan tambahkan minimal satu file PDF terlebih dahulu!');
+                alert('Silahkan tambahkan minimal satu file PDF atau gambar terlebih dahulu!');
                 return;
             }
 
@@ -878,30 +996,122 @@
                 if (!totalPagesCount) throw new Error('Tidak ada halaman yang dipilih untuk diproses.');
 
                 const sourcePdfCache = new Map();
-                for (const fileObj of state.files) sourcePdfCache.set(fileObj.id, await PDFLib.PDFDocument.load(fileObj.arrayBuffer));
+                const embeddedImageCache = new Map();
+
+                for (const fileObj of state.files) {
+                    if (fileObj.kind === 'pdf') {
+                        sourcePdfCache.set(
+                            fileObj.id,
+                            await PDFLib.PDFDocument.load(fileObj.arrayBuffer)
+                        );
+                    }
+                }
 
                 // pageOrder adalah sumber kebenaran urutan output.
                 for (const orderItem of state.pageOrder) {
-                    const fileObj=getFileById(orderItem.fileId);
-                    if(!fileObj) continue;
-                    const srcPdf=sourcePdfCache.get(orderItem.fileId);
-                    const pageIdx=orderItem.pageNumber-1;
+                    const fileObj = getFileById(orderItem.fileId);
+                    if (!fileObj) continue;
+
                     processedPagesCount++;
-                    const percent=Math.round((processedPagesCount/totalPagesCount)*100);
-                    progressBar.style.width=`${percent}%`; progressPercent.textContent=`${percent}%`;
-                    progressStatus.textContent=`Memproses ${processedPagesCount}/${totalPagesCount}: ${fileObj.file.name} — Halaman ${orderItem.pageNumber}...`;
-                    await new Promise(resolve=>requestAnimationFrame(resolve));
-                    const [embeddedPage]=await mergedPdf.embedPdf(srcPdf,[pageIdx]);
-                    const newPage=mergedPdf.addPage([targetDim.wPts,targetDim.hPts]);
-                    const origW=embeddedPage.width, origH=embeddedPage.height;
-                    const availW=targetDim.wPts-(marginPts*2), availH=targetDim.hPts-(marginPts*2);
-                    const scaleX=availW/origW, scaleY=availH/origH;
-                    let scale=Math.min(scaleX,scaleY), drawW=origW*scale, drawH=origH*scale;
-                    if(mode==='STRETCH'){drawW=availW;drawH=availH;}
-                    else if(mode==='FILL'){scale=Math.max(scaleX,scaleY);drawW=origW*scale;drawH=origH*scale;}
-                    else if(mode==='CENTER'){scale=1;if(origW>availW||origH>availH)scale=Math.min(availW/origW,availH/origH);drawW=origW*scale;drawH=origH*scale;}
-                    const posX=marginPts+(availW-drawW)/2, posY=marginPts+(availH-drawH)/2;
-                    newPage.drawPage(embeddedPage,{x:posX,y:posY,width:drawW,height:drawH});
+                    const percent = Math.round((processedPagesCount / totalPagesCount) * 100);
+                    progressBar.style.width = `${percent}%`;
+                    progressPercent.textContent = `${percent}%`;
+                    progressStatus.textContent =
+                        `Memproses ${processedPagesCount}/${totalPagesCount}: ${fileObj.file.name} — Halaman ${orderItem.pageNumber}...`;
+
+                    await new Promise(resolve => requestAnimationFrame(resolve));
+
+                    const newPage = mergedPdf.addPage([targetDim.wPts, targetDim.hPts]);
+                    const availW = targetDim.wPts - (marginPts * 2);
+                    const availH = targetDim.hPts - (marginPts * 2);
+
+                    let origW, origH, drawOperation;
+
+                    if (fileObj.kind === 'pdf') {
+                        const srcPdf = sourcePdfCache.get(fileObj.id);
+                        const pageIdx = orderItem.pageNumber - 1;
+                        const [embeddedPage] = await mergedPdf.embedPdf(srcPdf, [pageIdx]);
+
+                        origW = embeddedPage.width;
+                        origH = embeddedPage.height;
+
+                        drawOperation = (x, y, width, height) => {
+                            newPage.drawPage(embeddedPage, { x, y, width, height });
+                        };
+
+                    } else {
+                        // Convert browser-readable image into a PDF-embeddable image.
+                        let embeddedImage = embeddedImageCache.get(fileObj.id);
+
+                        if (!embeddedImage) {
+                            const ext = getExtension(fileObj.file.name);
+                            const bytes = fileObj.arrayBuffer;
+
+                            if (ext === 'jpg' || ext === 'jpeg' || fileObj.file.type === 'image/jpeg') {
+                                embeddedImage = await mergedPdf.embedJpg(bytes);
+                            } else {
+                                // PNG, WebP, BMP and GIF are rendered to canvas first.
+                                // This also makes all browser-supported image formats consistent.
+                                const img = await loadImageElement(fileObj.imageInfo.dataUrl);
+                                const maxDimension = 4096;
+                                const downscale = Math.min(
+                                    1,
+                                    maxDimension / Math.max(img.naturalWidth, img.naturalHeight)
+                                );
+                                const w = Math.max(1, Math.round(img.naturalWidth * downscale));
+                                const h = Math.max(1, Math.round(img.naturalHeight * downscale));
+
+                                const canvas = document.createElement('canvas');
+                                canvas.width = w;
+                                canvas.height = h;
+
+                                const ctx = canvas.getContext('2d', { alpha: false });
+                                ctx.fillStyle = '#ffffff';
+                                ctx.fillRect(0, 0, w, h);
+                                ctx.drawImage(img, 0, 0, w, h);
+
+                                const pngBytes = await fetch(canvas.toDataURL('image/png')).then(r => r.arrayBuffer());
+                                embeddedImage = await mergedPdf.embedPng(pngBytes);
+                            }
+
+                            embeddedImageCache.set(fileObj.id, embeddedImage);
+                        }
+
+                        origW = embeddedImage.width;
+                        origH = embeddedImage.height;
+
+                        drawOperation = (x, y, width, height) => {
+                            newPage.drawImage(embeddedImage, { x, y, width, height });
+                        };
+                    }
+
+                    const scaleX = availW / origW;
+                    const scaleY = availH / origH;
+
+                    let scale = Math.min(scaleX, scaleY);
+                    let drawW = origW * scale;
+                    let drawH = origH * scale;
+
+                    if (mode === 'STRETCH') {
+                        drawW = availW;
+                        drawH = availH;
+                    } else if (mode === 'FILL') {
+                        scale = Math.max(scaleX, scaleY);
+                        drawW = origW * scale;
+                        drawH = origH * scale;
+                    } else if (mode === 'CENTER') {
+                        scale = 1;
+                        if (origW > availW || origH > availH) {
+                            scale = Math.min(availW / origW, availH / origH);
+                        }
+                        drawW = origW * scale;
+                        drawH = origH * scale;
+                    }
+
+                    const posX = marginPts + (availW - drawW) / 2;
+                    const posY = marginPts + (availH - drawH) / 2;
+
+                    drawOperation(posX, posY, drawW, drawH);
                 }
 
                 // Finalize PDF Generation
@@ -929,7 +1139,7 @@
                 progressStatus.textContent = 'Proses Berhasil Selesai!';
 
             } catch (err) {
-                alert(`Terjadi kesalahan saat memproses PDF: ${err.message}`);
+                alert(`Terjadi kesalahan saat memproses PDF / gambar: ${err.message}`);
                 console.error(err);
             } finally {
                 state.isProcessing = false;
