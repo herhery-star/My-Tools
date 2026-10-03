@@ -6,182 +6,159 @@
 <meta name="theme-color" content="#111827">
 <title>DOCUMENT SCANNER</title>
 <style>
-:root{
- --bg:#07111f;--surface:#0d1a2b;--surface2:#13243a;--line:#263a54;
- --text:#f7fbff;--muted:#8ea2bb;--accent:#63a4ff;--accent2:#7c6cff;
- --good:#49d69a;--warn:#ffc857;--danger:#ff667a;
-}
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#708096;--line:#dfe6ef;--blue:#3478f6;--blue2:#5b5cf0;--green:#20a876;--shadow:0 8px 30px #24334a12}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
- font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-button,input,select{font:inherit}
-.app{height:100dvh;display:block;padding:0}
-.side{
- position:fixed;z-index:20;left:0;right:0;bottom:0;
- background:linear-gradient(180deg,rgba(13,26,43,.96),rgba(7,17,31,.99));
- border:0;border-top:1px solid rgba(255,255,255,.09);
- border-radius:24px 24px 0 0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));
- max-height:72dvh;overflow:auto;transform:translateY(calc(100% - 72px));
- transition:transform .28s ease;box-shadow:0 -18px 45px #0008
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+body{min-height:100dvh}
+.app{width:min(100%,620px);margin:auto;padding:12px 12px 28px}
+.side{display:flex;flex-direction:column;gap:12px}
+.main{order:-1}
+.viewer{display:flex;flex-direction:column;gap:10px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:3px 3px 5px}
+.title{font-weight:800;font-size:19px;letter-spacing:-.3px}
+.subtitle{font-size:11px;color:var(--muted);margin-top:2px}
+.iconbtn{width:40px;height:40px;border:1px solid var(--line);background:var(--card);border-radius:12px;color:var(--ink);font-size:18px;box-shadow:var(--shadow)}
+.stage{
+ position:relative;width:100%;aspect-ratio:4/3;min-height:0;background:#17202d;
+ border-radius:18px;overflow:hidden;box-shadow:var(--shadow)
 }
-.side.open{transform:translateY(0)}
-.side:before{content:"";display:block;width:42px;height:5px;border-radius:9px;background:#63758d;margin:0 auto 10px}
-.side h1,.side>.sub{display:none}
-.main{height:100%;padding:0;background:transparent;border:0;border-radius:0}
-.viewer{height:100%;min-height:0;display:flex;flex-direction:column;gap:0}
-.stage{position:relative;flex:1;min-height:0;background:#02060c;overflow:hidden;border-radius:0}
-video,img#preview{width:100%;height:100%;object-fit:cover;display:none}
-#preview{object-fit:contain!important;background:#03070d}
+video,img#preview{width:100%;height:100%;display:none;object-fit:contain;background:#101720}
 .active{display:block!important}
-.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#71839a;
- padding:35px;text-align:center;background:radial-gradient(circle at 50% 45%,#172b46 0,#050b14 58%)}
+.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#a9b7c8;padding:25px;font-size:13px}
 .overlay{position:absolute;inset:0;pointer-events:none}
-.quad{position:absolute;left:9%;top:13%;right:9%;bottom:13%;border:2px solid var(--good);
- display:none;clip-path:polygon(4% 7%,94% 4%,97% 93%,5% 97%);
- filter:drop-shadow(0 0 6px #49d69a88)}
-.detect{position:absolute;left:14px;top:calc(14px + env(safe-area-inset-top));
- background:#062018dd;color:#72e2b2;padding:8px 11px;border-radius:12px;font-size:12px;
- backdrop-filter:blur(10px);display:none}
-.controls{
- position:absolute;left:0;right:0;bottom:0;padding:14px 14px calc(18px + env(safe-area-inset-bottom));
- display:flex;align-items:center;justify-content:center;gap:18px;
- background:linear-gradient(transparent,#02060ddd 72%)
+.quad{position:absolute;left:7%;top:7%;right:7%;bottom:7%;border:2px solid #31d49b;display:none;border-radius:3px}
+.detect{position:absolute;left:10px;top:10px;background:#073022e8;color:#7af0bf;padding:6px 9px;border-radius:9px;font-size:11px;display:none}
+.camera-controls{display:flex;align-items:center;justify-content:center;gap:12px}
+.camera-controls button{
+ width:44px;height:44px;border-radius:13px;border:1px solid var(--line);background:var(--card);font-size:18px;box-shadow:var(--shadow)
 }
-.controls button{
- border:0;color:#fff;background:#14263caa;backdrop-filter:blur(12px);
- width:48px;height:48px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;
- font-size:18px;box-shadow:0 5px 20px #0005
-}
-.controls #captureBtn{width:74px;height:74px;background:#fff;color:#0a1320;border:6px solid #ffffff55;
- font-size:0;box-shadow:0 6px 25px #0008}
-.controls #captureBtn:after{content:"";width:54px;height:54px;border-radius:50%;background:#fff;border:2px solid #1d3048}
-.controls #switchBtn,.controls #flashBtn{font-size:18px}
-.controls #retakeBtn{display:none}
-
-.topbar{
- position:absolute;z-index:5;left:0;right:0;top:0;padding:14px 14px calc(22px);
- display:flex;justify-content:space-between;align-items:center;
- background:linear-gradient(#02060ddd,transparent)
-}
-.top-title{font-weight:800;font-size:15px;letter-spacing:.3px}
-.top-actions{display:flex;gap:8px}
-.top-actions button{
- border:1px solid #ffffff18;background:#0b1728aa;color:white;width:40px;height:40px;border-radius:50%;
- backdrop-filter:blur(12px)
-}
-#cameraBtn,#galleryBtn{display:none}
-
-.group{border-top:1px solid #ffffff0d;padding-top:13px;margin-top:12px}
-label{font-size:11px;color:var(--muted);display:block;margin-bottom:7px;text-transform:uppercase;letter-spacing:.7px}
-button,.select,.text{
- border:1px solid #ffffff12;background:var(--surface2);color:var(--text);
- border-radius:13px;padding:12px;font-size:14px
-}
-.row{display:flex;gap:8px}.row>*{flex:1}
-.folder{padding:12px;border:1px dashed #45617f;border-radius:14px;background:#0b1728}
-.folder b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.status{font-size:11px;color:var(--muted);line-height:1.4}
-.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0}
-.ok{background:var(--good);color:#06160f;border:0;font-weight:750}
-.filterbar{display:flex;gap:7px;overflow-x:auto;padding:2px 0 5px}
+.camera-controls #captureBtn{width:64px;height:64px;border-radius:50%;background:var(--blue);border:6px solid #dbe7ff;color:white;font-size:0}
+.camera-controls #captureBtn:after{content:"";width:44px;height:44px;border-radius:50%;border:2px solid white}
+.controls-extra{display:flex;gap:8px}
+.controls-extra button{flex:1}
+button,.select,.text{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:11px;padding:11px 12px}
+button{cursor:pointer}
+.primary{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border:0}
+.ok{background:var(--green);color:#fff;border:0;font-weight:700}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:13px;box-shadow:var(--shadow)}
+.panel-title{font-size:13px;font-weight:750;margin-bottom:10px}
+.source-row{display:flex;gap:8px}.source-row>*{flex:1}
+.filterbar{display:flex;gap:7px;overflow-x:auto;padding:1px 0 4px}
 .filterbar::-webkit-scrollbar{display:none}
-.filterbar button{white-space:nowrap;padding:10px 13px;border-radius:999px;background:#13243a}
-.filterbar button.selected{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
-#saveBtn{width:100%;font-size:15px;padding:14px}
-#folderBtn,#clearFolder,#autoName,#counterName,#detectBtn,#resetDetect{font-size:13px}
+.filterbar button{white-space:nowrap;border-radius:999px;padding:9px 13px;font-size:12px;background:#f2f5f9}
+.filterbar button.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
+.crop-row{display:flex;gap:7px}
+.crop-row button{flex:1;font-size:12px}
+.crop-row button.selected{background:#eaf2ff;color:var(--blue);border-color:#a9c8ff}
+.status{font-size:11px;color:var(--muted);line-height:1.45}
+.folder{padding:10px;border:1px dashed #b8c6d8;border-radius:11px;background:#f8fafc}
+.folder b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+label{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.7px;margin:0 0 6px}
+.row{display:flex;gap:7px}.row>*{flex:1}
 .hidden{display:none!important}
 canvas{display:none}
-
+#saveBtn{width:100%;padding:13px}
+#fileInput{display:none}
 @media(min-width:700px){
- .side{left:auto;right:14px;bottom:14px;width:360px;border:1px solid var(--line);border-radius:20px;
- max-height:calc(100dvh - 28px);transform:translateY(calc(100% - 58px))}
- .side.open{transform:translateY(0)}
- .side:before{margin-bottom:8px}
- .main{padding:14px}.stage{border-radius:20px}
- .topbar{top:14px;left:14px;right:14px}
+ .app{padding:20px}
+ .stage{aspect-ratio:4/3}
 }
 </style>
 </head>
 <body>
 <div class="app">
-<aside class="side" id="side">
-  <div><h1>DOCUMENT CAMERA</h1><div class="sub">Document Scanner • JPG • Rename • Folder</div></div>
-
-  <div class="row">
-    <button id="cameraBtn" class="primary">📷 Kamera</button>
-    <button id="galleryBtn">🖼 Galeri</button>
-    <input id="fileInput" class="hidden" type="file" accept="image/*" multiple>
-  </div>
-
-  <div class="group">
-    <label>Folder penyimpanan</label>
-    <div class="folder"><b id="folderName">Belum dipilih</b><span class="status" id="folderStatus">Pilih folder jika browser mendukung File System Access.</span></div>
-    <div class="row" style="margin-top:8px"><button id="folderBtn">📁 Pilih Folder</button><button id="clearFolder">Reset</button></div>
-  </div>
-
-  <div class="group">
-    <label>Nama file</label>
-    <input id="fileName" class="text" style="width:100%" value="">
-    <div class="row" style="margin-top:8px"><button id="autoName">Nama Otomatis</button><button id="counterName">+ Nomor</button></div>
-  </div>
-
-  <div class="group">
-    <label>Filter foto</label>
-    <div class="filterbar" style="flex-wrap:wrap">
-      <button data-filter="document" class="selected">Dokumen</button>
-      <button data-filter="bright">Cerah</button>
-      <button data-filter="contrast">Kontras</button>
-      <button data-filter="brightcontrast">Cerah + Kontras</button>
-      <button data-filter="gray">Grayscale</button>
-      <button data-filter="bw">BW</button>
-      <button data-filter="bwcontrast">BW Kontras</button>
-      <button data-filter="sharp">Tajam</button>
-      <button data-filter="document">Dokumen</button>
-      <button data-filter="auto">Auto</button>
+  <main class="main">
+    <div class="header">
+      <div><div class="title">Document Scanner</div><div class="subtitle">Foto dokumen • JPG • Auto Crop</div></div>
+      <button class="iconbtn" id="settingsBtn">⚙</button>
     </div>
-  </div>
 
-  <div class="group">
-    <label>Deteksi objek</label>
-    <div class="row"><button id="detectBtn">✓ Deteksi Dokumen</button><button id="resetDetect">Reset</button></div>
-    <div class="status" id="detectStatus">Deteksi dokumen aktif secara default. Temukan tepi dan sudut dokumen pada foto.</div>
-  </div>
+    <div class="viewer">
+      <div class="stage">
+        <video id="video" playsinline autoplay></video>
+        <img id="preview" alt="Preview dokumen">
+        <div id="empty" class="empty">Pilih <b>Kamera</b> atau <b>Galeri</b> untuk mulai.</div>
+        <div class="overlay"><div id="quad" class="quad"></div><div id="detect" class="detect">✓ Dokumen terdeteksi</div></div>
+      </div>
 
-  <div class="group">
-    <label>Format hasil</label>
-    <select id="format" class="select" style="width:100%"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WEBP</option></select>
-  </div>
+      <div class="camera-controls">
+        <button id="galleryBtn" title="Galeri">🖼</button>
+        <button id="captureBtn" class="primary" title="Ambil foto">●</button>
+        <button id="switchBtn" title="Ganti kamera">🔄</button>
+      </div>
 
-  <div class="status" id="saveStatus">Belum ada foto.</div>
-  <button id="saveBtn" class="ok" disabled>💾 Simpan Hasil</button>
-</aside>
+      <div class="controls-extra">
+        <button id="flashBtn">⚡ Flash</button>
+        <button id="retakeBtn">↩ Ulangi</button>
+      </div>
+    </div>
+  </main>
 
-<main class="main">
- <div class="topbar">
-  <div class="top-title">DOCUMENT SCANNER</div>
-  <div class="top-actions">
-    <button id="sourceBtn" title="Sumber">＋</button>
-    <button id="panelBtn" title="Pengaturan">☰</button>
-  </div>
-</div>
-<div class="viewer">
-  <div class="stage">
-    <video id="video" playsinline autoplay></video>
-    <img id="preview" alt="preview">
-    <div id="empty" class="empty">Pilih <b>Kamera</b> atau <b>Galeri</b>.</div>
-    <div class="overlay"><div id="quad" class="quad"></div><div id="detect" class="detect">✓ Objek terdeteksi</div></div>
-  </div>
-  <div class="controls">
-    <button id="switchBtn">🔄 Kamera Depan/Belakang</button>
-    <button id="flashBtn">⚡ Flash/Torch</button>
-    <button id="captureBtn" class="primary">● AMBIL FOTO</button>
-    <button id="retakeBtn">↩ Ulangi</button>
-  </div>
- </div>
-</main>
+  <aside class="side" id="side">
+    <div class="panel">
+      <div class="panel-title">Sumber Foto</div>
+      <div class="source-row">
+        <button id="cameraBtn" class="primary">📷 Kamera</button>
+        <button id="galleryBtn2">🖼 Galeri</button>
+        <input id="fileInput" type="file" accept="image/*" multiple>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Crop Dokumen</div>
+      <div class="crop-row">
+        <button id="cropAuto" class="selected">✓ Auto Detect</button>
+        <button id="cropManual">✋ Manual</button>
+        <button id="cropNone">Original</button>
+      </div>
+      <div class="status" id="detectStatus" style="margin-top:8px">Auto Detect aktif. Area dokumen akan dipotong otomatis.</div>
+      <div class="row" style="margin-top:8px">
+        <button id="detectBtn">↻ Deteksi Ulang</button>
+        <button id="resetDetect">Reset Crop</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Pengolahan Foto</div>
+      <div class="filterbar">
+        <button data-filter="original">Original</button>
+        <button data-filter="bright">Cerah</button>
+        <button data-filter="contrast">Kontras</button>
+        <button data-filter="brightcontrast">Cerah + Kontras</button>
+        <button data-filter="gray">Grayscale</button>
+        <button data-filter="bw">BW</button>
+        <button data-filter="bwcontrast">BW Kontras</button>
+        <button data-filter="sharp">Tajam</button>
+        <button data-filter="document" class="selected">Dokumen</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Nama & Penyimpanan</div>
+      <label>Nama file</label>
+      <input id="fileName" class="text" style="width:100%" value="">
+      <div class="row" style="margin-top:7px">
+        <button id="autoName">Nama Otomatis</button>
+        <button id="counterName">+ Nomor</button>
+      </div>
+      <div style="margin-top:10px">
+        <label>Folder tujuan</label>
+        <div class="folder"><b id="folderName">Belum dipilih</b><span class="status" id="folderStatus">Pilih folder untuk penyimpanan langsung jika didukung.</span></div>
+        <div class="row" style="margin-top:7px"><button id="folderBtn">📁 Pilih Folder</button><button id="clearFolder">Reset</button></div>
+      </div>
+      <div style="margin-top:10px">
+        <label>Format</label>
+        <select id="format" class="select" style="width:100%"><option value="image/jpeg">JPG — default</option><option value="image/png">PNG</option><option value="image/webp">WEBP</option></select>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="status" id="saveStatus">Belum ada foto.</div>
+      <button id="saveBtn" class="ok" disabled>💾 Simpan JPG</button>
+    </div>
+  </aside>
 </div>
 <canvas id="canvas"></canvas>
-
 <script>
 const $=id=>document.getElementById(id);
 const video=$('video'), preview=$('preview'), canvas=$('canvas'), ctx=canvas.getContext('2d');
@@ -189,7 +166,7 @@ let stream=null, facing='environment', sourceBlob=null, sourceUrl=null, currentF
 
 function stamp(){let d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
 function autoName(){let ext=$('format').value==='image/png'?'png':$('format').value==='image/webp'?'webp':'jpg';$('fileName').value=`DOKUMEN_${stamp()}.${ext}`}
-autoName();
+autoName(); $('format').value='image/jpeg';
 
 async function startCamera(){
  try{
@@ -200,7 +177,7 @@ async function startCamera(){
 }
 $('cameraBtn').onclick=startCamera;
 $('switchBtn').onclick=()=>{facing=facing==='environment'?'user':'environment';startCamera()};
-$('galleryBtn').onclick=()=>$('fileInput').click();
+$('galleryBtn').onclick=()=>$('fileInput').click(); $('galleryBtn2').onclick=()=>$('fileInput').click();
 
 $('fileInput').onchange=async e=>{
  const f=e.target.files?.[0]; if(!f)return;
@@ -237,8 +214,19 @@ document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=async()=>{
  if(sourceBlob){let img=await getBitmap();drawFiltered(img);preview.src=canvas.toDataURL('image/jpeg',.94);img.close?.()}
 });
 
+
+let cropMode='auto';
+$('cropAuto').onclick=()=>{cropMode='auto';document.querySelectorAll('.crop-row button').forEach(x=>x.classList.remove('selected'));$('cropAuto').classList.add('selected');$('detectStatus').textContent='Auto Detect aktif. Area dokumen akan dipotong otomatis.';if(sourceBlob)detectAndAutoCrop()};
+$('cropNone').onclick=()=>{cropMode='none';document.querySelectorAll('.crop-row button').forEach(x=>x.classList.remove('selected'));$('cropNone').classList.add('selected');$('quad').style.display='none';$('detect').style.display='none';$('detectStatus').textContent='Crop dimatikan. Foto digunakan tanpa pemotongan.'};
+$('cropManual').onclick=()=>{
+ cropMode='manual';document.querySelectorAll('.crop-row button').forEach(x=>x.classList.remove('selected'));$('cropManual').classList.add('selected');
+ $('detectStatus').textContent='Mode manual: gunakan area crop pada tahap berikutnya untuk menentukan empat sisi dokumen.';
+ if(sourceBlob){$('quad').style.display='block';$('detect').style.display='none';}
+};
 async function detectAndAutoCrop(){
  if(!sourceBlob)return false;
+ if(cropMode==='none')return false;
+ if(cropMode==='manual'){ $('detectStatus').textContent='Mode manual aktif — area akan dapat disesuaikan manual.'; return false; }
  const img=await getBitmap();
  const maxSide=1200, scale=Math.min(1,maxSide/Math.max(img.width,img.height));
  const w=Math.max(1,Math.round(img.width*scale)), h=Math.max(1,Math.round(img.height*scale));
@@ -325,11 +313,11 @@ async function save(){
   try{
    const fh=await folderHandle.getFileHandle(name,{create:true});
    const w=await fh.createWritable();await w.write(blob);await w.close();
-   $('saveStatus').textContent=`✓ Tersimpan: ${folderHandle.name}/${name}`;$('side').classList.remove('open');return;
+   $('saveStatus').textContent=`✓ Tersimpan: ${folderHandle.name}/${name}`;return;
   }catch(e){$('saveStatus').textContent='Folder langsung gagal; dialihkan ke download.'}
  }
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
- $('saveStatus').textContent=`✓ File dibuat: ${name}`;$('side').classList.remove('open');
+ $('saveStatus').textContent=`✓ File dibuat: ${name}`;
 }
 $('saveBtn').onclick=save;
 
@@ -346,8 +334,7 @@ $('flashBtn').onclick=async()=>{
 window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());if(sourceUrl)URL.revokeObjectURL(sourceUrl)});
 
 // Mobile-first controls
-$('panelBtn').onclick=()=>{$('side').classList.toggle('open')};
-$('sourceBtn').onclick=()=>{
+$('settingsBtn').onclick=()=>{$('side').classList.toggle('open')};
  const useGallery=confirm('Pilih OK untuk membuka Galeri.\nPilih Batal untuk membuka Kamera.');
  if(useGallery)$('fileInput').click();else startCamera();
 };
