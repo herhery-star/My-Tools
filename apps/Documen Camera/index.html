@@ -160,42 +160,74 @@ canvas{display:none}
 </div>
 <canvas id="canvas"></canvas>
 <script>
-const $=id=>document.getElementById(id);
+const $ = id => document.getElementById(id);
 const video=$('video'), preview=$('preview'), canvas=$('canvas'), ctx=canvas.getContext('2d');
-let stream=null, facing='environment', sourceBlob=null, sourceUrl=null, currentFilter='document', folderHandle=null, detected=false;
+let stream=null, facing='environment', sourceBlob=null, sourceUrl=null;
+let currentFilter='document', cropMode='auto', folderHandle=null, detected=false;
 
-function stamp(){let d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
-function autoName(){let ext=$('format').value==='image/png'?'png':$('format').value==='image/webp'?'webp':'jpg';$('fileName').value=`DOKUMEN_${stamp()}.${ext}`}
-autoName(); $('format').value='image/jpeg';
-
+function stamp(){
+ const d=new Date(), p=n=>String(n).padStart(2,'0');
+ return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+function autoName(){
+ const ext=$('format').value==='image/png'?'png':$('format').value==='image/webp'?'webp':'jpg';
+ $('fileName').value=`DOKUMEN_${stamp()}.${ext}`;
+}
+function setStatus(t){$('saveStatus').textContent=t}
+function setPreview(url){
+ preview.src=url; preview.classList.add('active'); video.classList.remove('active');
+ $('empty').style.display='none';
+}
+function stopCamera(){
+ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+}
 async function startCamera(){
  try{
-  if(stream) stream.getTracks().forEach(t=>t.stop());
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:4096},height:{ideal:2160}},audio:false});
-  video.srcObject=stream; video.classList.add('active'); preview.classList.remove('active'); $('empty').style.display='none';
- }catch(e){alert('Kamera tidak dapat diakses. Pastikan izin kamera diberikan dan halaman menggunakan HTTPS/localhost.');}
+  stopCamera();
+  if(!navigator.mediaDevices?.getUserMedia) throw new Error('no camera');
+  stream=await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080}},audio:false
+  });
+  video.srcObject=stream;
+  video.classList.add('active'); preview.classList.remove('active'); $('empty').style.display='none';
+  setStatus('Kamera aktif.');
+ }catch(e){
+  alert('Kamera tidak dapat diakses. Pastikan izin kamera diberikan dan halaman menggunakan HTTPS atau localhost.');
+ }
 }
-$('cameraBtn').onclick=startCamera;
-$('switchBtn').onclick=()=>{facing=facing==='environment'?'user':'environment';startCamera()};
-$('galleryBtn').onclick=()=>$('fileInput').click(); $('galleryBtn2').onclick=()=>$('fileInput').click();
 
-$('fileInput').onchange=async e=>{
- const f=e.target.files?.[0]; if(!f)return;
- sourceBlob=f; sourceUrl=URL.createObjectURL(f); preview.src=sourceUrl;
- preview.classList.add('active'); video.classList.remove('active'); $('empty').style.display='none';
- autoName(); $('saveBtn').disabled=false; $('saveStatus').textContent=`Foto dipilih: ${f.name}`; detectAndAutoCrop();
-};
+async function loadFile(file){
+ if(!file)return;
+ sourceBlob=file;
+ if(sourceUrl)URL.revokeObjectURL(sourceUrl);
+ sourceUrl=URL.createObjectURL(file);
+ setPreview(sourceUrl);
+ autoName();
+ $('saveBtn').disabled=false;
+ setStatus(`Foto dipilih: ${file.name}`);
+ if(cropMode==='auto') await detectAndAutoCrop();
+}
 
-$('captureBtn').onclick=()=>{
- if(!video.classList.contains('active'))return;
- canvas.width=video.videoWidth;canvas.height=video.videoHeight;
- ctx.drawImage(video,0,0);
- canvas.toBlob(b=>{sourceBlob=b; if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=URL.createObjectURL(b);preview.src=sourceUrl;preview.classList.add('active');video.classList.remove('active');$('saveBtn').disabled=false;autoName();$('saveStatus').textContent='Foto berhasil diambil.'; $('detectBtn').click()},'image/jpeg',.95);
-};
-$('retakeBtn').onclick=()=>{if(stream)startCamera();preview.classList.remove('active');$('saveBtn').disabled=true;$('detect').style.display='none';$('quad').style.display='none'};
+function capture(){
+ if(!video.classList.contains('active')){startCamera();return}
+ canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+ ctx.filter='none'; ctx.drawImage(video,0,0);
+ canvas.toBlob(async blob=>{
+  if(!blob)return;
+  sourceBlob=blob;
+  if(sourceUrl)URL.revokeObjectURL(sourceUrl);
+  sourceUrl=URL.createObjectURL(blob);
+  setPreview(sourceUrl);
+  autoName();
+  $('saveBtn').disabled=false;
+  setStatus('Foto berhasil diambil.');
+  if(cropMode==='auto') await detectAndAutoCrop();
+ },'image/jpeg',.96);
+}
 
 async function getBitmap(){return createImageBitmap(sourceBlob)}
-function drawFiltered(img){
+
+function applyFilter(img){
  canvas.width=img.width;canvas.height=img.height;
  let f='none';
  if(currentFilter==='bright')f='brightness(1.18)';
@@ -205,151 +237,153 @@ function drawFiltered(img){
  if(currentFilter==='bw')f='grayscale(1) contrast(1.9)';
  if(currentFilter==='bwcontrast')f='grayscale(1) contrast(2.2) brightness(1.05)';
  if(currentFilter==='sharp')f='contrast(1.18) saturate(1.08)';
- if(currentFilter==='document')f='grayscale(1) contrast(1.75) brightness(1.12)';
- if(currentFilter==='auto')f='contrast(1.35) brightness(1.08)';
+ if(currentFilter==='document')f='grayscale(1) contrast(1.7) brightness(1.1)';
  ctx.filter=f;ctx.drawImage(img,0,0);ctx.filter='none';
 }
-document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=async()=>{
- document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');currentFilter=b.dataset.filter;
- if(sourceBlob){let img=await getBitmap();drawFiltered(img);preview.src=canvas.toDataURL('image/jpeg',.94);img.close?.()}
-});
 
-
-let cropMode='auto';
-$('cropAuto').onclick=()=>{cropMode='auto';document.querySelectorAll('.crop-row button').forEach(x=>x.classList.remove('selected'));$('cropAuto').classList.add('selected');$('detectStatus').textContent='Auto Detect aktif. Area dokumen akan dipotong otomatis.';if(sourceBlob)detectAndAutoCrop()};
-$('cropNone').onclick=()=>{cropMode='none';document.querySelectorAll('.crop-row button').forEach(x=>x.classList.remove('selected'));$('cropNone').classList.add('selected');$('quad').style.display='none';$('detect').style.display='none';$('detectStatus').textContent='Crop dimatikan. Foto digunakan tanpa pemotongan.'};
-$('cropManual').onclick=()=>{
- cropMode='manual';document.querySelectorAll('.crop-row button').forEach(x=>x.classList.remove('selected'));$('cropManual').classList.add('selected');
- $('detectStatus').textContent='Mode manual: gunakan area crop pada tahap berikutnya untuk menentukan empat sisi dokumen.';
- if(sourceBlob){$('quad').style.display='block';$('detect').style.display='none';}
-};
 async function detectAndAutoCrop(){
- if(!sourceBlob)return false;
- if(cropMode==='none')return false;
- if(cropMode==='manual'){ $('detectStatus').textContent='Mode manual aktif — area akan dapat disesuaikan manual.'; return false; }
- const img=await getBitmap();
- const maxSide=1200, scale=Math.min(1,maxSide/Math.max(img.width,img.height));
- const w=Math.max(1,Math.round(img.width*scale)), h=Math.max(1,Math.round(img.height*scale));
- const work=document.createElement('canvas'); work.width=w;work.height=h;
- const c=work.getContext('2d',{willReadFrequently:true}); c.drawImage(img,0,0,w,h);
- const d=c.getImageData(0,0,w,h).data;
-
- // Estimate document bounds from edge/brightness contrast.
- // Multiple margins are tested; choose the rectangle with strongest edge evidence.
- const gray=new Float32Array(w*h);
- for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-   const i=(y*w+x)*4; gray[y*w+x]=.299*d[i]+.587*d[i+1]+.114*d[i+2];
- }
- const score=(x0,y0,x1,y1)=>{
-   let sum=0,n=0;
-   for(let x=x0;x<=x1;x+=Math.max(1,Math.floor(w/180))){
-     if(y0>1){let a=gray[(y0-1)*w+x],b=gray[y0*w+x];sum+=Math.abs(a-b);n++}
-     if(y1<h-1){let a=gray[y1*w+x],b=gray[(y1+1)*w+x];sum+=Math.abs(a-b);n++}
+ if(!sourceBlob || cropMode!=='auto')return;
+ try{
+  const img=await getBitmap();
+  const maxSide=1000, scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+  const w=Math.max(1,Math.round(img.width*scale)), h=Math.max(1,Math.round(img.height*scale));
+  const work=document.createElement('canvas');work.width=w;work.height=h;
+  const c=work.getContext('2d',{willReadFrequently:true});c.drawImage(img,0,0,w,h);
+  const data=c.getImageData(0,0,w,h).data, gray=new Float32Array(w*h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const i=(y*w+x)*4;gray[y*w+x]=.299*data[i]+.587*data[i+1]+.114*data[i+2];
+  }
+  const edge=(x0,y0,x1,y1)=>{
+   let sum=0,n=0,step=Math.max(1,Math.floor(Math.min(w,h)/160));
+   for(let x=x0;x<=x1;x+=step){
+    if(y0>0){sum+=Math.abs(gray[y0*w+x]-gray[(y0-1)*w+x]);n++}
+    if(y1<h-1){sum+=Math.abs(gray[(y1+1)*w+x]-gray[y1*w+x]);n++}
    }
-   for(let y=y0;y<=y1;y+=Math.max(1,Math.floor(h/180))){
-     if(x0>1){let a=gray[y*w+x0-1],b=gray[y*w+x0];sum+=Math.abs(a-b);n++}
-     if(x1<w-1){let a=gray[y*w+x1],b=gray[y*w+x1+1];sum+=Math.abs(a-b);n++}
+   for(let y=y0;y<=y1;y+=step){
+    if(x0>0){sum+=Math.abs(gray[y*w+x0]-gray[y*w+x0-1]);n++}
+    if(x1<w-1){sum+=Math.abs(gray[y*w+x1]-gray[y*w+x1+1]);n++}
    }
    return n?sum/n:0;
- };
-
- let best={score:-1,x0:.04,y0:.04,x1:.96,y1:.96};
- const mx=Math.max(8,Math.floor(w*.08)), my=Math.max(8,Math.floor(h*.08));
- for(let L=0;L<=5;L++)for(let R=0;R<=5;R++)for(let T=0;T<=5;T++)for(let B=0;B<=5;B++){
-   const x0=Math.round(L*mx/5), x1=w-1-Math.round(R*mx/5);
-   const y0=Math.round(T*my/5), y1=h-1-Math.round(B*my/5);
-   if(x1-x0<w*.45||y1-y0<h*.45)continue;
-   const sc=score(x0,y0,x1,y1);
+  };
+  let best={score:-1,x0:.035,y0:.035,x1:.965,y1:.965};
+  const mx=Math.round(w*.08),my=Math.round(h*.08);
+  for(let l=0;l<=5;l++)for(let r=0;r<=5;r++)for(let t=0;t<=5;t++)for(let b=0;b<=5;b++){
+   const x0=Math.round(l*mx/5),x1=w-1-Math.round(r*mx/5);
+   const y0=Math.round(t*my/5),y1=h-1-Math.round(b*my/5);
+   if(x1-x0<w*.5||y1-y0<h*.5)continue;
+   const sc=edge(x0,y0,x1,y1);
    if(sc>best.score)best={score:sc,x0:x0/w,y0:y0/h,x1:x1/w,y1:y1/h};
- }
-
- // Conservative auto-crop: only crop when there is meaningful edge evidence.
- // Keeps a safety margin so normal photos are not aggressively clipped.
- const confidence=Math.min(1,Math.max(0,(best.score-5)/35));
- const margin=confidence>.28 ? .012 : .035;
- let x0=Math.max(0,best.x0-margin),y0=Math.max(0,best.y0-margin);
- let x1=Math.min(1,best.x1+margin),y1=Math.min(1,best.y1+margin);
-
- // If evidence is weak, use a document-safe crop rather than pretending certainty.
- if(confidence<.12){x0=.035;y0=.035;x1=.965;y1=.965}
-
- const sx=Math.round(x0*img.width),sy=Math.round(y0*img.height);
- const sw=Math.max(1,Math.round((x1-x0)*img.width)),sh=Math.max(1,Math.round((y1-y0)*img.height));
- canvas.width=sw;canvas.height=sh;ctx.filter='none';ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
- const cropped=await new Promise(r=>canvas.toBlob(r,'image/jpeg',.96));
- sourceBlob=cropped;
- if(sourceUrl)URL.revokeObjectURL(sourceUrl);
- sourceUrl=URL.createObjectURL(cropped);
- preview.src=sourceUrl;preview.classList.add('active');video.classList.remove('active');
- detected=true;
- $('quad').style.display='block';$('detect').style.display='block';
- $('detectStatus').textContent=`✓ Auto-detect & auto-crop selesai • ${sw} × ${sh}px`;
- img.close?.();
- return true;
+  }
+  const confidence=Math.max(0,Math.min(1,(best.score-4)/30));
+  const margin=confidence>.25?.012:.035;
+  const x0=Math.max(0,best.x0-margin),y0=Math.max(0,best.y0-margin);
+  const x1=Math.min(1,best.x1+margin),y1=Math.min(1,best.y1+margin);
+  const sx=Math.round(x0*img.width),sy=Math.round(y0*img.height);
+  const sw=Math.max(1,Math.round((x1-x0)*img.width)),sh=Math.max(1,Math.round((y1-y0)*img.height));
+  canvas.width=sw;canvas.height=sh;ctx.filter='none';ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+  const cropped=await new Promise(r=>canvas.toBlob(r,'image/jpeg',.96));
+  if(cropped){
+   sourceBlob=cropped;
+   if(sourceUrl)URL.revokeObjectURL(sourceUrl);
+   sourceUrl=URL.createObjectURL(cropped);setPreview(sourceUrl);
+   detected=true;$('quad').style.display='block';$('detect').style.display='block';
+   $('detectStatus').textContent=`✓ Auto Crop selesai • ${sw} × ${sh}px`;
+  }
+  img.close?.();
+ }catch(e){$('detectStatus').textContent='Auto Crop gagal, foto tetap digunakan.'}
 }
 
-$('detectBtn').onclick=async()=>{
- await detectAndAutoCrop();
-};
+function resetCrop(){
+ $('quad').style.display='none';$('detect').style.display='none';detected=false;
+ $('detectStatus').textContent=cropMode==='auto'?'Auto Detect aktif. Area dokumen akan dipotong otomatis.':'Crop direset.';
+}
 
-$('resetDetect').onclick=()=>{detected=false;$('quad').style.display='none';$('detect').style.display='none';$('detectStatus').textContent='Deteksi dokumen aktif.'};
-
-$('folderBtn').onclick=async()=>{
- if(!window.showDirectoryPicker){alert('Browser ini belum mendukung pemilihan folder langsung. Gunakan Chrome/Edge versi terbaru di perangkat yang mendukung File System Access API.');return}
- try{folderHandle=await showDirectoryPicker({mode:'readwrite'});$('folderName').textContent=folderHandle.name;$('folderStatus').textContent='Folder aktif. Hasil akan dicoba disimpan langsung ke sini.'}catch(e){}
-};
-$('clearFolder').onclick=()=>{folderHandle=null;$('folderName').textContent='Belum dipilih';$('folderStatus').textContent='Folder tujuan direset.'};
-$('autoName').onclick=autoName;
-$('counterName').onclick=()=>{let v=$('fileName').value;let m=v.match(/^(.*?)(\.[^.]+)$/);$('fileName').value=(m?m[1]:v)+'_001'+(m?m[2]:'.jpg')};
+async function chooseFolder(){
+ if(!window.showDirectoryPicker){
+  alert('Browser ini tidak mendukung pemilihan folder langsung. Gunakan Chrome/Edge terbaru pada perangkat yang mendukung File System Access API.');
+  return;
+ }
+ try{
+  folderHandle=await showDirectoryPicker({mode:'readwrite'});
+  $('folderName').textContent=folderHandle.name;
+  $('folderStatus').textContent='Folder aktif untuk penyimpanan.';
+ }catch(e){}
+}
 
 async function save(){
  if(!sourceBlob)return;
  let name=$('fileName').value.trim()||`DOKUMEN_${stamp()}.jpg`;
- let type=$('format').value;
- // Re-render current filter from original source when possible.
- let img=await getBitmap();drawFiltered(img);
- const blob=await new Promise(r=>canvas.toBlob(r,type,.94));img.close?.();
+ const type=$('format').value;
+ const img=await getBitmap();
+ applyFilter(img);
+ const blob=await new Promise(r=>canvas.toBlob(r,type,.94));
+ img.close?.();
+ if(!blob)return;
  if(folderHandle){
   try{
    const fh=await folderHandle.getFileHandle(name,{create:true});
    const w=await fh.createWritable();await w.write(blob);await w.close();
-   $('saveStatus').textContent=`✓ Tersimpan: ${folderHandle.name}/${name}`;return;
-  }catch(e){$('saveStatus').textContent='Folder langsung gagal; dialihkan ke download.'}
+   setStatus(`✓ Tersimpan: ${folderHandle.name}/${name}`);return;
+  }catch(e){}
  }
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
- $('saveStatus').textContent=`✓ File dibuat: ${name}`;
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+ setStatus(`✓ File dibuat: ${name}`);
 }
-$('saveBtn').onclick=save;
 
+// Core controls
+$('cameraBtn').onclick=startCamera;
+$('galleryBtn').onclick=()=>$('fileInput').click();
+$('galleryBtn2').onclick=()=>$('fileInput').click();
+$('fileInput').onchange=e=>loadFile(e.target.files?.[0]);
+$('captureBtn').onclick=capture;
+$('switchBtn').onclick=()=>{facing=facing==='environment'?'user':'environment';startCamera()};
+$('retakeBtn').onclick=()=>{preview.classList.remove('active');$('saveBtn').disabled=true;resetCrop();startCamera()};
 $('flashBtn').onclick=async()=>{
  if(!stream)return;
- const t=stream.getVideoTracks()[0];
- const caps=t.getCapabilities?.();
- if(caps?.torch){
-  const on=!(t.getSettings().torch||false);
-  try{await t.applyConstraints({advanced:[{torch:on}]});$('flashBtn').textContent=on?'⚡ Flash ON':'⚡ Flash/Torch'}catch(e){}
- }else alert('Torch/flash tidak tersedia melalui browser pada kamera ini.');
+ const t=stream.getVideoTracks()[0],caps=t.getCapabilities?.();
+ if(!caps?.torch){alert('Torch/flash tidak tersedia melalui browser pada kamera ini.');return}
+ const on=!t.getSettings().torch;
+ try{await t.applyConstraints({advanced:[{torch:on}]});$('flashBtn').textContent=on?'⚡ Flash ON':'⚡ Flash'}catch(e){}
 };
 
-window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());if(sourceUrl)URL.revokeObjectURL(sourceUrl)});
-
-// Mobile-first controls
+// Settings panel
 $('settingsBtn').onclick=()=>{$('side').classList.toggle('open')};
- const useGallery=confirm('Pilih OK untuk membuka Galeri.\nPilih Batal untuk membuka Kamera.');
- if(useGallery)$('fileInput').click();else startCamera();
-};
 
-// Document Scanner defaults
+// Crop modes
+$('cropAuto').onclick=()=>{cropMode='auto';document.querySelectorAll('.crop-row button').forEach(b=>b.classList.remove('selected'));$('cropAuto').classList.add('selected');$('detectStatus').textContent='Auto Detect aktif. Area dokumen akan dipotong otomatis.';if(sourceBlob)detectAndAutoCrop()};
+$('cropManual').onclick=()=>{cropMode='manual';document.querySelectorAll('.crop-row button').forEach(b=>b.classList.remove('selected'));$('cropManual').classList.add('selected');$('detectStatus').textContent='Mode Manual: area crop dapat disesuaikan pada tahap berikutnya.';$('quad').style.display=sourceBlob?'block':'none';$('detect').style.display='none'};
+$('cropNone').onclick=()=>{cropMode='none';document.querySelectorAll('.crop-row button').forEach(b=>b.classList.remove('selected'));$('cropNone').classList.add('selected');resetCrop();$('detectStatus').textContent='Original: crop tidak digunakan.'};
+$('detectBtn').onclick=()=>{if(cropMode==='auto')detectAndAutoCrop();else alert('Pilih Auto Detect terlebih dahulu.')};
+$('resetDetect').onclick=resetCrop;
+
+// Filters
+document.querySelectorAll('[data-filter]').forEach(btn=>btn.onclick=async()=>{
+ document.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('selected'));
+ btn.classList.add('selected');currentFilter=btn.dataset.filter;
+ if(!sourceBlob)return;
+ const img=await getBitmap();applyFilter(img);
+ preview.src=canvas.toDataURL('image/jpeg',.94);img.close?.();
+});
+
+// Name/folder/save
+$('autoName').onclick=autoName;
+$('counterName').onclick=()=>{
+ const v=$('fileName').value,m=v.match(/^(.*?)(\.[^.]+)$/);
+ $('fileName').value=(m?m[1]:v)+'_001'+(m?m[2]:'.jpg');
+};
+$('folderBtn').onclick=chooseFolder;
+$('clearFolder').onclick=()=>{folderHandle=null;$('folderName').textContent='Belum dipilih';$('folderStatus').textContent='Pilih folder untuk penyimpanan langsung jika didukung.'};
+$('format').onchange=()=>{if(!$('fileName').value || /\.jpg$/i.test($('fileName').value))autoName()};
+$('saveBtn').onclick=save;
+
+// Defaults
 $('format').value='image/jpeg';
 $('fileName').value=`DOKUMEN_${stamp()}.jpg`;
-document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('selected',x.dataset.filter==='document'));
+$('saveBtn').disabled=true;
 
-async function autoDetectOnLoad(){
-  // Detection is considered enabled by default; actual corner detection runs after an image exists.
-  detected=false;
-  $('detectStatus').textContent='Deteksi dokumen AKTIF. Ambil foto atau pilih dari Galeri untuk mendeteksi area dokumen.';
-}
-autoDetectOnLoad();
+window.addEventListener('beforeunload',stopCamera);
 </script>
 </body>
 </html>
