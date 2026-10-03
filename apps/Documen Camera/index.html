@@ -4,28 +4,108 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>DOCUMENT CAMERA</title>
+<title>DOCUMENT SCANNER</title>
 <style>
-:root{--bg:#0b1020;--panel:#111827;--panel2:#182235;--line:#2a3850;--text:#eef2f7;--muted:#9aa8bd;--accent:#4f8cff;--ok:#35c98a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-.app{min-height:100vh;display:grid;grid-template-columns:320px 1fr;gap:14px;padding:14px}.side,.main{background:var(--panel);border:1px solid var(--line);border-radius:16px}.side{padding:16px;display:flex;flex-direction:column;gap:12px}.main{min-width:0;padding:14px}
-h1{font-size:20px;margin:2px 0}.sub{font-size:12px;color:var(--muted)}label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
-button,.select,.text{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:11px 12px;font:inherit}
-button{cursor:pointer}button:hover{border-color:#55709c}.primary{background:var(--accent);border-color:var(--accent)}.ok{background:var(--ok);color:#06150f;border-color:var(--ok)}
-.row{display:flex;gap:8px}.row>*{flex:1}.group{border-top:1px solid var(--line);padding-top:12px}
-.folder{padding:12px;border:1px dashed #49607f;border-radius:10px;background:#0e1727}.folder b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.status{font-size:12px;color:var(--muted);line-height:1.45}
-.viewer{height:calc(100vh - 42px);min-height:560px;display:flex;flex-direction:column;gap:10px}.stage{position:relative;flex:1;min-height:0;background:#050912;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-video,img#preview{width:100%;height:100%;object-fit:contain;display:none}.active{display:block!important}.empty{color:#6f7e95;text-align:center;padding:30px}
-.controls{display:flex;flex-wrap:wrap;gap:8px}.controls button{flex:1;min-width:110px}.filterbar{display:flex;gap:7px;overflow:auto;padding-bottom:2px}.filterbar button{white-space:nowrap}.filterbar button.selected{outline:2px solid var(--accent)}
-.overlay{position:absolute;inset:0;pointer-events:none}.quad{position:absolute;left:12%;top:12%;right:12%;bottom:12%;border:2px solid var(--ok);display:none;clip-path:polygon(4% 7%,94% 4%,97% 93%,5% 97%)}.detect{position:absolute;left:14px;top:14px;background:#07150fdd;color:#77e0b1;padding:7px 10px;border-radius:8px;font-size:12px;display:none}
-canvas{display:none}.hidden{display:none!important}
-@media(max-width:850px){.app{grid-template-columns:1fr;padding:8px}.side{order:2}.main{order:1}.viewer{height:70vh;min-height:480px}}
+:root{
+ --bg:#07111f;--surface:#0d1a2b;--surface2:#13243a;--line:#263a54;
+ --text:#f7fbff;--muted:#8ea2bb;--accent:#63a4ff;--accent2:#7c6cff;
+ --good:#49d69a;--warn:#ffc857;--danger:#ff667a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+ font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+.app{height:100dvh;display:block;padding:0}
+.side{
+ position:fixed;z-index:20;left:0;right:0;bottom:0;
+ background:linear-gradient(180deg,rgba(13,26,43,.96),rgba(7,17,31,.99));
+ border:0;border-top:1px solid rgba(255,255,255,.09);
+ border-radius:24px 24px 0 0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+ max-height:72dvh;overflow:auto;transform:translateY(calc(100% - 72px));
+ transition:transform .28s ease;box-shadow:0 -18px 45px #0008
+}
+.side.open{transform:translateY(0)}
+.side:before{content:"";display:block;width:42px;height:5px;border-radius:9px;background:#63758d;margin:0 auto 10px}
+.side h1,.side>.sub{display:none}
+.main{height:100%;padding:0;background:transparent;border:0;border-radius:0}
+.viewer{height:100%;min-height:0;display:flex;flex-direction:column;gap:0}
+.stage{position:relative;flex:1;min-height:0;background:#02060c;overflow:hidden;border-radius:0}
+video,img#preview{width:100%;height:100%;object-fit:cover;display:none}
+#preview{object-fit:contain!important;background:#03070d}
+.active{display:block!important}
+.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#71839a;
+ padding:35px;text-align:center;background:radial-gradient(circle at 50% 45%,#172b46 0,#050b14 58%)}
+.overlay{position:absolute;inset:0;pointer-events:none}
+.quad{position:absolute;left:9%;top:13%;right:9%;bottom:13%;border:2px solid var(--good);
+ display:none;clip-path:polygon(4% 7%,94% 4%,97% 93%,5% 97%);
+ filter:drop-shadow(0 0 6px #49d69a88)}
+.detect{position:absolute;left:14px;top:calc(14px + env(safe-area-inset-top));
+ background:#062018dd;color:#72e2b2;padding:8px 11px;border-radius:12px;font-size:12px;
+ backdrop-filter:blur(10px);display:none}
+.controls{
+ position:absolute;left:0;right:0;bottom:0;padding:14px 14px calc(18px + env(safe-area-inset-bottom));
+ display:flex;align-items:center;justify-content:center;gap:18px;
+ background:linear-gradient(transparent,#02060ddd 72%)
+}
+.controls button{
+ border:0;color:#fff;background:#14263caa;backdrop-filter:blur(12px);
+ width:48px;height:48px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;
+ font-size:18px;box-shadow:0 5px 20px #0005
+}
+.controls #captureBtn{width:74px;height:74px;background:#fff;color:#0a1320;border:6px solid #ffffff55;
+ font-size:0;box-shadow:0 6px 25px #0008}
+.controls #captureBtn:after{content:"";width:54px;height:54px;border-radius:50%;background:#fff;border:2px solid #1d3048}
+.controls #switchBtn,.controls #flashBtn{font-size:18px}
+.controls #retakeBtn{display:none}
+
+.topbar{
+ position:absolute;z-index:5;left:0;right:0;top:0;padding:14px 14px calc(22px);
+ display:flex;justify-content:space-between;align-items:center;
+ background:linear-gradient(#02060ddd,transparent)
+}
+.top-title{font-weight:800;font-size:15px;letter-spacing:.3px}
+.top-actions{display:flex;gap:8px}
+.top-actions button{
+ border:1px solid #ffffff18;background:#0b1728aa;color:white;width:40px;height:40px;border-radius:50%;
+ backdrop-filter:blur(12px)
+}
+#cameraBtn,#galleryBtn{display:none}
+
+.group{border-top:1px solid #ffffff0d;padding-top:13px;margin-top:12px}
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:7px;text-transform:uppercase;letter-spacing:.7px}
+button,.select,.text{
+ border:1px solid #ffffff12;background:var(--surface2);color:var(--text);
+ border-radius:13px;padding:12px;font-size:14px
+}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.folder{padding:12px;border:1px dashed #45617f;border-radius:14px;background:#0b1728}
+.folder b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status{font-size:11px;color:var(--muted);line-height:1.4}
+.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0}
+.ok{background:var(--good);color:#06160f;border:0;font-weight:750}
+.filterbar{display:flex;gap:7px;overflow-x:auto;padding:2px 0 5px}
+.filterbar::-webkit-scrollbar{display:none}
+.filterbar button{white-space:nowrap;padding:10px 13px;border-radius:999px;background:#13243a}
+.filterbar button.selected{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+#saveBtn{width:100%;font-size:15px;padding:14px}
+#folderBtn,#clearFolder,#autoName,#counterName,#detectBtn,#resetDetect{font-size:13px}
+.hidden{display:none!important}
+canvas{display:none}
+
+@media(min-width:700px){
+ .side{left:auto;right:14px;bottom:14px;width:360px;border:1px solid var(--line);border-radius:20px;
+ max-height:calc(100dvh - 28px);transform:translateY(calc(100% - 58px))}
+ .side.open{transform:translateY(0)}
+ .side:before{margin-bottom:8px}
+ .main{padding:14px}.stage{border-radius:20px}
+ .topbar{top:14px;left:14px;right:14px}
+}
 </style>
 </head>
 <body>
 <div class="app">
-<aside class="side">
-  <div><h1>DOCUMENT CAMERA</h1><div class="sub">Kamera • Galeri • Scan • Rename • Folder</div></div>
+<aside class="side" id="side">
+  <div><h1>DOCUMENT CAMERA</h1><div class="sub">Document Scanner • JPG • Rename • Folder</div></div>
 
   <div class="row">
     <button id="cameraBtn" class="primary">📷 Kamera</button>
@@ -48,7 +128,7 @@ canvas{display:none}.hidden{display:none!important}
   <div class="group">
     <label>Filter foto</label>
     <div class="filterbar" style="flex-wrap:wrap">
-      <button data-filter="original" class="selected">Original</button>
+      <button data-filter="document" class="selected">Dokumen</button>
       <button data-filter="bright">Cerah</button>
       <button data-filter="contrast">Kontras</button>
       <button data-filter="brightcontrast">Cerah + Kontras</button>
@@ -63,8 +143,8 @@ canvas{display:none}.hidden{display:none!important}
 
   <div class="group">
     <label>Deteksi objek</label>
-    <div class="row"><button id="detectBtn">🔲 Deteksi Dokumen</button><button id="resetDetect">Reset</button></div>
-    <div class="status" id="detectStatus">Deteksi visual dasar. Untuk koreksi perspektif penuh dapat ditingkatkan dengan OpenCV.js.</div>
+    <div class="row"><button id="detectBtn">✓ Deteksi Dokumen</button><button id="resetDetect">Reset</button></div>
+    <div class="status" id="detectStatus">Deteksi dokumen aktif secara default. Temukan tepi dan sudut dokumen pada foto.</div>
   </div>
 
   <div class="group">
@@ -77,7 +157,14 @@ canvas{display:none}.hidden{display:none!important}
 </aside>
 
 <main class="main">
- <div class="viewer">
+ <div class="topbar">
+  <div class="top-title">DOCUMENT SCANNER</div>
+  <div class="top-actions">
+    <button id="sourceBtn" title="Sumber">＋</button>
+    <button id="panelBtn" title="Pengaturan">☰</button>
+  </div>
+</div>
+<div class="viewer">
   <div class="stage">
     <video id="video" playsinline autoplay></video>
     <img id="preview" alt="preview">
@@ -98,7 +185,7 @@ canvas{display:none}.hidden{display:none!important}
 <script>
 const $=id=>document.getElementById(id);
 const video=$('video'), preview=$('preview'), canvas=$('canvas'), ctx=canvas.getContext('2d');
-let stream=null, facing='environment', sourceBlob=null, sourceUrl=null, currentFilter='original', folderHandle=null, detected=false;
+let stream=null, facing='environment', sourceBlob=null, sourceUrl=null, currentFilter='document', folderHandle=null, detected=false;
 
 function stamp(){let d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
 function autoName(){let ext=$('format').value==='image/png'?'png':$('format').value==='image/webp'?'webp':'jpg';$('fileName').value=`DOKUMEN_${stamp()}.${ext}`}
@@ -119,14 +206,14 @@ $('fileInput').onchange=async e=>{
  const f=e.target.files?.[0]; if(!f)return;
  sourceBlob=f; sourceUrl=URL.createObjectURL(f); preview.src=sourceUrl;
  preview.classList.add('active'); video.classList.remove('active'); $('empty').style.display='none';
- autoName(); $('saveBtn').disabled=false; $('saveStatus').textContent=`Foto dipilih: ${f.name}`;
+ autoName(); $('saveBtn').disabled=false; $('saveStatus').textContent=`Foto dipilih: ${f.name}`; detectAndAutoCrop();
 };
 
 $('captureBtn').onclick=()=>{
  if(!video.classList.contains('active'))return;
  canvas.width=video.videoWidth;canvas.height=video.videoHeight;
  ctx.drawImage(video,0,0);
- canvas.toBlob(b=>{sourceBlob=b; if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=URL.createObjectURL(b);preview.src=sourceUrl;preview.classList.add('active');video.classList.remove('active');$('saveBtn').disabled=false;autoName();$('saveStatus').textContent='Foto berhasil diambil.'},'image/jpeg',.95);
+ canvas.toBlob(b=>{sourceBlob=b; if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=URL.createObjectURL(b);preview.src=sourceUrl;preview.classList.add('active');video.classList.remove('active');$('saveBtn').disabled=false;autoName();$('saveStatus').textContent='Foto berhasil diambil.'; $('detectBtn').click()},'image/jpeg',.95);
 };
 $('retakeBtn').onclick=()=>{if(stream)startCamera();preview.classList.remove('active');$('saveBtn').disabled=true;$('detect').style.display='none';$('quad').style.display='none'};
 
@@ -150,15 +237,74 @@ document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=async()=>{
  if(sourceBlob){let img=await getBitmap();drawFiltered(img);preview.src=canvas.toDataURL('image/jpeg',.94);img.close?.()}
 });
 
-$('detectBtn').onclick=async()=>{
- if(!sourceBlob)return alert('Ambil atau pilih foto terlebih dahulu.');
- // Lightweight visual approximation: detect whether image is landscape/portrait and show a safe document frame.
- const img=await getBitmap(); detected=true;
+async function detectAndAutoCrop(){
+ if(!sourceBlob)return false;
+ const img=await getBitmap();
+ const maxSide=1200, scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+ const w=Math.max(1,Math.round(img.width*scale)), h=Math.max(1,Math.round(img.height*scale));
+ const work=document.createElement('canvas'); work.width=w;work.height=h;
+ const c=work.getContext('2d',{willReadFrequently:true}); c.drawImage(img,0,0,w,h);
+ const d=c.getImageData(0,0,w,h).data;
+
+ // Estimate document bounds from edge/brightness contrast.
+ // Multiple margins are tested; choose the rectangle with strongest edge evidence.
+ const gray=new Float32Array(w*h);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const i=(y*w+x)*4; gray[y*w+x]=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+ }
+ const score=(x0,y0,x1,y1)=>{
+   let sum=0,n=0;
+   for(let x=x0;x<=x1;x+=Math.max(1,Math.floor(w/180))){
+     if(y0>1){let a=gray[(y0-1)*w+x],b=gray[y0*w+x];sum+=Math.abs(a-b);n++}
+     if(y1<h-1){let a=gray[y1*w+x],b=gray[(y1+1)*w+x];sum+=Math.abs(a-b);n++}
+   }
+   for(let y=y0;y<=y1;y+=Math.max(1,Math.floor(h/180))){
+     if(x0>1){let a=gray[y*w+x0-1],b=gray[y*w+x0];sum+=Math.abs(a-b);n++}
+     if(x1<w-1){let a=gray[y*w+x1],b=gray[y*w+x1+1];sum+=Math.abs(a-b);n++}
+   }
+   return n?sum/n:0;
+ };
+
+ let best={score:-1,x0:.04,y0:.04,x1:.96,y1:.96};
+ const mx=Math.max(8,Math.floor(w*.08)), my=Math.max(8,Math.floor(h*.08));
+ for(let L=0;L<=5;L++)for(let R=0;R<=5;R++)for(let T=0;T<=5;T++)for(let B=0;B<=5;B++){
+   const x0=Math.round(L*mx/5), x1=w-1-Math.round(R*mx/5);
+   const y0=Math.round(T*my/5), y1=h-1-Math.round(B*my/5);
+   if(x1-x0<w*.45||y1-y0<h*.45)continue;
+   const sc=score(x0,y0,x1,y1);
+   if(sc>best.score)best={score:sc,x0:x0/w,y0:y0/h,x1:x1/w,y1:y1/h};
+ }
+
+ // Conservative auto-crop: only crop when there is meaningful edge evidence.
+ // Keeps a safety margin so normal photos are not aggressively clipped.
+ const confidence=Math.min(1,Math.max(0,(best.score-5)/35));
+ const margin=confidence>.28 ? .012 : .035;
+ let x0=Math.max(0,best.x0-margin),y0=Math.max(0,best.y0-margin);
+ let x1=Math.min(1,best.x1+margin),y1=Math.min(1,best.y1+margin);
+
+ // If evidence is weak, use a document-safe crop rather than pretending certainty.
+ if(confidence<.12){x0=.035;y0=.035;x1=.965;y1=.965}
+
+ const sx=Math.round(x0*img.width),sy=Math.round(y0*img.height);
+ const sw=Math.max(1,Math.round((x1-x0)*img.width)),sh=Math.max(1,Math.round((y1-y0)*img.height));
+ canvas.width=sw;canvas.height=sh;ctx.filter='none';ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+ const cropped=await new Promise(r=>canvas.toBlob(r,'image/jpeg',.96));
+ sourceBlob=cropped;
+ if(sourceUrl)URL.revokeObjectURL(sourceUrl);
+ sourceUrl=URL.createObjectURL(cropped);
+ preview.src=sourceUrl;preview.classList.add('active');video.classList.remove('active');
+ detected=true;
  $('quad').style.display='block';$('detect').style.display='block';
- $('detectStatus').textContent=`✓ Area objek ditandai. Resolusi sumber: ${img.width} × ${img.height}px.`;
+ $('detectStatus').textContent=`✓ Auto-detect & auto-crop selesai • ${sw} × ${sh}px`;
  img.close?.();
+ return true;
+}
+
+$('detectBtn').onclick=async()=>{
+ await detectAndAutoCrop();
 };
-$('resetDetect').onclick=()=>{detected=false;$('quad').style.display='none';$('detect').style.display='none';$('detectStatus').textContent='Deteksi visual dasar.'};
+
+$('resetDetect').onclick=()=>{detected=false;$('quad').style.display='none';$('detect').style.display='none';$('detectStatus').textContent='Deteksi dokumen aktif.'};
 
 $('folderBtn').onclick=async()=>{
  if(!window.showDirectoryPicker){alert('Browser ini belum mendukung pemilihan folder langsung. Gunakan Chrome/Edge versi terbaru di perangkat yang mendukung File System Access API.');return}
@@ -179,11 +325,11 @@ async function save(){
   try{
    const fh=await folderHandle.getFileHandle(name,{create:true});
    const w=await fh.createWritable();await w.write(blob);await w.close();
-   $('saveStatus').textContent=`✓ Tersimpan: ${folderHandle.name}/${name}`;return;
+   $('saveStatus').textContent=`✓ Tersimpan: ${folderHandle.name}/${name}`;$('side').classList.remove('open');return;
   }catch(e){$('saveStatus').textContent='Folder langsung gagal; dialihkan ke download.'}
  }
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
- $('saveStatus').textContent=`✓ File dibuat: ${name}`;
+ $('saveStatus').textContent=`✓ File dibuat: ${name}`;$('side').classList.remove('open');
 }
 $('saveBtn').onclick=save;
 
@@ -198,6 +344,25 @@ $('flashBtn').onclick=async()=>{
 };
 
 window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());if(sourceUrl)URL.revokeObjectURL(sourceUrl)});
+
+// Mobile-first controls
+$('panelBtn').onclick=()=>{$('side').classList.toggle('open')};
+$('sourceBtn').onclick=()=>{
+ const useGallery=confirm('Pilih OK untuk membuka Galeri.\nPilih Batal untuk membuka Kamera.');
+ if(useGallery)$('fileInput').click();else startCamera();
+};
+
+// Document Scanner defaults
+$('format').value='image/jpeg';
+$('fileName').value=`DOKUMEN_${stamp()}.jpg`;
+document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('selected',x.dataset.filter==='document'));
+
+async function autoDetectOnLoad(){
+  // Detection is considered enabled by default; actual corner detection runs after an image exists.
+  detected=false;
+  $('detectStatus').textContent='Deteksi dokumen AKTIF. Ambil foto atau pilih dari Galeri untuk mendeteksi area dokumen.';
+}
+autoDetectOnLoad();
 </script>
 </body>
 </html>
