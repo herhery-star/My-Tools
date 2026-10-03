@@ -256,6 +256,7 @@ button.action{
   background:#f1f5f9;font-weight:800;cursor:pointer
 }
 .master-code-spbu-btn.active{background:#172033;color:#fff}
+.price-spbu-btn.active{background:#172033;color:#fff}
 .master-code-pangkajene{border-top:3px solid var(--green)}
 .master-code-labakkang{border-top:3px solid var(--blue)}
 .master-code-spbu-label{padding:8px;font-weight:800;font-size:12px}
@@ -360,7 +361,7 @@ try {
   });
   state.formListening = true;
 
-  onValue(ref(db,"master/harga"), snap => {
+  onValue(ref(db,"master/hargaBySpbu"), snap => {
     if (!snap.exists()) return;
     const value = snap.val();
     if (typeof state.onPricesRemote === "function") state.onPricesRemote(value);
@@ -401,7 +402,7 @@ try {
       return false;
     }
     try {
-      await set(ref(db,"master/harga"), payload);
+      await set(ref(db,"master/hargaBySpbu"), payload);
       return true;
     } catch(err) {
       console.error("Firebase Harga write error:",err);
@@ -470,7 +471,14 @@ try {
 <section id="prices" class="panel">
   <div class="card">
     <div class="title">MASTER HARGA BBM</div>
-    <div class="subtitle">Harga diinput dalam satuan 8 KL. Harga tetap dapat diedit dari perangkat. Sumber data bersama: Firebase Realtime Database.</div>
+    <div class="subtitle">Setiap SPBU memiliki master harga dan riwayat harga sendiri. Harga diinput dalam satuan 8 KL. Sumber data bersama: Firebase Realtime Database.</div>
+    <div class="master-code-spbu-tabs">
+      <button type="button" class="master-code-spbu-btn price-spbu-btn active"
+              onclick="setActivePriceSpbu('pangkajene',this)">PANGKAJENE</button>
+      <button type="button" class="master-code-spbu-btn price-spbu-btn"
+              onclick="setActivePriceSpbu('labakkang',this)">LABAKKANG</button>
+    </div>
+    <div id="priceSpbuLabel" style="padding:0 8px 4px;font-weight:800;color:var(--muted);font-size:12px;"></div>
     <div class="price-form">
       <div><label>TANGGAL BERLAKU</label><input id="priceDate" type="date"></div>
       <div><label>PRODUK</label><select id="priceProduct"></select></div>
@@ -521,12 +529,20 @@ function firebaseApplyForm(remote){
 }
 
 function firebaseApplyPrices(remote){
-  if(!Array.isArray(remote)) return;
+  if(!remote || typeof remote!=="object") return;
   FIREBASE_RT.applyingRemote=true;
   try{
-    prices=remote.map(x=>({date:String(x.date||""),product:String(x.product||""),price:Number(x.price||0)}))
-      .filter(x=>x.date&&x.product&&x.price>0);
-    localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+    const normalized={pangkajene:[],labakkang:[]};
+    SPBUS.forEach(s=>{
+      const raw=Array.isArray(remote[s.id]) ? remote[s.id] : [];
+      normalized[s.id]=raw.map(x=>({
+        date:String(x.date||""),
+        product:String(x.product||""),
+        price:Number(x.price||0)
+      })).filter(x=>x.date&&x.product&&x.price>0);
+    });
+    pricesBySpbu=normalized;
+    localStorage.setItem("bbmPrices8KLBySpbu",JSON.stringify(pricesBySpbu));
     renderPrices(); renderForm(); renderReport();
   }finally{ FIREBASE_RT.applyingRemote=false; }
 }
@@ -547,7 +563,7 @@ function firebasePublishForm(){
 }
 function firebasePublishPrices(){
   if(!firebaseIsReady() || FIREBASE_RT.applyingRemote) return;
-  window.ESTIMASI_FIREBASE.publishPrices(prices);
+  window.ESTIMASI_FIREBASE.publishPrices(pricesBySpbu);
 }
 
 function updateFirebaseStatus(){
@@ -567,27 +583,42 @@ let SPBUS=[
  {id:"labakkang",name:"SPBU-74.906.07 LABAKKANG",color:"blue",extra:["TF Dex PT Citatah (hari ini)"]}
 ];
 
-let prices=JSON.parse(localStorage.getItem("bbmPrices8KL")||"null");
-if(!prices){
+const DEFAULT_PRICES_BY_SPBU = {
+  pangkajene: [
+    {date:"2026-09-01",product:"Pertalite",price:80000000},
+    {date:"2026-09-01",product:"Biosolar",price:54400000},
+    {date:"2026-09-01",product:"Pertamax",price:98400000},
+    {date:"2026-09-01",product:"Pertamax Turbo",price:104800000},
+    {date:"2026-09-01",product:"Dexlite",price:110800000}
+  ],
+  labakkang: [
+    {date:"2026-09-01",product:"Pertalite",price:80000000},
+    {date:"2026-09-01",product:"Biosolar",price:54400000},
+    {date:"2026-09-01",product:"Pertamax",price:98400000},
+    {date:"2026-09-01",product:"Pertamax Turbo",price:104800000},
+    {date:"2026-09-01",product:"Dexlite",price:110800000}
+  ]
+};
+
+let pricesBySpbu=JSON.parse(localStorage.getItem("bbmPrices8KLBySpbu")||"null");
+if(!pricesBySpbu || typeof pricesBySpbu!=="object"){
+  const legacy=JSON.parse(localStorage.getItem("bbmPrices8KL")||"null");
   const old8=JSON.parse(localStorage.getItem("bbmPricesKL")||"null");
   const oldLiter=JSON.parse(localStorage.getItem("bbmPrices")||"null");
-  if(old8){
-    // Migrasi prototype sebelumnya: harga/KL -> harga/8 KL
-    prices=old8.map(x=>({...x,price:Number(x.price||0)*8}));
-  }else if(oldLiter){
-    // Migrasi data harga/liter lama -> harga/8 KL
-    prices=oldLiter.map(x=>({...x,price:Number(x.price||0)*8000}));
-  }else{
-    prices=[
-      {date:"2026-09-01",product:"Pertalite",price:80000000},
-      {date:"2026-09-01",product:"Biosolar",price:54400000},
-      {date:"2026-09-01",product:"Pertamax",price:98400000},
-      {date:"2026-09-01",product:"Pertamax Turbo",price:104800000},
-      {date:"2026-09-01",product:"Dexlite",price:110800000}
-    ];
-  }
-  localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+  let migrated=[];
+  if(Array.isArray(legacy)) migrated=legacy;
+  else if(Array.isArray(old8)) migrated=old8.map(x=>({...x,price:Number(x.price||0)*8}));
+  else if(Array.isArray(oldLiter)) migrated=oldLiter.map(x=>({...x,price:Number(x.price||0)*8000}));
+  pricesBySpbu={
+    pangkajene: migrated.length ? JSON.parse(JSON.stringify(migrated)) : JSON.parse(JSON.stringify(DEFAULT_PRICES_BY_SPBU.pangkajene)),
+    labakkang: migrated.length ? JSON.parse(JSON.stringify(migrated)) : JSON.parse(JSON.stringify(DEFAULT_PRICES_BY_SPBU.labakkang))
+  };
+  localStorage.setItem("bbmPrices8KLBySpbu",JSON.stringify(pricesBySpbu));
+}else{
+  pricesBySpbu.pangkajene=Array.isArray(pricesBySpbu.pangkajene)?pricesBySpbu.pangkajene:[];
+  pricesBySpbu.labakkang=Array.isArray(pricesBySpbu.labakkang)?pricesBySpbu.labakkang:[];
 }
+let activePriceSpbu="pangkajene";
 
 let data=JSON.parse(localStorage.getItem("bbmForm")||"null")||makeBlank();
 
@@ -692,16 +723,17 @@ function resetSelectedOptionForSpbu(id){
 
 function fmt(n){return new Intl.NumberFormat("id-ID",{maximumFractionDigits:0}).format(Number(n)||0)}
 function parseDate(v){return v?new Date(v+"T00:00:00"):null}
-function effectivePrice(product,date){
- const d=parseDate(date);
- if(!d)return 0;
- const list=prices.filter(x=>x.product===product&&parseDate(x.date)<=d)
-                  .sort((a,b)=>parseDate(b.date)-parseDate(a.date));
- return list.length?Number(list[0].price):0;
+function effectivePrice(spbuId,product,date){
+  const d=parseDate(date);
+  if(!d)return 0;
+  const list=(pricesBySpbu[spbuId]||[])
+    .filter(x=>x.product===product&&parseDate(x.date)<=d)
+    .sort((a,b)=>parseDate(b.date)-parseDate(a.date));
+  return list.length?Number(list[0].price):0;
 }
 function save(){
   localStorage.setItem("bbmForm",JSON.stringify(data));
-  localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+  localStorage.setItem("bbmPrices8KLBySpbu",JSON.stringify(pricesBySpbu));
   if(!FIREBASE_RT.applyingRemote) firebasePublishForm();
 }
 function showTab(id,btn){
@@ -834,7 +866,7 @@ async function loadMasterFromGas(){
         .filter(x=>x.date && x.product && x.price>0);
       if(remotePrices.length){
         prices=remotePrices;
-        localStorage.setItem("bbmPrices8KL",JSON.stringify(prices));
+        localStorage.setItem("bbmPrices8KLBySpbu",JSON.stringify(pricesBySpbu));
       }
     }
 
@@ -875,6 +907,7 @@ function init(){
   sel.innerHTML=PRODUCTS.map(p=>`<option>${p}</option>`).join("");
   renderForm();
   renderPrices();
+  setActivePriceSpbu("pangkajene",document.querySelector(".price-spbu-btn"));
   renderMasterCodes("pangkajene");
   renderReport();
   startFirebaseBridge();
@@ -900,16 +933,16 @@ function calc(s){
  const totalSaldo=s.saldo+jumlah;
  return {jumlah,totalSaldo};
 }
-function optionCalc(s,oi){
- let total=0,totalQty=0,rows=[];
- PRODUCTS.forEach(p=>{
-   const q=num(s.qty[oi][p]||0);
-   if(q>0){
-     const val=(q/8)*effectivePrice(p,data.date);
-     total+=val;totalQty+=q;rows.push({p,q,val});
-   }
- });
- return {total,totalQty,rows,balance:calc(s).totalSaldo-total};
+function optionCalc(s,oi,spbuId){
+  let total=0,totalQty=0,rows=[];
+  PRODUCTS.forEach(p=>{
+    const q=num(s.qty[oi][p]||0);
+    if(q>0){
+      const val=(q/8)*effectivePrice(spbuId,p,data.date);
+      total+=val; totalQty+=q; rows.push({p,q,val});
+    }
+  });
+  return {total,totalQty,rows,balance:calc(s).totalSaldo-total};
 }
 function renderForm(){
  const root=document.getElementById("formSpbus");
@@ -962,11 +995,11 @@ function renderForm(){
         ${[0,1,2].map(oi=>`<td><div class="inline-editor"><select class="qty-select" onchange="setQty('${s.id}',${oi},'${p}',this.value)">
           <option value="">—</option>
           ${(p==="Dexlite"?[4,8,16,32]:[8,16,24]).map(q=>`<option value="${q}" ${Number(x.qty[oi][p]||0)===q?'selected':''}>${q}</option>`).join("")}
-        </select> KL <span class="result-line">- Rp. ${fmt((num(x.qty[oi][p]||0)/8)*effectivePrice(p,data.date))}</span></div></td>`).join("")}
+        </select> KL <span class="result-line">- Rp. ${fmt((num(x.qty[oi][p]||0)/8)*effectivePrice(s.id,p,data.date))}</span></div></td>`).join("")}
        </tr>`).join("")}
-       <tr class="total-row"><td>TOT KEBUTUHAN PEMBELIAN</td>${[0,1,2].map(oi=>`<td>${fmt(optionCalc(x,oi).total)}</td>`).join("")}</tr>
+       <tr class="total-row"><td>TOT KEBUTUHAN PEMBELIAN</td>${[0,1,2].map(oi=>`<td>${fmt(optionCalc(x,oi,s.id).total)}</td>`).join("")}</tr>
        <tr class="balance-row"><td>LEBIH/KURANG SALDO</td>${[0,1,2].map(oi=>{
-          const b=optionCalc(x,oi).balance;
+          const b=optionCalc(x,oi,s.id).balance;
           return `<td class="${b<0?'balance-negative':'balance-positive'}">${fmt(b)}</td>`;
        }).join("")}</tr>
       </tbody>
@@ -986,7 +1019,7 @@ function renderReport(){
  let grand=0;
  SPBUS.forEach(s=>{
    const x=data.spbus[s.id], c=calc(x);
-   let opts=[0,1,2].map(oi=>({oi,...optionCalc(x,oi)})).filter(o=>o.rows.length>0);
+   let opts=[0,1,2].map(oi=>({oi,...optionCalc(x,oi,s.id)})).filter(o=>o.rows.length>0);
    opts.forEach(o=>grand+=o.total);
    html+=`<div class="report-spbu ${s.color}">
     <h2>${s.name}</h2>
@@ -1026,25 +1059,51 @@ function renderReport(){
  </div>`;
  document.getElementById("reportContent").innerHTML=html;
 }
+function setActivePriceSpbu(id,button){
+  if(!pricesBySpbu[id]) pricesBySpbu[id]=[];
+  activePriceSpbu=id;
+  document.querySelectorAll(".price-spbu-btn").forEach(b=>b.classList.remove("active"));
+  if(button) button.classList.add("active");
+  const label=document.getElementById("priceSpbuLabel");
+  const sp=SPBUS.find(x=>x.id===id);
+  if(label) label.textContent=sp ? sp.name : id;
+  renderPrices();
+}
+
 function addPrice(){
- const date=document.getElementById("priceDate").value;
- const product=document.getElementById("priceProduct").value;
- const price=num(document.getElementById("priceValue").value);
- if(!date||!product||price<=0){alert("Lengkapi tanggal, produk, dan harga.");return}
- prices.push({date,product,price});save();
+  const date=document.getElementById("priceDate").value;
+  const product=document.getElementById("priceProduct").value;
+  const price=num(document.getElementById("priceValue").value);
+  if(!date||!product||price<=0){alert("Lengkapi tanggal, produk, dan harga.");return}
+  if(!pricesBySpbu[activePriceSpbu]) pricesBySpbu[activePriceSpbu]=[];
+  pricesBySpbu[activePriceSpbu].push({date,product,price});
+  save();
   if(!FIREBASE_RT.applyingRemote) firebasePublishPrices();
- document.getElementById("priceValue").value="";
- renderPrices();renderForm();renderReport();
+  document.getElementById("priceValue").value="";
+  renderPrices();renderForm();renderReport();
 }
+
 function renderPrices(){
- const rows=[...prices].sort((a,b)=>parseDate(b.date)-parseDate(a.date));
- document.getElementById("priceRows").innerHTML=rows.length?rows.map((x,i)=>`<tr>
- <td>${parseDate(x.date).toLocaleDateString("id-ID")}</td>
- <td>${x.product}</td><td>${fmt(x.price)}</td>
- <td class="delete" onclick="deletePrice(${prices.indexOf(x)})">Hapus</td></tr>`).join("")
- :`<tr><td colspan="4" class="empty">Belum ada data harga.</td></tr>`;
+  const list=pricesBySpbu[activePriceSpbu]||[];
+  const rows=[...list].sort((a,b)=>parseDate(b.date)-parseDate(a.date));
+  document.getElementById("priceRows").innerHTML=rows.length?rows.map(x=>`
+    <tr>
+      <td>${parseDate(x.date).toLocaleDateString("id-ID")}</td>
+      <td>${x.product}</td><td>${fmt(x.price)}</td>
+      <td class="delete" onclick="deletePrice('${activePriceSpbu}',${pricesBySpbu[activePriceSpbu].indexOf(x)})">Hapus</td>
+    </tr>`).join("")
+    :`<tr><td colspan="4" class="empty">Belum ada data harga untuk SPBU ini.</td></tr>`;
 }
-function deletePrice(i){if(confirm("Hapus data harga ini?")){prices.splice(i,1);save();renderPrices();renderForm();renderReport()}}
+
+function deletePrice(spbuId,i){
+  if(confirm("Hapus data harga ini?")){
+    pricesBySpbu[spbuId].splice(i,1);
+    save();
+    if(!FIREBASE_RT.applyingRemote) firebasePublishPrices();
+    renderPrices();renderForm();renderReport();
+  }
+}
+
 let displayScale = Number(localStorage.getItem("bbmDisplayScale") || 100);
 displayScale = Math.min(125, Math.max(75, displayScale));
 
