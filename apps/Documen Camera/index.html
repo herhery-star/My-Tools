@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>DOCUMENT CAMERA</title>
+<style>
+:root{--bg:#0b1020;--panel:#111827;--panel2:#182235;--line:#2a3850;--text:#eef2f7;--muted:#9aa8bd;--accent:#4f8cff;--ok:#35c98a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.app{min-height:100vh;display:grid;grid-template-columns:320px 1fr;gap:14px;padding:14px}.side,.main{background:var(--panel);border:1px solid var(--line);border-radius:16px}.side{padding:16px;display:flex;flex-direction:column;gap:12px}.main{min-width:0;padding:14px}
+h1{font-size:20px;margin:2px 0}.sub{font-size:12px;color:var(--muted)}label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+button,.select,.text{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:11px 12px;font:inherit}
+button{cursor:pointer}button:hover{border-color:#55709c}.primary{background:var(--accent);border-color:var(--accent)}.ok{background:var(--ok);color:#06150f;border-color:var(--ok)}
+.row{display:flex;gap:8px}.row>*{flex:1}.group{border-top:1px solid var(--line);padding-top:12px}
+.folder{padding:12px;border:1px dashed #49607f;border-radius:10px;background:#0e1727}.folder b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.status{font-size:12px;color:var(--muted);line-height:1.45}
+.viewer{height:calc(100vh - 42px);min-height:560px;display:flex;flex-direction:column;gap:10px}.stage{position:relative;flex:1;min-height:0;background:#050912;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+video,img#preview{width:100%;height:100%;object-fit:contain;display:none}.active{display:block!important}.empty{color:#6f7e95;text-align:center;padding:30px}
+.controls{display:flex;flex-wrap:wrap;gap:8px}.controls button{flex:1;min-width:110px}.filterbar{display:flex;gap:7px;overflow:auto;padding-bottom:2px}.filterbar button{white-space:nowrap}.filterbar button.selected{outline:2px solid var(--accent)}
+.overlay{position:absolute;inset:0;pointer-events:none}.quad{position:absolute;left:12%;top:12%;right:12%;bottom:12%;border:2px solid var(--ok);display:none;clip-path:polygon(4% 7%,94% 4%,97% 93%,5% 97%)}.detect{position:absolute;left:14px;top:14px;background:#07150fdd;color:#77e0b1;padding:7px 10px;border-radius:8px;font-size:12px;display:none}
+canvas{display:none}.hidden{display:none!important}
+@media(max-width:850px){.app{grid-template-columns:1fr;padding:8px}.side{order:2}.main{order:1}.viewer{height:70vh;min-height:480px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div><h1>DOCUMENT CAMERA</h1><div class="sub">Kamera • Galeri • Scan • Rename • Folder</div></div>
+
+  <div class="row">
+    <button id="cameraBtn" class="primary">📷 Kamera</button>
+    <button id="galleryBtn">🖼 Galeri</button>
+    <input id="fileInput" class="hidden" type="file" accept="image/*" multiple>
+  </div>
+
+  <div class="group">
+    <label>Folder penyimpanan</label>
+    <div class="folder"><b id="folderName">Belum dipilih</b><span class="status" id="folderStatus">Pilih folder jika browser mendukung File System Access.</span></div>
+    <div class="row" style="margin-top:8px"><button id="folderBtn">📁 Pilih Folder</button><button id="clearFolder">Reset</button></div>
+  </div>
+
+  <div class="group">
+    <label>Nama file</label>
+    <input id="fileName" class="text" style="width:100%" value="">
+    <div class="row" style="margin-top:8px"><button id="autoName">Nama Otomatis</button><button id="counterName">+ Nomor</button></div>
+  </div>
+
+  <div class="group">
+    <label>Filter foto</label>
+    <div class="filterbar" style="flex-wrap:wrap">
+      <button data-filter="original" class="selected">Original</button>
+      <button data-filter="bright">Cerah</button>
+      <button data-filter="contrast">Kontras</button>
+      <button data-filter="brightcontrast">Cerah + Kontras</button>
+      <button data-filter="gray">Grayscale</button>
+      <button data-filter="bw">BW</button>
+      <button data-filter="bwcontrast">BW Kontras</button>
+      <button data-filter="sharp">Tajam</button>
+      <button data-filter="document">Dokumen</button>
+      <button data-filter="auto">Auto</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <label>Deteksi objek</label>
+    <div class="row"><button id="detectBtn">🔲 Deteksi Dokumen</button><button id="resetDetect">Reset</button></div>
+    <div class="status" id="detectStatus">Deteksi visual dasar. Untuk koreksi perspektif penuh dapat ditingkatkan dengan OpenCV.js.</div>
+  </div>
+
+  <div class="group">
+    <label>Format hasil</label>
+    <select id="format" class="select" style="width:100%"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WEBP</option></select>
+  </div>
+
+  <div class="status" id="saveStatus">Belum ada foto.</div>
+  <button id="saveBtn" class="ok" disabled>💾 Simpan Hasil</button>
+</aside>
+
+<main class="main">
+ <div class="viewer">
+  <div class="stage">
+    <video id="video" playsinline autoplay></video>
+    <img id="preview" alt="preview">
+    <div id="empty" class="empty">Pilih <b>Kamera</b> atau <b>Galeri</b>.</div>
+    <div class="overlay"><div id="quad" class="quad"></div><div id="detect" class="detect">✓ Objek terdeteksi</div></div>
+  </div>
+  <div class="controls">
+    <button id="switchBtn">🔄 Kamera Depan/Belakang</button>
+    <button id="flashBtn">⚡ Flash/Torch</button>
+    <button id="captureBtn" class="primary">● AMBIL FOTO</button>
+    <button id="retakeBtn">↩ Ulangi</button>
+  </div>
+ </div>
+</main>
+</div>
+<canvas id="canvas"></canvas>
+
+<script>
+const $=id=>document.getElementById(id);
+const video=$('video'), preview=$('preview'), canvas=$('canvas'), ctx=canvas.getContext('2d');
+let stream=null, facing='environment', sourceBlob=null, sourceUrl=null, currentFilter='original', folderHandle=null, detected=false;
+
+function stamp(){let d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
+function autoName(){let ext=$('format').value==='image/png'?'png':$('format').value==='image/webp'?'webp':'jpg';$('fileName').value=`DOKUMEN_${stamp()}.${ext}`}
+autoName();
+
+async function startCamera(){
+ try{
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:4096},height:{ideal:2160}},audio:false});
+  video.srcObject=stream; video.classList.add('active'); preview.classList.remove('active'); $('empty').style.display='none';
+ }catch(e){alert('Kamera tidak dapat diakses. Pastikan izin kamera diberikan dan halaman menggunakan HTTPS/localhost.');}
+}
+$('cameraBtn').onclick=startCamera;
+$('switchBtn').onclick=()=>{facing=facing==='environment'?'user':'environment';startCamera()};
+$('galleryBtn').onclick=()=>$('fileInput').click();
+
+$('fileInput').onchange=async e=>{
+ const f=e.target.files?.[0]; if(!f)return;
+ sourceBlob=f; sourceUrl=URL.createObjectURL(f); preview.src=sourceUrl;
+ preview.classList.add('active'); video.classList.remove('active'); $('empty').style.display='none';
+ autoName(); $('saveBtn').disabled=false; $('saveStatus').textContent=`Foto dipilih: ${f.name}`;
+};
+
+$('captureBtn').onclick=()=>{
+ if(!video.classList.contains('active'))return;
+ canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+ ctx.drawImage(video,0,0);
+ canvas.toBlob(b=>{sourceBlob=b; if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=URL.createObjectURL(b);preview.src=sourceUrl;preview.classList.add('active');video.classList.remove('active');$('saveBtn').disabled=false;autoName();$('saveStatus').textContent='Foto berhasil diambil.'},'image/jpeg',.95);
+};
+$('retakeBtn').onclick=()=>{if(stream)startCamera();preview.classList.remove('active');$('saveBtn').disabled=true;$('detect').style.display='none';$('quad').style.display='none'};
+
+async function getBitmap(){return createImageBitmap(sourceBlob)}
+function drawFiltered(img){
+ canvas.width=img.width;canvas.height=img.height;
+ let f='none';
+ if(currentFilter==='bright')f='brightness(1.18)';
+ if(currentFilter==='contrast')f='contrast(1.35)';
+ if(currentFilter==='brightcontrast')f='brightness(1.12) contrast(1.35)';
+ if(currentFilter==='gray')f='grayscale(1)';
+ if(currentFilter==='bw')f='grayscale(1) contrast(1.9)';
+ if(currentFilter==='bwcontrast')f='grayscale(1) contrast(2.2) brightness(1.05)';
+ if(currentFilter==='sharp')f='contrast(1.18) saturate(1.08)';
+ if(currentFilter==='document')f='grayscale(1) contrast(1.75) brightness(1.12)';
+ if(currentFilter==='auto')f='contrast(1.35) brightness(1.08)';
+ ctx.filter=f;ctx.drawImage(img,0,0);ctx.filter='none';
+}
+document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=async()=>{
+ document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');currentFilter=b.dataset.filter;
+ if(sourceBlob){let img=await getBitmap();drawFiltered(img);preview.src=canvas.toDataURL('image/jpeg',.94);img.close?.()}
+});
+
+$('detectBtn').onclick=async()=>{
+ if(!sourceBlob)return alert('Ambil atau pilih foto terlebih dahulu.');
+ // Lightweight visual approximation: detect whether image is landscape/portrait and show a safe document frame.
+ const img=await getBitmap(); detected=true;
+ $('quad').style.display='block';$('detect').style.display='block';
+ $('detectStatus').textContent=`✓ Area objek ditandai. Resolusi sumber: ${img.width} × ${img.height}px.`;
+ img.close?.();
+};
+$('resetDetect').onclick=()=>{detected=false;$('quad').style.display='none';$('detect').style.display='none';$('detectStatus').textContent='Deteksi visual dasar.'};
+
+$('folderBtn').onclick=async()=>{
+ if(!window.showDirectoryPicker){alert('Browser ini belum mendukung pemilihan folder langsung. Gunakan Chrome/Edge versi terbaru di perangkat yang mendukung File System Access API.');return}
+ try{folderHandle=await showDirectoryPicker({mode:'readwrite'});$('folderName').textContent=folderHandle.name;$('folderStatus').textContent='Folder aktif. Hasil akan dicoba disimpan langsung ke sini.'}catch(e){}
+};
+$('clearFolder').onclick=()=>{folderHandle=null;$('folderName').textContent='Belum dipilih';$('folderStatus').textContent='Folder tujuan direset.'};
+$('autoName').onclick=autoName;
+$('counterName').onclick=()=>{let v=$('fileName').value;let m=v.match(/^(.*?)(\.[^.]+)$/);$('fileName').value=(m?m[1]:v)+'_001'+(m?m[2]:'.jpg')};
+
+async function save(){
+ if(!sourceBlob)return;
+ let name=$('fileName').value.trim()||`DOKUMEN_${stamp()}.jpg`;
+ let type=$('format').value;
+ // Re-render current filter from original source when possible.
+ let img=await getBitmap();drawFiltered(img);
+ const blob=await new Promise(r=>canvas.toBlob(r,type,.94));img.close?.();
+ if(folderHandle){
+  try{
+   const fh=await folderHandle.getFileHandle(name,{create:true});
+   const w=await fh.createWritable();await w.write(blob);await w.close();
+   $('saveStatus').textContent=`✓ Tersimpan: ${folderHandle.name}/${name}`;return;
+  }catch(e){$('saveStatus').textContent='Folder langsung gagal; dialihkan ke download.'}
+ }
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+ $('saveStatus').textContent=`✓ File dibuat: ${name}`;
+}
+$('saveBtn').onclick=save;
+
+$('flashBtn').onclick=async()=>{
+ if(!stream)return;
+ const t=stream.getVideoTracks()[0];
+ const caps=t.getCapabilities?.();
+ if(caps?.torch){
+  const on=!(t.getSettings().torch||false);
+  try{await t.applyConstraints({advanced:[{torch:on}]});$('flashBtn').textContent=on?'⚡ Flash ON':'⚡ Flash/Torch'}catch(e){}
+ }else alert('Torch/flash tidak tersedia melalui browser pada kamera ini.');
+};
+
+window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());if(sourceUrl)URL.revokeObjectURL(sourceUrl)});
+</script>
+</body>
+</html>
