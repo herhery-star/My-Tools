@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SuratKu — Pengolah Surat Indonesia</title>
+<style>
+:root{--ink:#172033;--muted:#657086;--line:#dce2ea;--panel:#fff;--bg:#eef1f5;--accent:#2358c5;--accent2:#eaf0ff;--danger:#b42318;--shadow:0 8px 28px rgba(25,35,55,.09)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:7px;padding:7px 10px}
+button:hover{background:#f5f7fb}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.primary:hover{background:#1747a7}
+button:disabled{opacity:.45;cursor:not-allowed}
+.topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 8px #18243a0a}
+.toprow{display:flex;align-items:center;gap:12px;padding:10px 16px;max-width:1600px;margin:auto}
+.brand{font-size:19px;font-weight:800;letter-spacing:-.5px;white-space:nowrap}.brand span{color:var(--accent)}
+.docname{min-width:120px;flex:1;max-width:360px;border:1px solid transparent;border-radius:6px;padding:7px 9px;font-weight:600}.docname:focus{outline:2px solid #c6d5ff;border-color:#9bb5ff}
+.status{font-size:12px;color:var(--muted);white-space:nowrap}
+.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 16px;max-width:1600px;margin:auto;border-top:1px solid #f0f2f6}
+.toolbar select{height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:0 8px;max-width:160px}
+.toolgroup{display:flex;align-items:center;gap:3px;padding-right:8px;margin-right:3px;border-right:1px solid var(--line)}
+.toolbar button{min-width:31px;height:31px;padding:4px 8px}.toolbar .active{background:var(--accent2);border-color:#b8caff;color:#1747a7}
+.workspace{display:grid;grid-template-columns:260px minmax(320px,1fr);gap:18px;max-width:1500px;margin:20px auto;padding:0 18px 50px;align-items:start}
+.sidebar{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:var(--shadow);position:sticky;top:125px}
+.sidebar h2{font-size:14px;margin:0 0 10px}.side-section{padding-bottom:16px;margin-bottom:15px;border-bottom:1px solid #edf0f4}.side-section:last-child{border:0;margin:0;padding:0}
+.collapsible-section{padding-bottom:10px}
+.section-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 10px;text-align:left;font-weight:750;border-radius:8px;background:#f7f8fb}
+.section-toggle-label{display:flex;align-items:center;gap:8px}
+.section-toggle-icon{display:inline-block;width:12px;color:var(--accent);transition:transform .15s ease}
+.section-toggle[aria-expanded="true"] .section-toggle-icon{transform:rotate(90deg)}
+.section-toggle-hint{font-size:11px;font-weight:500;color:var(--muted)}
+#myTemplatesContent{padding-top:9px}
+#myTemplatesContent[hidden]{display:none}
+.sidebar label{display:block;font-size:12px;color:var(--muted);margin:9px 0 4px}
+.sidebar input[type=text],.sidebar input[type=number],.sidebar select{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px;background:white}
+.sidebar .full{width:100%;margin-top:7px}
+.help{font-size:12px;color:var(--muted);line-height:1.5}
+.template-list{display:grid;gap:7px}.template-list button{text-align:left;padding:9px}.template-list button strong{display:block;font-size:13px}.template-list button span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.date-settings{background:#f8faff;border:1px solid #e0e8fb;border-radius:9px;padding:10px;margin-top:8px}.date-settings .help{margin:6px 0 0}.date-settings label{margin-top:8px}.date-settings select,.date-settings input{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px;background:#fff}
+.custom-template-card{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}
+.custom-template-card .template-title{font-weight:700;font-size:13px;overflow-wrap:anywhere}
+.custom-template-card .template-meta{font-size:11px;color:var(--muted);margin:3px 0 7px}
+.custom-template-card .template-buttons{display:flex;gap:4px;flex-wrap:wrap}
+.custom-template-card .template-buttons button{font-size:11px;padding:5px 7px}
+.custom-template-card .template-buttons .use-template{background:var(--accent2);border-color:#c6d5ff}
+.template-empty{font-size:12px;color:var(--muted);padding:8px;border:1px dashed var(--line);border-radius:8px}
+.canvas-area{min-width:0}.canvas-head{display:flex;justify-content:space-between;align-items:center;margin:0 auto 10px;max-width:210mm;color:var(--muted);font-size:12px;gap:12px}
+.paper-wrap{overflow:auto;padding:4px 5px 30px}
+.paper{width:210mm;min-height:297mm;margin:0 auto 22px;background:#fff;box-shadow:var(--shadow);padding:25mm 25mm 23mm;position:relative;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12pt;line-height:1.5;outline:none}
+.paper[contenteditable=true]:focus{box-shadow:0 0 0 2px #b9ccff,var(--shadow)}
+.paper p{margin:0 0 9pt}.paper h1,.paper h2,.paper h3{line-height:1.25}.paper table{border-collapse:collapse;width:100%;margin:8pt 0}.paper td,.paper th{border:1px solid #555;padding:5px 7px;vertical-align:top}.paper img{max-width:100%;height:auto}.paper ul,.paper ol{padding-left:25px}
+.letterhead{display:flex;align-items:center;gap:14px;border-bottom:3px double #111;padding-bottom:10px;margin-bottom:22px;min-height:70px}
+.letterhead .logo{width:76px;height:76px;object-fit:contain;flex:0 0 auto}
+.letterhead .org{flex:1;text-align:center}.letterhead .org-name{font-size:16pt;font-weight:bold;text-transform:uppercase;letter-spacing:.3px}.letterhead .org-details{font-size:9.5pt;line-height:1.35;margin-top:3px}
+.letterhead.no-logo .org{text-align:center}
+.doc-footer-note{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
+#logoInput{display:none}
+.toast{position:fixed;right:20px;bottom:20px;z-index:50;background:#172033;color:white;padding:11px 15px;border-radius:9px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}
+.modal-backdrop{position:fixed;inset:0;background:#10182888;display:none;align-items:center;justify-content:center;z-index:40;padding:20px}.modal-backdrop.show{display:flex}.modal{background:white;border-radius:12px;max-width:520px;width:100%;padding:20px;box-shadow:var(--shadow)}.modal h2{margin:0 0 8px;font-size:18px}.modal p{color:var(--muted);font-size:13px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+@media(max-width:950px){.workspace{grid-template-columns:1fr}.sidebar{position:static;order:2}.canvas-area{order:1}.toprow{flex-wrap:wrap}.docname{order:3;max-width:none;flex-basis:100%}.status{margin-left:auto}.paper-wrap{padding-left:0;padding-right:0}.paper{transform-origin:top center}}
+@media(max-width:600px){.toprow{padding:8px}.toolbar{padding:8px}.workspace{padding:0 8px 30px;margin-top:10px}.actions button{padding:6px}.paper{width:100%;min-height:unset;padding:24px 22px;font-size:11pt}.canvas-head{padding:0 5px}.status{display:none}}
+@page{size:A4;margin:0}
+@media print{
+ body{background:white!important}.topbar,.sidebar,.canvas-head,.doc-footer-note,.toast,.modal-backdrop{display:none!important}
+ .workspace{display:block;margin:0;padding:0;max-width:none}.canvas-area,.paper-wrap{padding:0;margin:0;overflow:visible}
+ .paper{width:auto;min-height:0;margin:0;box-shadow:none;padding:25mm 25mm 23mm;outline:none;overflow:visible;font-size:12pt}
+ .paper[contenteditable=true]:focus{box-shadow:none}
+ .paper table,.paper img{break-inside:avoid}
+ .paper h1,.paper h2,.paper h3{break-after:avoid}
+ a{color:inherit;text-decoration:none}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="toprow">
+    <div class="brand">Surat<span>Ku</span></div>
+    <input class="docname" id="docName" value="Surat Baru" aria-label="Nama dokumen" title="Nama dokumen">
+    <div class="status" id="saveStatus" aria-live="polite">Siap</div>
+    <div class="actions">
+      <button id="newBtn" title="Buat dokumen baru">＋ Baru</button>
+      <button id="openBtn" title="Buka file HTML SuratKu">Buka file</button>
+      <button id="saveBtn" title="Unduh dokumen untuk dibuka dan diedit kembali">↓ Simpan HTML</button>
+      <button id="printBtn" class="primary" title="Buka dialog cetak untuk menyimpan surat sebagai PDF">↓ Simpan PDF</button>
+    </div>
+  </div>
+  <div class="toolbar" role="toolbar" aria-label="Pemformatan teks">
+    <div class="toolgroup">
+      <select id="fontFamily" aria-label="Jenis huruf" title="Jenis huruf">
+        <option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option><option value="Calibri">Calibri</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option>
+      </select>
+      <select id="fontSize" aria-label="Ukuran huruf" title="Ukuran huruf">
+        <option value="1">8 pt</option>
+        <option value="2">9 pt</option>
+        <option value="3">10 pt</option>
+        <option value="4">11 pt</option>
+        <option value="5" selected>12 pt</option>
+        <option value="6">13 pt</option>
+        <option value="7">14 pt</option>
+        <option value="8">15 pt</option>
+        <option value="9">16 pt</option>
+        <option value="10">17 pt</option>
+        <option value="11">18 pt</option>
+        <option value="12">19 pt</option>
+        <option value="13">20 pt</option>
+        <option value="14">21 pt</option>
+        <option value="15">22 pt</option>
+        <option value="16">23 pt</option>
+        <option value="17">24 pt</option>
+        <option value="18">25 pt</option>
+        <option value="19">26 pt</option>
+        <option value="20">27 pt</option>
+        <option value="21">28 pt</option>
+        <option value="22">29 pt</option>
+        <option value="23">30 pt</option>
+        <option value="24">31 pt</option>
+        <option value="25">32 pt</option>
+        <option value="26">33 pt</option>
+        <option value="27">34 pt</option>
+        <option value="28">35 pt</option>
+        <option value="29">36 pt</option>
+        <option value="30">37 pt</option>
+        <option value="31">38 pt</option>
+        <option value="32">39 pt</option>
+        <option value="33">40 pt</option>
+        <option value="34">41 pt</option>
+        <option value="35">42 pt</option>
+        <option value="36">43 pt</option>
+        <option value="37">44 pt</option>
+        <option value="38">45 pt</option>
+        <option value="39">46 pt</option>
+        <option value="40">47 pt</option>
+        <option value="41">48 pt</option>
+        <option value="42">49 pt</option>
+        <option value="43">50 pt</option>
+        <option value="44">51 pt</option>
+        <option value="45">52 pt</option>
+        <option value="46">53 pt</option>
+        <option value="47">54 pt</option>
+        <option value="48">55 pt</option>
+        <option value="49">56 pt</option>
+        <option value="50">57 pt</option>
+        <option value="51">58 pt</option>
+        <option value="52">59 pt</option>
+        <option value="53">60 pt</option>
+        <option value="54">61 pt</option>
+        <option value="55">62 pt</option>
+        <option value="56">63 pt</option>
+        <option value="57">64 pt</option>
+        <option value="58">65 pt</option>
+        <option value="59">66 pt</option>
+        <option value="60">67 pt</option>
+        <option value="61">68 pt</option>
+        <option value="62">69 pt</option>
+        <option value="63">70 pt</option>
+        <option value="64">71 pt</option>
+        <option value="65">72 pt</option>
+      </select>
+    </div>
+    <div class="toolgroup">
+      <button data-cmd="bold" title="Tebal (Ctrl+B)"><b>B</b></button><button data-cmd="italic" title="Miring (Ctrl+I)"><i>I</i></button><button data-cmd="underline" title="Garis bawah (Ctrl+U)"><u>U</u></button>
+      <input id="textColor" type="color" value="#111111" title="Warna teks" aria-label="Warna teks" style="width:31px;height:31px;padding:2px;border:1px solid #dce2ea;border-radius:6px;background:white">
+    </div>
+    <div class="toolgroup">
+      <button data-cmd="justifyLeft" title="Rata kiri">☰←</button><button data-cmd="justifyCenter" title="Rata tengah">☷</button><button data-cmd="justifyRight" title="Rata kanan">→☰</button><button data-cmd="justifyFull" title="Rata kiri-kanan">☰</button>
+    </div>
+    <div class="toolgroup">
+      <button data-cmd="insertUnorderedList" title="Daftar poin">• Daftar</button><button data-cmd="insertOrderedList" title="Daftar bernomor">1. Daftar</button>
+      <select id="blockFormat" title="Gaya paragraf" aria-label="Gaya paragraf"><option value="P">Paragraf</option><option value="H1">Judul 1</option><option value="H2">Judul 2</option><option value="H3">Judul 3</option><option value="BLOCKQUOTE">Kutipan</option></select>
+    </div>
+    <div class="toolgroup">
+      <button id="linkBtn" title="Sisipkan tautan">🔗</button><button id="tableBtn" title="Sisipkan tabel">▦ Tabel</button><button id="imageBtn" title="Sisipkan gambar">▧ Gambar</button><button id="ruleBtn" title="Garis pemisah">― Garis</button>
+    </div>
+    <div class="toolgroup">
+      <button id="undoBtn" title="Urungkan perubahan (Ctrl/Cmd+Z)" aria-label="Undo / Urungkan">↶ Urungkan</button><button id="redoBtn" title="Ulangi perubahan (Ctrl/Cmd+Y)" aria-label="Redo / Ulangi">↷ Ulangi</button><button id="clearBtn" title="Hapus pemformatan">Tx</button>
+    </div>
+  </div>
+</header>
+
+<main class="workspace">
+  <aside class="sidebar">
+    <section class="side-section collapsible-section" id="defaultTemplatesSection">
+      <button class="section-toggle" id="toggleDefaultTemplatesBtn" type="button" aria-expanded="false" aria-controls="defaultTemplatesContent">
+        <span class="section-toggle-label"><span class="section-toggle-icon" aria-hidden="true">▸</span><span>Template Bawaan</span></span>
+        <span class="section-toggle-hint">Buka</span>
+      </button>
+      <div id="defaultTemplatesContent" hidden>
+        <input id="templateSearch" type="text" placeholder="Cari template surat…" aria-label="Cari template" style="width:100%;border:1px solid var(--line);border-radius:6px;padding:9px;margin:9px 0 8px">
+        <select id="templateCategory" aria-label="Kategori template" style="width:100%;border:1px solid var(--line);border-radius:6px;padding:9px;margin-bottom:9px;background:#fff"><option value="semua">Semua kategori</option><option>Umum & Administrasi</option><option>Permohonan & Kuasa</option><option>Perusahaan & Bisnis</option><option>Pekerjaan</option><option>Rapat & Kegiatan</option><option>Berita Acara & Catatan</option><option>Pribadi & Keterangan</option></select>
+        <div class="help" id="templateCount" style="margin:0 0 7px"></div>
+        <div class="template-list" id="templateList"></div>
+        <p class="help">Memilih template akan mengganti isi halaman saat ini. Semua contoh perlu disesuaikan dengan fakta, kebutuhan, dan aturan instansi Anda.</p>
+      </div>
+    </section>
+    <section class="side-section">
+      <h2>Kop surat</h2>
+      <button class="full" id="logoBtn">＋ Unggah logo</button>
+      <input type="file" id="logoInput" accept="image/*">
+      <label for="orgName">Nama instansi / perusahaan</label><input id="orgName" type="text" placeholder="NAMA INSTANSI">
+      <label for="orgAddress">Alamat dan kontak</label><input id="orgAddress" type="text" placeholder="Alamat • Telepon • Email">
+      <button class="full" id="applyLetterhead">Terapkan / perbarui kop</button>
+      <button class="full" id="removeLogo">Hapus logo</button>
+      <p class="help">Logo disimpan bersama dokumen di browser. Untuk kop yang sudah ada di halaman, klik tombol Terapkan untuk memperbaruinya.</p>
+    </section>
+    <section class="side-section collapsible-section" id="myTemplatesSection">
+      <button class="section-toggle" id="toggleTemplatesBtn" type="button" aria-expanded="false" aria-controls="myTemplatesContent">
+        <span class="section-toggle-label"><span class="section-toggle-icon" aria-hidden="true">▸</span><span>Template Saya</span></span>
+        <span class="section-toggle-hint">Buka</span>
+      </button>
+      <div id="myTemplatesContent" hidden>
+        <p class="help">Simpan format surat yang sering dipakai. Template disimpan di browser ini dan tidak mengubah template asli saat digunakan.</p>
+        <button class="full primary" id="saveTemplateBtn">＋ Simpan dokumen sebagai template</button>
+        <div style="display:flex;gap:6px;margin-top:7px">
+          <button id="exportTemplatesBtn" style="flex:1">Ekspor cadangan</button>
+          <button id="importTemplatesBtn" style="flex:1">Impor template</button>
+        </div>
+        <input type="file" id="importTemplatesInput" accept=".json,application/json" hidden>
+        <label for="customTemplateSearch">Cari template saya</label>
+        <input id="customTemplateSearch" type="text" placeholder="Nama atau kategori…">
+        <div id="customTemplateList" class="template-list" style="margin-top:8px"></div>
+        <p class="help" id="templateStorageStatus" aria-live="polite">Memuat penyimpanan lokal…</p>
+      </div>
+    </section>
+    <section class="side-section">
+      <h2>Pengaturan tanggal surat</h2>
+      <div class="date-settings">
+        <label for="letterDateMode">Mode tanggal</label>
+        <select id="letterDateMode"><option value="auto">Otomatis — tanggal hari ini</option><option value="manual">Manual — tentukan tanggal</option></select>
+        <div id="manualDateWrap" hidden><label for="letterDateValue">Tanggal manual</label><input type="date" id="letterDateValue"></div>
+        <label for="letterDateFormat">Format tanggal</label>
+        <select id="letterDateFormat"><option value="long">10 Oktober 2026</option><option value="numeric">10-10-2026</option><option value="city">Makassar, 10 Oktober 2026</option></select>
+        <div id="letterCityWrap"><label for="letterCity">Kota pada tanggal surat</label><input type="text" id="letterCity" placeholder="Contoh: Makassar"></div>
+        <button class="full primary" id="saveLetterDateSettings" type="button">Simpan pengaturan tanggal</button>
+        <p class="help">Berlaku saat template digunakan untuk membuat surat baru. Surat yang sedang diedit tidak diubah. Tanggal acara, rapat, dan jatuh tempo tetap diisi terpisah.</p>
+      </div>
+    </section>
+    <section class="side-section">
+      <h2>Pengaturan halaman</h2>
+      <label for="marginSelect">Margin halaman</label>
+      <select id="marginSelect">
+        <option value="25">Normal (2,5 cm)</option><option value="20">Sempit (2 cm)</option><option value="30">Lebar (3 cm)</option>
+      </select>
+      <label for="lineSpacing">Jarak baris</label>
+      <select id="lineSpacing"><option value="1.15">Rapat (1,15)</option><option value="1.5" selected>Normal (1,5)</option><option value="2">Lebar (2)</option></select>
+      <button class="full" id="applyPage">Terapkan pengaturan</button>
+    </section>
+    <section>
+      <h2>Petunjuk singkat</h2>
+      <p class="help">Klik halaman putih untuk mengetik. Pilih teks, lalu gunakan toolbar. Untuk PDF, klik <b>Simpan PDF</b> dan pilih “Save as PDF” pada dialog cetak.</p>
+      <p class="help">Penyimpanan browser hanya tersedia pada browser dan perangkat ini. Gunakan <b>Simpan HTML</b> untuk memindahkan dokumen, atau Ekspor cadangan pada Template Saya untuk memindahkan koleksi template.</p>
+    </section>
+  </aside>
+
+  <section class="canvas-area">
+    <div class="canvas-head"><span>HALAMAN A4 · Area dokumen dapat diedit</span><span id="wordCount">0 kata</span></div>
+    <div class="paper-wrap"><article class="paper" id="paper" contenteditable="true" spellcheck="true" aria-label="Isi dokumen" data-placeholder="Mulai mengetik surat Anda di sini..."></article></div>
+    <div class="doc-footer-note">SuratKu • Dokumen diproses di browser Anda, tidak diunggah ke server.</div>
+  </section>
+</main>
+
+<input type="file" id="openInput" accept=".html,.htm,text/html" hidden>
+<div class="toast" id="toast" role="status"></div>
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal"><h2>Mulai dokumen baru?</h2><p>Isi halaman saat ini akan diganti. Jika belum disimpan sebagai file, unduh dahulu agar tidak kehilangan perubahan.</p><div class="modal-actions"><button id="cancelNew">Batal</button><button class="primary" id="confirmNew">Lanjutkan</button></div></div>
+</div>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const paper=$('paper'), docName=$('docName');
+const STORAGE_KEY='suratku.document.v1';
+const DATE_SETTINGS_KEY='suratku.letterDateSettings.v1';
+let logoData='',saveTimer=null,dirty=false;
+let savedRange=null;
+function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function readLetterDateSettings(){
+ const defaults={mode:'auto',date:todayISO(),format:'long',city:'Makassar'};
+ try{return {...defaults,...JSON.parse(localStorage.getItem(DATE_SETTINGS_KEY)||'{}')}}catch{return defaults}
+}
+function activeLetterDate(){
+ const cfg=readLetterDateSettings();const iso=cfg.mode==='manual'&&cfg.date?cfg.date:todayISO();
+ const parts=iso.split('-').map(Number);const d=new Date(parts[0],parts[1]-1,parts[2]);
+ const long=d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+ if(cfg.format==='numeric')return `${String(parts[2]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}-${parts[0]}`;
+ if(cfg.format==='city')return `${(cfg.city||'').trim()?((cfg.city||'').trim()+', '):''}${long}`;
+ return long;
+}
+function applyLetterDateToNewTemplate(html){
+ let source=String(html||'').replace(/\{\{SURATKU_TANGGAL_SURAT\}\}/g,()=>`<span data-suratku-date="true">${escapeHTML(activeLetterDate())}</span>`);
+ const parsed=new DOMParser().parseFromString(source,'text/html');
+ // Kenali juga penanda tanggal lama pada template kustom yang disimpan sebelum fitur ini.
+ parsed.body.querySelectorAll('p').forEach(p=>{
+  const t=(p.textContent||'').trim();
+  // Placeholder tanggal umum pada template kustom versi lama.
+  if(/^\[Kota\],\s*\[Tanggal(?: Bulan Tahun)?\]$/i.test(t)||
+     /^Tempat,\s*tanggal:?\s*\[Kota,\s*tanggal\]$/i.test(t)||
+     /^Tempat,\s*tanggal:?\s*\[Tanggal(?: Bulan Tahun)?\]$/i.test(t)){
+   p.innerHTML='<span data-suratku-date="true"></span>';
+  }
+ });
+ parsed.body.querySelectorAll('[data-suratku-date="true"]').forEach(el=>{el.textContent=activeLetterDate()});
+ return parsed.body.innerHTML;
+}
+function initLetterDateSettings(){
+ const cfg=readLetterDateSettings();$('letterDateMode').value=cfg.mode;$('letterDateValue').value=cfg.date||todayISO();$('letterDateFormat').value=cfg.format||'long';$('letterCity').value=cfg.city||'';
+ $('manualDateWrap').hidden=cfg.mode!=='manual';$('letterCityWrap').hidden=cfg.format!=='city';
+ $('letterDateMode').addEventListener('change',()=>{$('manualDateWrap').hidden=$('letterDateMode').value!=='manual'});
+ $('letterDateFormat').addEventListener('change',()=>{$('letterCityWrap').hidden=$('letterDateFormat').value!=='city'});
+ $('saveLetterDateSettings').addEventListener('click',()=>{
+  const next={mode:$('letterDateMode').value,date:$('letterDateValue').value||todayISO(),format:$('letterDateFormat').value,city:$('letterCity').value.trim()};
+  try{localStorage.setItem(DATE_SETTINGS_KEY,JSON.stringify(next));toast('Pengaturan tanggal disimpan. Berlaku untuk surat baru; surat aktif tidak diubah.')}catch(e){toast('Pengaturan tanggal tidak dapat disimpan di browser')}
+ });
+}
+function letter(title, body, category='Umum & Administrasi') {
+ return `<div class="letterhead"><div class="org"><div class="org-name">NAMA INSTANSI / PERUSAHAAN</div><div class="org-details">Alamat lengkap • Nomor telepon • Email</div></div></div>
+ <p style="text-align:right">{{SURATKU_TANGGAL_SURAT}}</p>
+ <p>Nomor&nbsp;&nbsp;&nbsp;&nbsp;: [Nomor surat]<br>Lampiran : [Jika ada]<br>Perihal&nbsp;&nbsp;&nbsp;&nbsp;: <b>${title}</b></p>
+ <p>Kepada Yth.<br><b>[Nama / Jabatan penerima]</b><br>[Nama instansi / perusahaan]<br>di [Tempat]</p>
+ <p>Dengan hormat,</p>${body}
+ <p>Demikian surat ini kami sampaikan. Atas perhatian dan kerja sama Bapak/Ibu, kami ucapkan terima kasih.</p>
+ <p style="text-align:right">Hormat kami,<br>[Jabatan / posisi]</p><p style="text-align:right"><br><br><b>[Nama lengkap]</b><br>[Nomor identitas / jabatan, jika diperlukan]</p>`;
+}
+const templates={
+ resmi:letter('Surat Resmi',`<p>Sehubungan dengan [latar belakang atau maksud surat], bersama ini kami sampaikan bahwa [uraian pokok surat].</p><p>[Tambahkan informasi pendukung, tanggal, atau tindak lanjut yang diperlukan.]</p>`),
+ permohonan:letter('Permohonan',`<p>Melalui surat ini, kami mengajukan permohonan [jenis permohonan] kepada [pihak tujuan].</p><p>Permohonan ini kami ajukan dengan pertimbangan [alasan]. Sebagai bahan pertimbangan, bersama ini kami sertakan [dokumen pendukung].</p>`,'Permohonan & Kuasa'),
+ kuasa:`<p style="text-align:center"><b>SURAT KUASA</b></p><p>Yang bertanda tangan di bawah ini:</p><p>Nama : [Nama pemberi kuasa]<br>Tempat/Tanggal Lahir : [Data, bila diperlukan]<br>Alamat : [Alamat]<br>Nomor identitas : [Nomor identitas, bila diperlukan]</p><p>Selanjutnya disebut <b>Pemberi Kuasa</b>, memberikan kuasa kepada:</p><p>Nama : [Nama penerima kuasa]<br>Alamat : [Alamat]<br>Nomor identitas : [Nomor identitas, bila diperlukan]</p><p>Selanjutnya disebut <b>Penerima Kuasa</b>, untuk [jelaskan secara spesifik tindakan atau urusan yang dikuasakan].</p><p>Surat kuasa ini dibuat dengan sadar untuk digunakan sebagaimana mestinya. [Cantumkan batas waktu atau ketentuan lain bila diperlukan.]</p><p>{{SURATKU_TANGGAL_SURAT}}</p><table><tr><td style="text-align:center">Pemberi Kuasa<br><br><br><br><b>[Nama]</b></td><td style="text-align:center">Penerima Kuasa<br><br><br><br><b>[Nama]</b></td></tr></table>`,
+ pernyataan:`<p style="text-align:center"><b>SURAT PERNYATAAN</b></p><p>Saya yang bertanda tangan di bawah ini:</p><p>Nama : [Nama lengkap]<br>Tempat/Tanggal Lahir : [Tempat, tanggal lahir]<br>Alamat : [Alamat]<br>Nomor identitas : [Jika diperlukan]</p><p>Dengan ini menyatakan bahwa:</p><p><b>[Tuliskan pernyataan secara jelas, spesifik, dan sesuai fakta.]</b></p><p>Demikian surat pernyataan ini dibuat dengan sebenar-benarnya untuk digunakan sebagaimana mestinya.</p><p>{{SURATKU_TANGGAL_SURAT}}</p><p style="text-align:right">Yang membuat pernyataan,<br><br><br><b>[Nama lengkap]</b></p>`,
+ keterangan:letter('Surat Keterangan',`<p>Yang bertanda tangan di bawah ini, [nama pejabat / penanggung jawab], menerangkan bahwa:</p><p>Nama : [Nama lengkap]<br>Tempat/Tanggal Lahir : [Data bila diperlukan]<br>Alamat : [Alamat]<br>Keterangan : [Hal yang diterangkan]</p><p>Surat keterangan ini dibuat berdasarkan [dokumen atau informasi yang menjadi dasar] untuk keperluan [tujuan penggunaan].</p>`,'Pribadi & Keterangan'),
+ pengantar:letter('Surat Pengantar',`<p>Bersama surat ini kami mengantarkan [nama dokumen / berkas / orang] untuk keperluan [tujuan].</p><p>Adapun rincian berkas yang disampaikan:</p><ol><li>[Dokumen pertama]</li><li>[Dokumen kedua]</li><li>[Dokumen tambahan]</li></ol><p>Mohon dapat diterima dan diproses sesuai ketentuan yang berlaku.</p>`),
+ undangan:letter('Undangan',`<p>Dengan ini kami mengundang Bapak/Ibu untuk menghadiri kegiatan yang akan dilaksanakan pada:</p><table><tr><td style="width:30%">Hari/Tanggal</td><td>[Hari, tanggal]</td></tr><tr><td>Waktu</td><td>[Jam mulai–selesai]</td></tr><tr><td>Tempat</td><td>[Lokasi]</td></tr><tr><td>Agenda</td><td>[Agenda kegiatan]</td></tr></table><p>Mengingat pentingnya kegiatan tersebut, kami mengharapkan kehadiran Bapak/Ibu.</p>`,'Rapat & Kegiatan'),
+ undanganRapat:letter('Undangan Rapat',`<p>Dalam rangka membahas [topik rapat], kami mengundang Bapak/Ibu untuk menghadiri rapat pada:</p><table><tr><td>Hari/Tanggal</td><td>[Hari, tanggal]</td></tr><tr><td>Waktu</td><td>[Jam]</td></tr><tr><td>Tempat / media</td><td>[Lokasi atau tautan rapat]</td></tr><tr><td>Agenda</td><td>[Daftar agenda]</td></tr></table><p>Mohon konfirmasi kehadiran kepada [nama dan kontak].</p>`,'Rapat & Kegiatan'),
+ pemberitahuan:letter('Pemberitahuan',`<p>Melalui surat ini, kami memberitahukan bahwa [informasi utama].</p><p>Hal-hal yang perlu menjadi perhatian:</p><ol><li>[Informasi pertama]</li><li>[Informasi kedua]</li><li>[Tanggal berlaku atau tindak lanjut]</li></ol>`),
+ edaran:letter('Surat Edaran',`<p><b>Kepada: [Seluruh penerima / unit terkait]</b></p><p>Dalam rangka [tujuan atau latar belakang], disampaikan hal-hal sebagai berikut:</p><ol><li>[Ketentuan atau informasi pertama]</li><li>[Ketentuan atau informasi kedua]</li><li>[Tanggal mulai berlaku dan tindak lanjut]</li></ol><p>Surat edaran ini agar menjadi perhatian dan dilaksanakan sebagaimana mestinya.</p>`),
+ tugas:letter('Surat Tugas',`<p>Yang bertanda tangan di bawah ini menugaskan kepada:</p><p>Nama : [Nama pegawai]<br>Jabatan : [Jabatan / unit kerja]</p><p>Untuk melaksanakan tugas [uraian tugas] pada:</p><p>Hari/Tanggal : [Tanggal]<br>Tempat : [Lokasi]<br>Tujuan : [Tujuan tugas]</p><p>Setelah tugas selesai, yang bersangkutan diminta menyampaikan laporan pelaksanaan tugas. Surat tugas ini berlaku sesuai tanggal yang tercantum.</p>`,'Rapat & Kegiatan'),
+ izin:letter('Permohonan Izin',`<p>Dengan hormat, saya / kami mengajukan izin untuk [kegiatan atau keperluan] yang akan berlangsung pada [tanggal dan waktu] di [tempat].</p><p>Alasan permohonan: [Alasan]. Sebagai bahan pertimbangan, saya / kami bersedia memenuhi persyaratan yang berlaku.</p>`,'Permohonan & Kuasa'),
+ lamaran:letter('Lamaran Pekerjaan',`<p>Berdasarkan informasi lowongan pekerjaan untuk posisi <b>[Nama posisi]</b>, saya bermaksud mengajukan lamaran untuk posisi tersebut.</p><p>Berikut ringkasan identitas saya:</p><p>Nama : [Nama lengkap]<br>Pendidikan terakhir : [Pendidikan]<br>Nomor telepon : [Nomor kontak]<br>Email : [Email]</p><p>Saya memiliki pengalaman / keterampilan dalam [keterampilan relevan]. Sebagai bahan pertimbangan, saya lampirkan [CV, ijazah, portofolio, dan dokumen yang diminta].</p><p>Saya berharap mendapat kesempatan untuk mengikuti proses seleksi. Terima kasih atas perhatian Bapak/Ibu.</p>`,'Pekerjaan'),
+ resign:letter('Pengunduran Diri',`<p>Melalui surat ini, saya menyampaikan pengunduran diri dari posisi <b>[Jabatan]</b> di [Nama perusahaan], efektif mulai [Tanggal efektif], sesuai ketentuan dan pemberitahuan yang berlaku.</p><p>Saya mengucapkan terima kasih atas kesempatan dan pengalaman yang telah diberikan. Saya akan membantu proses serah terima pekerjaan agar berjalan dengan baik.</p><p>Demikian surat ini saya sampaikan. Terima kasih atas pengertian dan kerja samanya.</p>`,'Pekerjaan'),
+ pengalaman:letter('Surat Keterangan Pengalaman Kerja',`<p>Dengan ini menerangkan bahwa:</p><p>Nama : [Nama karyawan]<br>Jabatan terakhir : [Jabatan]<br>Periode kerja : [Tanggal mulai] sampai [Tanggal selesai]</p><p>Yang bersangkutan benar telah bekerja di [Nama perusahaan] pada periode tersebut. Selama bekerja, yang bersangkutan menjalankan tugas di bidang [ringkasan tugas].</p><p>Surat keterangan ini dibuat berdasarkan catatan perusahaan untuk digunakan sesuai keperluan.</p>`,'Pekerjaan'),
+ rekomendasi:letter('Surat Rekomendasi',`<p>Dengan ini kami merekomendasikan:</p><p>Nama : [Nama]<br>Jabatan / hubungan : [Keterangan]<br>Keperluan rekomendasi : [Tujuan]</p><p>Berdasarkan pengetahuan dan pengalaman kami, yang bersangkutan [uraian yang faktual mengenai kinerja, kompetensi, atau kegiatan].</p><p>Rekomendasi ini diberikan dengan sebenar-benarnya untuk tujuan yang disebutkan di atas.</p>`,'Pekerjaan'),
+ penawaranBarang:letter('Penawaran Barang',`<p>Melalui surat ini, kami menawarkan produk berikut kepada [Nama perusahaan / calon pelanggan]:</p><table><tr><th>Nama barang</th><th>Spesifikasi</th><th>Jumlah</th><th>Harga</th></tr><tr><td>[Produk]</td><td>[Spesifikasi]</td><td>[Qty]</td><td>Rp [Harga]</td></tr><tr><td colspan="3"><b>Total penawaran</b></td><td>Rp [Total]</td></tr></table><p>Harga dan ketentuan berlaku sampai [tanggal]. Rincian lebih lanjut mengenai pembayaran, pengiriman, dan garansi dapat disepakati dalam dokumen terpisah.</p>`,'Perusahaan & Bisnis'),
+ penawaranJasa:letter('Penawaran Jasa',`<p>Kami menawarkan layanan [nama jasa] untuk mendukung kebutuhan [nama calon pelanggan]. Ruang lingkup layanan meliputi:</p><ol><li>[Ruang lingkup pertama]</li><li>[Ruang lingkup kedua]</li><li>[Hasil / deliverable]</li></ol><p>Perkiraan biaya: Rp [Nilai]. Jangka waktu: [Durasi]. Ketentuan pembayaran dan rincian pekerjaan dapat dituangkan dalam penawaran terperinci atau kontrak.</p>`,'Perusahaan & Bisnis'),
+ penawaranKerjasama:letter('Penawaran Kerja Sama',`<p>Kami dari [Nama perusahaan] bermaksud menawarkan kerja sama dalam bidang [bentuk kerja sama].</p><p>Bentuk kerja sama yang diusulkan:</p><ol><li>[Ruang lingkup / kontribusi pihak pertama]</li><li>[Kontribusi pihak kedua]</li><li>[Manfaat yang diharapkan]</li></ol><p>Rincian teknis dan komersial dapat dibahas lebih lanjut. Sebagai bahan pertimbangan, kami lampirkan [profil / proposal].</p>`,'Perusahaan & Bisnis'),
+ permohonanKerjasama:letter('Permohonan Kerja Sama',`<p>Kami mengajukan permohonan untuk menjajaki kerja sama dengan [nama pihak] dalam bidang [bidang kerja sama].</p><p>Latar belakang dan tujuan: [Penjelasan singkat]. Bentuk dukungan atau kerja sama yang kami harapkan: [Rincian].</p><p>Kami siap melakukan pertemuan untuk membahas ruang lingkup, jadwal, dan ketentuan kerja sama lebih lanjut.</p>`,'Perusahaan & Bisnis'),
+ penagihan:letter('Pengingat / Penagihan Pembayaran',`<p>Berdasarkan catatan kami, terdapat tagihan dengan rincian berikut:</p><table><tr><td>Nomor invoice</td><td>[Nomor]</td></tr><tr><td>Tanggal invoice</td><td>[Tanggal]</td></tr><tr><td>Jatuh tempo</td><td>[Tanggal]</td></tr><tr><td>Nilai tagihan</td><td>Rp [Jumlah]</td></tr></table><p>Mohon dilakukan pengecekan dan penyelesaian pembayaran sesuai kesepakatan. Apabila pembayaran telah dilakukan, mohon abaikan pemberitahuan ini dan kirimkan bukti pembayaran untuk rekonsiliasi.</p>`,'Perusahaan & Bisnis'),
+ pengaduan:letter('Surat Pengaduan',`<p>Melalui surat ini, kami menyampaikan pengaduan mengenai [produk, layanan, atau kejadian] yang terjadi pada [tanggal / lokasi].</p><p>Kronologi singkat:</p><ol><li>[Kejadian pertama]</li><li>[Dampak atau masalah yang dialami]</li></ol><p>Adapun penyelesaian yang kami harapkan adalah [permintaan penyelesaian]. Dokumen pendukung terlampir jika diperlukan.</p>`),
+ beritaAcara:`<p style="text-align:center"><b>BERITA ACARA</b><br><b>[JUDUL / KEGIATAN]</b></p><p>Pada hari ini [hari], tanggal [tanggal], bertempat di [lokasi], kami yang bertanda tangan di bawah ini telah melaksanakan / menyaksikan [kegiatan atau peristiwa].</p><p>Rincian:</p><ol><li>[Uraian kejadian atau kegiatan]</li><li>[Hasil / kondisi yang ditemukan]</li><li>[Tindak lanjut / kesepakatan]</li></ol><p>Demikian berita acara ini dibuat dengan sebenar-benarnya untuk digunakan sebagaimana mestinya.</p><p style="text-align:right">{{SURATKU_TANGGAL_SURAT}}</p><table><tr><td style="text-align:center">Pihak / Saksi 1<br><br><br><b>[Nama]</b></td><td style="text-align:center">Pihak / Saksi 2<br><br><br><b>[Nama]</b></td></tr></table>`,
+ notulen:`<p style="text-align:center"><b>NOTULEN RAPAT</b></p><table><tr><td>Hari/Tanggal</td><td>[Hari, tanggal]</td></tr><tr><td>Waktu</td><td>[Jam]</td></tr><tr><td>Tempat</td><td>[Lokasi / media]</td></tr><tr><td>Pimpinan rapat</td><td>[Nama]</td></tr><tr><td>Notulis</td><td>[Nama]</td></tr><tr><td>Peserta</td><td>[Daftar peserta / lampiran]</td></tr></table><p><b>Agenda</b></p><ol><li>[Agenda pertama]</li><li>[Agenda kedua]</li></ol><p><b>Pokok pembahasan</b></p><ul><li>[Ringkasan pembahasan]</li></ul><p><b>Keputusan dan tindak lanjut</b></p><table><tr><th>Keputusan / tindakan</th><th>Penanggung jawab</th><th>Tenggat</th></tr><tr><td>[Tindak lanjut]</td><td>[Nama]</td><td>[Tanggal]</td></tr></table><p>Notulis, [Nama]</p><p style="text-align:right">Tanggal penyusunan: {{SURATKU_TANGGAL_SURAT}}</p>`,
+ tandaTerima:`<p style="text-align:center"><b>TANDA TERIMA</b></p><p>Telah diterima dari: [Nama pengirim]</p><p>Berupa / untuk keperluan: [Uraian barang, dokumen, atau pembayaran]</p><p>Rincian:</p><table><tr><th>No.</th><th>Uraian</th><th>Jumlah</th><th>Keterangan</th></tr><tr><td>1</td><td>[Uraian]</td><td>[Jumlah]</td><td>[Kondisi / catatan]</td></tr></table><p>Tempat, tanggal: {{SURATKU_TANGGAL_SURAT}}</p><p style="text-align:right">Penerima,<br><br><br><b>[Nama lengkap]</b></p>`,
+ izinOrtu:letter('Surat Izin Orang Tua / Wali',`<p>Saya yang bertanda tangan di bawah ini:</p><p>Nama orang tua / wali : [Nama]<br>Alamat : [Alamat]<br>Orang tua / wali dari : [Nama anak]</p><p>Dengan ini memberikan izin kepada anak / yang berada dalam perwalian saya untuk [kegiatan atau keperluan] pada [tanggal dan tempat].</p><p>Demikian surat izin ini dibuat dengan sebenar-benarnya.</p><p>{{SURATKU_TANGGAL_SURAT}}</p><p>Orang tua / wali,<br><br><br><b>[Nama]</b></p>`,'Pribadi & Keterangan'),
+ suratDinas:letter('Surat Dinas / Internal',`<p>Dasar: [Dasar atau rujukan, jika ada].</p><p>Sehubungan dengan [konteks kedinasan], disampaikan hal-hal berikut:</p><ol><li>[Informasi / instruksi pertama]</li><li>[Informasi / instruksi kedua]</li></ol><p>Mohon menjadi perhatian dan dilaksanakan sesuai kewenangan serta ketentuan yang berlaku.</p>`),
+ kosong:'<p><br></p>'
+};
+const templateInfo=[
+['resmi','Surat resmi umum','Umum & Administrasi','Format dasar surat resmi'],['suratDinas','Surat dinas / internal','Umum & Administrasi','Komunikasi kedinasan internal'],['pemberitahuan','Surat pemberitahuan','Umum & Administrasi','Informasi kepada pihak terkait'],['edaran','Surat edaran','Umum & Administrasi','Informasi untuk banyak penerima'],['pengantar','Surat pengantar','Umum & Administrasi','Pengantar dokumen atau berkas'],['permohonan','Surat permohonan','Permohonan & Kuasa','Permohonan umum kepada instansi'],['kuasa','Surat kuasa','Permohonan & Kuasa','Pemberian kuasa untuk urusan tertentu'],['pernyataan','Surat pernyataan','Pribadi & Keterangan','Pernyataan tertulis'],['keterangan','Surat keterangan','Pribadi & Keterangan','Keterangan untuk suatu keperluan'],['izin','Surat permohonan izin','Permohonan & Kuasa','Izin kegiatan atau keperluan'],['undangan','Surat undangan','Rapat & Kegiatan','Undangan kegiatan umum'],['undanganRapat','Undangan rapat','Rapat & Kegiatan','Agenda, waktu, tempat, peserta'],['tugas','Surat tugas','Rapat & Kegiatan','Penugasan seseorang'],['lamaran','Surat lamaran kerja','Pekerjaan','Melamar pekerjaan'],['resign','Surat pengunduran diri','Pekerjaan','Mengundurkan diri dari pekerjaan'],['pengalaman','Surat pengalaman kerja','Pekerjaan','Keterangan riwayat kerja'],['rekomendasi','Surat rekomendasi','Pekerjaan','Rekomendasi profesional'],['penawaranBarang','Penawaran barang','Perusahaan & Bisnis','Harga, spesifikasi, dan jumlah'],['penawaranJasa','Penawaran jasa','Perusahaan & Bisnis','Ruang lingkup layanan dan biaya'],['penawaranKerjasama','Penawaran kerja sama','Perusahaan & Bisnis','Mengajukan tawaran kemitraan'],['permohonanKerjasama','Permohonan kerja sama','Perusahaan & Bisnis','Mengajak pihak lain bekerja sama'],['penagihan','Pengingat / penagihan pembayaran','Perusahaan & Bisnis','Pengingat invoice atau tagihan'],['pengaduan','Surat pengaduan','Umum & Administrasi','Menyampaikan masalah dan solusi'],['beritaAcara','Berita acara','Berita Acara & Catatan','Mencatat kejadian atau serah terima'],['notulen','Notulen rapat','Berita Acara & Catatan','Agenda, pembahasan, keputusan'],['tandaTerima','Tanda terima','Berita Acara & Catatan','Bukti penerimaan barang atau dokumen'],['izinOrtu','Izin orang tua / wali','Pribadi & Keterangan','Izin kegiatan anak / wali'],['kosong','Halaman kosong','Umum & Administrasi','Mulai dari halaman kosong']
+];
+function renderTemplates(){
+ const q=$('templateSearch').value.trim().toLocaleLowerCase('id');const cat=$('templateCategory').value;const list=$('templateList');list.innerHTML='';
+ const filtered=templateInfo.filter(x=>(cat==='semua'||x[2]===cat)&&x.slice(1).join(' ').toLocaleLowerCase('id').includes(q));
+ $('templateCount').textContent=filtered.length+' template';
+ filtered.forEach(x=>{const b=document.createElement('button');b.dataset.template=x[0];const strong=document.createElement('strong');strong.textContent=x[1];const span=document.createElement('span');span.textContent=x[3];b.append(strong,span);b.addEventListener('click',()=>{if(!confirm('Ganti isi dokumen dengan template “'+x[1]+'”?'))return;paper.innerHTML=applyLetterDateToNewTemplate(templates[x[0]]);docName.value=x[1];markDirty();toast('Template baru diterapkan: '+x[1])});list.appendChild(b)});
+}
+
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
+function markDirty(){dirty=true;$('saveStatus').textContent='Menyimpan…';updateCount();clearTimeout(saveTimer);saveTimer=setTimeout(saveLocal,500)}
+function updateCount(){const text=paper.innerText.trim();const count=text?text.split(/\s+/).length:0;$('wordCount').textContent=count+' kata'}
+function docObject(){return {app:'SuratKu',version:1,title:docName.value||'Surat Baru',html:paper.innerHTML,logoData,orgName:$('orgName').value,orgAddress:$('orgAddress').value,margin:$('marginSelect').value,lineSpacing:$('lineSpacing').value,updatedAt:new Date().toISOString()}}
+function saveLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(docObject()));dirty=false;$('saveStatus').textContent='Tersimpan di browser';}catch(e){$('saveStatus').textContent='Tidak dapat menyimpan';toast('Penyimpanan browser penuh. Gunakan Simpan file.');}}
+function applyPage(){const m=Number($('marginSelect').value);paper.style.padding=`${m}mm ${m}mm ${Math.max(18,m-2)}mm`;paper.style.lineHeight=$('lineSpacing').value;markDirty()}
+function insertHTML(html){paper.focus();if(savedRange){const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange)}document.execCommand('insertHTML',false,html);markDirty()}
+function rememberSelection(){const sel=window.getSelection();if(sel&&sel.rangeCount&&paper.contains(sel.anchorNode)){savedRange=sel.getRangeAt(0).cloneRange()}}
+function restoreSelection(){paper.focus();if(savedRange){const s=window.getSelection();s.removeAllRanges();s.addRange(savedRange)}}
+function applyLetterhead(){
+ const name=$('orgName').value.trim()||'NAMA INSTANSI / PERUSAHAAN';
+ const addr=$('orgAddress').value.trim()||'Alamat lengkap • Nomor telepon • Email';
+ const img=logoData?`<img class="logo" src="${logoData}" alt="Logo instansi">`:'';
+ const html=`<div class="letterhead ${logoData?'':'no-logo'}">${img}<div class="org"><div class="org-name">${escapeHTML(name)}</div><div class="org-details">${escapeHTML(addr)}</div></div></div><p><br></p>`;
+ const existing=paper.querySelector('.letterhead');
+ if(existing) existing.outerHTML=html.replace('<p><br></p>',''); else paper.insertAdjacentHTML('afterbegin',html);
+ markDirty();toast('Kop surat diperbarui');
+}
+function escapeHTML(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function setLogo(src){logoData=src;const existing=paper.querySelector('.letterhead');if(existing)applyLetterhead();else markDirty()}
+function downloadFile(){
+ const data=docObject();
+ const embedded=`<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(data.title)}</title><style>body{font:12pt Arial,sans-serif;color:#111;line-height:${data.lineSpacing};margin:0}.paper{box-sizing:border-box;width:210mm;min-height:297mm;margin:auto;padding:${data.margin}mm ${data.margin}mm ${Math.max(18,Number(data.margin)-2)}mm;overflow-wrap:break-word}.letterhead{display:flex;align-items:center;gap:14px;border-bottom:3px double #111;padding-bottom:10px;margin-bottom:22px;min-height:70px}.logo{width:76px;height:76px;object-fit:contain}.org{flex:1;text-align:center}.org-name{font-size:16pt;font-weight:bold;text-transform:uppercase}.org-details{font-size:9.5pt}@page{size:A4;margin:0}@media print{.paper{margin:0;box-shadow:none}}table{border-collapse:collapse;width:100%}td,th{border:1px solid #555;padding:5px 7px;vertical-align:top}img{max-width:100%;height:auto}</style></head><body><main class="paper">${data.html}</main></body></html>`;
+ const blob=new Blob([embedded],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=(data.title.replace(/[\\/:*?"<>|]+/g,'_')||'SuratKu')+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$('saveStatus').textContent='File diunduh';toast('File HTML berhasil diunduh');
+}
+function loadData(data){
+ if(!data||!data.html)throw new Error('Format dokumen tidak dikenali');
+ docName.value=data.title||'Surat Baru';paper.innerHTML=data.html;logoData=data.logoData||'';
+ $('orgName').value=data.orgName||'';$('orgAddress').value=data.orgAddress||'';
+ $('marginSelect').value=data.margin||'25';$('lineSpacing').value=data.lineSpacing||'1.5';applyPage();dirty=false;saveLocal();updateCount();toast('Dokumen berhasil dibuka');
+}
+function newDoc(){docName.value='Surat Baru';paper.innerHTML=templates.kosong;logoData='';$('orgName').value='';$('orgAddress').value='';applyPage();markDirty()}
+paper.addEventListener('input',markDirty);docName.addEventListener('input',markDirty);
+paper.addEventListener('keyup',rememberSelection);paper.addEventListener('mouseup',rememberSelection);paper.addEventListener('touchend',rememberSelection);
+document.querySelectorAll('[data-cmd]').forEach(b=>b.addEventListener('mousedown',e=>e.preventDefault()));
+document.querySelectorAll('[data-cmd]').forEach(b=>b.addEventListener('click',()=>{restoreSelection();document.execCommand(b.dataset.cmd,false,null);markDirty()}));
+$('fontFamily').addEventListener('change',e=>{restoreSelection();document.execCommand('fontName',false,e.target.value);markDirty()});
+$('fontSize').addEventListener('change',e=>{
+ const raw=e.target.selectedOptions[0]?.textContent||'12 pt';
+ const pt=Number(raw.replace(/\s*pt$/,''));
+ if(!Number.isFinite(pt)||pt<1){toast('Ukuran font tidak valid');return}
+ restoreSelection();
+ // Gunakan mekanisme editor untuk menerapkan ukuran ke seleksi/cursor,
+ // lalu ubah tag font legacy menjadi span CSS dengan ukuran pt yang tepat.
+ document.execCommand('fontSize',false,'7');
+ paper.querySelectorAll('font[size="7"]').forEach(font=>{
+  const span=document.createElement('span');
+  span.style.fontSize=pt+'pt';
+  while(font.firstChild) span.appendChild(font.firstChild);
+  font.replaceWith(span);
+ });
+ // Jaga seleksi supaya pengguna bisa langsung mengganti ukuran lagi.
+ rememberSelection();
+ markDirty();
+});
+$('textColor').addEventListener('input',e=>{restoreSelection();document.execCommand('foreColor',false,e.target.value);markDirty()});
+$('blockFormat').addEventListener('change',e=>{restoreSelection();document.execCommand('formatBlock',false,e.target.value);markDirty()});
+$('linkBtn').addEventListener('click',()=>{restoreSelection();const u=prompt('Masukkan alamat tautan (URL):','https://');if(u){document.execCommand('createLink',false,u);markDirty()}});
+$('tableBtn').addEventListener('click',()=>{const r=Math.min(15,Math.max(1,parseInt(prompt('Jumlah baris tabel:', '3'),10)||3));const c=Math.min(10,Math.max(1,parseInt(prompt('Jumlah kolom tabel:', '2'),10)||2));let h='<table><tbody>';for(let i=0;i<r;i++){h+='<tr>';for(let j=0;j<c;j++)h+=`<td>${i===0?'&nbsp;':'<br>'}</td>`;h+='</tr>'}h+='</tbody></table><p><br></p>';insertHTML(h)});
+$('imageBtn').addEventListener('click',()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{const f=inp.files[0];if(!f)return;if(f.size>5*1024*1024){toast('Ukuran gambar maksimal 5 MB');return}const rd=new FileReader();rd.onload=()=>insertHTML(`<img src="${rd.result}" alt="Gambar sisipan" style="max-width:100%;height:auto">`);rd.readAsDataURL(f)};inp.click()});
+$('ruleBtn').addEventListener('click',()=>insertHTML('<hr><p><br></p>'));
+function runUndoRedo(action){
+  paper.focus();
+  try { document.execCommand(action, false, null); } catch (err) { console.warn('Perintah '+action+' tidak tersedia', err); }
+  rememberSelection();
+  markDirty();
+}
+$('undoBtn').addEventListener('click',()=>runUndoRedo('undo'));
+$('redoBtn').addEventListener('click',()=>runUndoRedo('redo'));
+paper.addEventListener('keydown',e=>{
+  if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+  const key=e.key.toLowerCase();
+  if(key==='z'){
+    e.preventDefault();
+    runUndoRedo(e.shiftKey?'redo':'undo');
+  } else if(key==='y'){
+    e.preventDefault();
+    runUndoRedo('redo');
+  }
+});
+$('clearBtn').addEventListener('click',()=>{restoreSelection();document.execCommand('removeFormat');markDirty()});
+$('logoBtn').addEventListener('click',()=>$('logoInput').click());
+$('logoInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(f.size>5*1024*1024){toast('Ukuran logo maksimal 5 MB');return}const r=new FileReader();r.onload=()=>{logoData=r.result;$('applyLetterhead').click()};r.readAsDataURL(f);e.target.value=''});
+$('applyLetterhead').addEventListener('click',applyLetterhead);
+$('removeLogo').addEventListener('click',()=>{logoData='';const img=paper.querySelector('.letterhead .logo');if(img)img.remove();markDirty();toast('Logo dihapus')});
+$('applyPage').addEventListener('click',()=>{applyPage();toast('Pengaturan halaman diterapkan')});
+$('printBtn').addEventListener('click',()=>{saveLocal();const oldTitle=document.title;const safeTitle=(docName.value||'SuratKu').trim();document.title=safeTitle;toast('Pada dialog cetak, pilih Save as PDF untuk menyimpan PDF.');window.addEventListener('afterprint',()=>{document.title=oldTitle;},{once:true});window.print();});
+$('saveBtn').addEventListener('click',downloadFile);
+$('openBtn').addEventListener('click',()=>$('openInput').click());
+$('openInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const parsed=new DOMParser().parseFromString(reader.result,'text/html');const meta=parsed.querySelector('script#suratku-data');if(meta){loadData(JSON.parse(meta.textContent));return}const main=parsed.querySelector('main.paper')||parsed.querySelector('.paper')||parsed.body;paper.innerHTML=main.innerHTML;docName.value=f.name.replace(/\.(html?|HTML?)$/,'');logoData='';markDirty();toast('HTML dibuka. Periksa kembali tata letak.')}catch(err){toast('File tidak dapat dibuka')} };reader.readAsText(f);e.target.value=''});
+$('newBtn').addEventListener('click',()=>$('confirmModal').classList.add('show'));
+$('cancelNew').addEventListener('click',()=>$('confirmModal').classList.remove('show'));
+$('confirmNew').addEventListener('click',()=>{$('confirmModal').classList.remove('show');newDoc()});
+$('templateSearch').addEventListener('input',renderTemplates);$('templateCategory').addEventListener('change',renderTemplates);renderTemplates();initLetterDateSettings();
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){e.preventDefault();downloadFile()}});
+// Template kustom disimpan terpisah dari dokumen aktif di IndexedDB.
+const TEMPLATE_DB='suratku-template-library';
+const TEMPLATE_STORE='customTemplates';
+let templateDb=null;
+function openTemplateDB(){
+ return new Promise((resolve,reject)=>{
+  if(!('indexedDB' in window)){reject(new Error('IndexedDB tidak tersedia'));return}
+  const req=indexedDB.open(TEMPLATE_DB,1);
+  req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(TEMPLATE_STORE)){const store=db.createObjectStore(TEMPLATE_STORE,{keyPath:'id'});store.createIndex('name','name',{unique:false});store.createIndex('updatedAt','updatedAt',{unique:false})}};
+  req.onsuccess=()=>{templateDb=req.result;resolve(templateDb)};
+  req.onerror=()=>reject(req.error||new Error('Gagal membuka IndexedDB'));
+ });
+}
+function templateTransaction(mode,action){
+ return new Promise((resolve,reject)=>{
+  if(!templateDb){reject(new Error('Database belum siap'));return}
+  const tx=templateDb.transaction(TEMPLATE_STORE,mode),store=tx.objectStore(TEMPLATE_STORE);
+  let result;
+  try{result=action(store)}catch(e){reject(e);return}
+  tx.oncomplete=()=>resolve(result&&result.result!==undefined?result.result:result);
+  tx.onerror=()=>reject(tx.error||new Error('Operasi database gagal'));
+  tx.onabort=()=>reject(tx.error||new Error('Operasi database dibatalkan'));
+ });
+}
+function getAllCustomTemplates(){
+ return new Promise((resolve,reject)=>{
+  if(!templateDb){reject(new Error('Database belum siap'));return}
+  const tx=templateDb.transaction(TEMPLATE_STORE,'readonly'),req=tx.objectStore(TEMPLATE_STORE).getAll();
+  req.onsuccess=()=>resolve((req.result||[]).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')));
+  req.onerror=()=>reject(req.error);
+ });
+}
+function saveCustomTemplate(record){
+ return new Promise((resolve,reject)=>{
+  const tx=templateDb.transaction(TEMPLATE_STORE,'readwrite');
+  tx.objectStore(TEMPLATE_STORE).put(record);
+  tx.oncomplete=()=>resolve(record);
+  tx.onerror=()=>reject(tx.error||new Error('Gagal menyimpan template'));
+ });
+}
+function deleteCustomTemplate(id){
+ return new Promise((resolve,reject)=>{
+  const tx=templateDb.transaction(TEMPLATE_STORE,'readwrite');
+  tx.objectStore(TEMPLATE_STORE).delete(id);
+  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Gagal menghapus template'));
+ });
+}
+function safeText(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function makeTemplateRecord(name,existing){
+ const now=new Date().toISOString(),current=docObject();
+ return {id:existing?existing.id:('tpl-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)),
+  name:name.trim(),category:existing?.category||'Kustom',html:current.html,logoData:current.logoData||'',
+  orgName:current.orgName||'',orgAddress:current.orgAddress||'',margin:current.margin||'25',
+  lineSpacing:current.lineSpacing||'1.5',createdAt:existing?.createdAt||now,updatedAt:now,
+  version:(existing?.version||0)+1};
+}
+function useCustomTemplate(t){
+ if(!confirm('Gunakan template “'+t.name+'” untuk mengganti isi dokumen saat ini? Template asli tidak akan diubah.'))return;
+ paper.innerHTML=applyLetterDateToNewTemplate(t.html||'<p><br></p>');
+ docName.value=t.name+' — Salinan';
+ logoData=t.logoData||'';
+ $('orgName').value=t.orgName||'';$('orgAddress').value=t.orgAddress||'';
+ $('marginSelect').value=t.margin||'25';$('lineSpacing').value=t.lineSpacing||'1.5';
+ applyPage();markDirty();toast('Template dimuat sebagai dokumen baru');
+}
+async function renderCustomTemplates(){
+ const list=$('customTemplateList');if(!list)return;
+ try{
+  const all=await getAllCustomTemplates(),q=$('customTemplateSearch').value.trim().toLowerCase();
+  const filtered=all.filter(t=>(t.name+' '+(t.category||'')).toLowerCase().includes(q));
+  list.innerHTML='';
+  if(!filtered.length){list.innerHTML='<div class="template-empty">'+(all.length?'Tidak ada template yang cocok.':'Belum ada template kustom. Simpan dokumen saat ini untuk memulai.')+'</div>'}
+  filtered.forEach(t=>{
+   const card=document.createElement('div');card.className='custom-template-card';
+   const title=document.createElement('div');title.className='template-title';title.textContent=t.name;card.appendChild(title);
+   const meta=document.createElement('div');meta.className='template-meta';meta.textContent=(t.category||'Kustom')+' · v'+(t.version||1)+' · '+new Date(t.updatedAt||Date.now()).toLocaleDateString('id-ID');card.appendChild(meta);
+   const buttons=document.createElement('div');buttons.className='template-buttons';
+   const use=document.createElement('button');use.className='use-template';use.textContent='Gunakan';use.addEventListener('click',()=>useCustomTemplate(t));buttons.appendChild(use);
+   const rename=document.createElement('button');rename.textContent='Nama';rename.addEventListener('click',async()=>{const n=prompt('Nama template:',t.name);if(n===null)return;if(!n.trim()){toast('Nama template tidak boleh kosong');return}try{await saveCustomTemplate({...t,name:n.trim(),updatedAt:new Date().toISOString(),version:(t.version||1)+1});await renderCustomTemplates();toast('Nama template diperbarui')}catch(e){toast('Gagal memperbarui template')}});buttons.appendChild(rename);
+   const update=document.createElement('button');update.textContent='Perbarui isi';update.title='Ganti isi template dengan dokumen yang sedang terbuka';update.addEventListener('click',async()=>{if(!confirm('Ganti isi template “'+t.name+'” dengan dokumen yang sedang terbuka? Versi template akan diperbarui.'))return;try{await saveCustomTemplate(makeTemplateRecord(t.name,t));await renderCustomTemplates();toast('Template diperbarui')}catch(e){toast('Gagal memperbarui template')}});buttons.appendChild(update);
+   const del=document.createElement('button');del.textContent='Hapus';del.addEventListener('click',async()=>{if(!confirm('Hapus template “'+t.name+'” dari browser ini?'))return;try{await deleteCustomTemplate(t.id);await renderCustomTemplates();toast('Template dihapus')}catch(e){toast('Gagal menghapus template')}});buttons.appendChild(del);
+   card.appendChild(buttons);list.appendChild(card);
+  });
+  $('templateStorageStatus').textContent=all.length+' template tersimpan di browser ini · belum tersinkron ke cloud';
+ }catch(e){list.innerHTML='<div class="template-empty">Penyimpanan template tidak tersedia: '+safeText(e.message)+'</div>';$('templateStorageStatus').textContent='Periksa dukungan penyimpanan browser.'}
+}
+$('saveTemplateBtn').addEventListener('click',async()=>{
+ const suggested=(docName.value||'Template Baru').replace(/\s+—\s+Salinan$/,'');
+ const name=prompt('Nama untuk template ini:',suggested);if(name===null)return;
+ if(!name.trim()){toast('Nama template tidak boleh kosong');return}
+ try{await saveCustomTemplate(makeTemplateRecord(name));await renderCustomTemplates();toast('Template disimpan di browser')}catch(e){toast('Tidak dapat menyimpan template: '+e.message)}
+});
+$('customTemplateSearch').addEventListener('input',renderCustomTemplates);
+$('exportTemplatesBtn').addEventListener('click',async()=>{
+ try{
+  const all=await getAllCustomTemplates();if(!all.length){toast('Belum ada template untuk diekspor');return}
+  const payload={app:'SuratKu',type:'template-backup',version:1,exportedAt:new Date().toISOString(),templates:all};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='SuratKu_Template_Cadangan_'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Cadangan template diunduh');
+ }catch(e){toast('Gagal mengekspor template')}
+});
+$('importTemplatesBtn').addEventListener('click',()=>$('importTemplatesInput').click());
+$('importTemplatesInput').addEventListener('change',async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  const parsed=JSON.parse(await file.text()),arr=Array.isArray(parsed)?parsed:parsed.templates;
+  if(!Array.isArray(arr))throw new Error('File tidak berisi daftar template');
+  let imported=0;
+  for(const item of arr){
+   if(!item||typeof item.html!=='string'||!String(item.name||'').trim())continue;
+   const record={id:'tpl-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),name:String(item.name).trim(),category:item.category||'Impor',html:item.html,logoData:item.logoData||'',orgName:item.orgName||'',orgAddress:item.orgAddress||'',margin:item.margin||'25',lineSpacing:item.lineSpacing||'1.5',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),version:1};
+   await saveCustomTemplate(record);imported++;
+  }
+  await renderCustomTemplates();toast(imported+' template berhasil diimpor');
+ }catch(err){toast('Gagal mengimpor: '+err.message)}
+ e.target.value='';
+});
+function setupCollapsible(btnId,contentId){
+ const btn=$(btnId),content=$(contentId);
+ btn.addEventListener('click',()=>{
+  const expanded=btn.getAttribute('aria-expanded')==='true';
+  btn.setAttribute('aria-expanded',String(!expanded));
+  content.hidden=expanded;
+  btn.querySelector('.section-toggle-hint').textContent=expanded?'Buka':'Tutup';
+ });
+}
+setupCollapsible('toggleTemplatesBtn','myTemplatesContent');
+setupCollapsible('toggleDefaultTemplatesBtn','defaultTemplatesContent');
+async function initTemplateLibrary(){
+ try{await openTemplateDB();await renderCustomTemplates()}
+ catch(e){$('templateStorageStatus').textContent='IndexedDB tidak tersedia. Coba gunakan Chrome atau browser modern.';$('customTemplateList').innerHTML='<div class="template-empty">Penyimpanan lokal tidak dapat dibuka.</div>'}
+}
+try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const data=JSON.parse(raw);loadData(data)}else{paper.innerHTML=applyLetterDateToNewTemplate(templates.resmi);$('orgName').value='NAMA INSTANSI / PERUSAHAAN';$('orgAddress').value='Alamat lengkap • Nomor telepon • Email';updateCount();saveLocal()}}catch(e){paper.innerHTML=applyLetterDateToNewTemplate(templates.resmi);updateCount()}
+initTemplateLibrary();
+})();
+</script>
+</body>
+</html>
