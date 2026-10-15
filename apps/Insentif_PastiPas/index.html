@@ -359,15 +359,18 @@ function setPdfFileName(withTimestamp=false){
  document.title='Insentif_PastiPas_'+periodCode+'_'+siteCode+suffix;
 }
 function printPdf(){
+ // Sinkronkan halaman rekap dengan SPBU aktif tepat sebelum dialog cetak dibuka.
+ updateRecap();
  // Membuat cap waktu baru setiap kali pengguna memulai proses cetak/simpan PDF.
  setPdfFileName(true);
  if(document.getElementById('includeSettings').checked){document.getElementById('settingsPanel').open=true;document.body.classList.add('include-settings');}
  window.print();
 }
-window.addEventListener('beforeprint',()=>{if(!document.title.includes('_Cetak_'))setPdfFileName(true);if(document.getElementById('includeSettings').checked){document.getElementById('settingsPanel').open=true;document.body.classList.add('include-settings');}});
+window.addEventListener('beforeprint',()=>{updateRecap();if(!document.title.includes('_Cetak_'))setPdfFileName(true);if(document.getElementById('includeSettings').checked){document.getElementById('settingsPanel').open=true;document.body.classList.add('include-settings');}});
 window.addEventListener('afterprint',()=>{document.title=originalDocumentTitle;document.body.classList.toggle('include-settings',document.getElementById('includeSettings').checked);});
 // Perbarui judul dokumen saat periode atau SPBU berubah, agar nama dasar PDF selalu sesuai.
-document.addEventListener('DOMContentLoaded',()=>setPdfFileName(false));
+document.addEventListener('DOMContentLoaded',()=>{updateRecap();setPdfFileName(false);});
+document.getElementById('spbu')?.addEventListener('change',()=>{updateRecap();setPdfFileName(false);});
 const monthFmt = v => { if(!v) return '-'; const [y,m]=v.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'}); };
 const dateFmt = v => {if(!v)return '-'; const [y,m,d]=v.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});};
 function spell(n){
