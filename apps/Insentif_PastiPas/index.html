@@ -17,7 +17,7 @@ button:hover{filter:brightness(.96)}
 .topline{height:7px;background:linear-gradient(90deg,#17365d 0%,#3578ad 62%,#82b4d7 100%);border-radius:5px;margin-bottom:22px}
 .heading{text-align:center;margin-bottom:22px}
 .heading h1{font-size:23px;line-height:1.25;margin:0;color:var(--navy);letter-spacing:.4px}
-.heading .sub{font-size:21px;line-height:1.25;color:#fff;letter-spacing:1.15px;margin-top:13px;font-weight:850;background:linear-gradient(115deg,#17365d 0%,#245b8f 58%,#397db3 100%);border:1px solid #17365d;border-radius:9px;padding:12px 22px;display:block;max-width:100%;text-align:center;box-shadow:0 4px 10px #17365d20;text-shadow:0 1px 1px #0e2745;}
+.heading .sub{font-size:24px;line-height:1.25;color:#fff;letter-spacing:1.2px;margin-top:13px;font-weight:900;background:linear-gradient(110deg,#102947 0%,#173f6b 55%,#245b8f 100%);border:2px solid #102947;border-radius:9px;padding:13px 22px;display:block;max-width:100%;text-align:center;box-shadow:0 4px 12px #10294730;text-shadow:0 1px 2px #07182b;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;background:linear-gradient(135deg,#f3f7fb,#eaf1f8);border:1px solid #d3dfeb;border-radius:10px;padding:16px;margin-bottom:22px}
 .field label{display:block;font-size:11px;letter-spacing:.7px;font-weight:750;color:var(--muted);margin-bottom:5px;text-transform:uppercase}
 select,input{width:100%;font:inherit;border:1px solid #cbd5e1;border-radius:7px;padding:9px 10px;background:white;color:var(--ink)}
@@ -54,7 +54,13 @@ td input.susut-input{background:#fffaf0;border-color:#e5d5aa}
 .note{font-size:12px;color:var(--muted);margin-top:12px}
 .signatures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:38px;text-align:left;break-inside:avoid}
 .sign-title{font-weight:750;min-height:26px}
-.sign-space{height:78px;position:relative;display:block;overflow:visible}.sign-img{position:absolute;left:8px;top:-24px;width:145px;height:auto;max-width:none;max-height:none;object-fit:contain;display:none;z-index:5;user-select:none;-webkit-user-drag:none;touch-action:none}.signatures.signed .sign-img{display:block}.signatures.signed .sign-space{height:78px}.signatures.edit-signatures .sign-img{outline:1px dashed #2585ff;cursor:move}.signatures.edit-signatures .sign-img::selection{background:transparent}.sig-resize{display:none;position:absolute;width:12px;height:12px;right:-5px;bottom:-5px;background:#1677ff;border:2px solid white;border-radius:50%;z-index:8;cursor:nwse-resize}.signatures.edit-signatures .sig-resize{display:block}.sign-name{position:relative;z-index:1}
+.sign-space{height:78px;position:relative;display:block;overflow:visible}.sign-img{position:absolute;left:8px;top:-24px;width:145px;height:auto;max-width:none;max-height:none;object-fit:contain;display:none;z-index:5;user-select:none;-webkit-user-drag:none;touch-action:none}.signatures.signed .sign-img{display:block}.signatures.signed .sign-space{height:78px}.signatures.edit-signatures .sign-img{outline:1px dashed #2585ff;cursor:move}.signatures.edit-signatures .sign-img::selection{background:transparent}.sig-resize{display:none;position:absolute;width:12px;height:12px;right:-5px;bottom:-5px;background:#1677ff;border:2px solid white;border-radius:50%;z-index:8;cursor:nwse-resize}.signatures.edit-signatures .sig-resize{display:block}/* Samakan baseline nama pada ketiga kolom tanda tangan */
+.signatures > div{display:grid;grid-template-rows:26px 78px auto auto;align-content:start;min-width:0}
+.signatures > div .sign-title{grid-row:1}
+.signatures > div .sign-space{grid-row:2;margin:0}
+.signatures > div .sign-name{grid-row:3;align-self:start}
+.signatures > div .sign-role{grid-row:4;align-self:start}
+.sign-name{position:relative;z-index:1}
 .sign-name{font-weight:800;text-decoration:underline}
 .sign-role{font-size:12px;color:var(--muted);margin-top:2px}.signatures .blank-supervisor .sign-space{height:78px}.signatures .blank-supervisor .sign-name{visibility:visible}
 .footerline{border-top:1px solid var(--line);margin-top:26px;padding-top:10px;font-size:10px;color:#94a3b8;display:flex;justify-content:space-between}
@@ -63,10 +69,10 @@ td input.susut-input{background:#fffaf0;border-color:#e5d5aa}
 .rate-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
 .rate-grid label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
 .rate-grid input{text-align:right}
-@media(max-width:650px){.paper{padding:22px 15px}.meta{grid-template-columns:1fr}.heading h1{font-size:19px}.heading .sub{font-size:17px;letter-spacing:.6px;padding:10px 12px}.rate-grid{grid-template-columns:repeat(2,1fr)}.signatures{gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))}.sign-space{height:60px}.amount{font-size:21px}}
-@page{size:A4 portrait;margin:10mm}
+@media(max-width:650px){.paper{padding:22px 15px}.meta{grid-template-columns:1fr}.heading h1{font-size:19px}.heading .sub{font-size:19px;letter-spacing:.7px;padding:11px 12px}.rate-grid{grid-template-columns:repeat(2,1fr)}.signatures{gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))}.sign-space{height:60px}.amount{font-size:21px}}
+@page{size:A4 portrait;margin:0}
 @media print{
- body{background:#fff;font-size:10px;line-height:1.32;color:#202b3a}
+ body{background:#fff;font-size:10px;line-height:1.32;color:#202b3a;padding:10mm!important;box-sizing:border-box}
  .toolbar,.no-print{display:none!important}
  .settings{display:none!important}
  body.include-settings .settings{display:block!important;margin-top:12px;padding:9px;background:#f7f9fc;border:1px solid #cbd9e7;border-radius:6px;break-inside:avoid}
@@ -97,6 +103,7 @@ td input.susut-input{background:#fffaf0;border-color:#e5d5aa}
  .amount{font-size:21px}.amount-label{font-size:9px}.terbilang{margin-top:8px;padding-top:7px}.terbilang strong{font-size:9px}.terbilang span{font-size:13px;line-height:1.35}
  .comp-table{margin-top:5px;max-width:100%;font-size:10px}.comp-table td{padding:6px 9px}
  .signatures{margin-top:23px;gap:14px;grid-template-columns:repeat(3,minmax(0,1fr))}
+ .signatures > div{grid-template-rows:20px 52px auto auto}
  .sign-title{font-size:10px;min-height:20px}.sign-space{height:52px}.sign-name{font-size:10px}.sign-role{font-size:9px}
  .footerline{font-size:8px;margin-top:16px;padding-top:7px}
 }
@@ -131,7 +138,8 @@ td input.susut-input{background:#fffaf0;border-color:#e5d5aa}
   #page2 .recap-column .recap-title[style]{font-size:19px!important;margin-top:0!important}
   .page-number{margin-top:8px}
   .recap-panel{break-inside:avoid}
-  .recap-actions,.recap-name-input{display:none!important}
+  .recap-actions{display:none!important}
+  .recap-name-input{display:block!important;width:100%!important;box-sizing:border-box!important;border:0!important;border-radius:0!important;background:transparent!important;color:#202b3a!important;padding:0!important;margin:0!important;font:inherit!important;appearance:none!important;-webkit-appearance:none!important}
   .recap-table td{height:27px}
   #page1{break-after:page;page-break-after:always}
 }
@@ -150,7 +158,30 @@ body.spbu-green #page2 .recap-title,body.spbu-green #page2 .recap-spbu{color:#16
 body.spbu-green #page2 .recap-table th{background:#e4f0e8;color:#164b32}
 
 </style>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+/* Loader pustaka Excel dengan beberapa sumber CDN agar uploader tetap bekerja di GitHub Pages/Huawei. */
+(function(){
+  const sources = [
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+    'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+  ];
+  let i = 0;
+  function loadNext(){
+    if (window.XLSX) { document.documentElement.dataset.xlsxReady = 'true'; return; }
+    if (i >= sources.length) { document.documentElement.dataset.xlsxReady = 'false'; return; }
+    const script = document.createElement('script');
+    script.src = sources[i++];
+    script.onload = function(){
+      if (window.XLSX) document.documentElement.dataset.xlsxReady = 'true';
+      else loadNext();
+    };
+    script.onerror = loadNext;
+    document.head.appendChild(script);
+  }
+  loadNext();
+})();
+</script>
 </head>
 <body>
 <div class="toolbar">
@@ -214,7 +245,7 @@ body.spbu-green #page2 .recap-table th{background:#e4f0e8;color:#164b32}
   <table>
     <thead><tr>
       <th style="text-align:left;width:22%">PRODUK</th>
-      <th class="num" style="width:11%;white-space:nowrap">FEE/LITER (RP)</th>
+      <th class="num" style="width:11%;white-space:nowrap">FEE/L (RP)</th>
       <th class="num" style="width:14%">SOLD (L)</th>
       <th class="num" style="width:14%">SUSUT (L)</th>
       <th class="num" style="width:17%">BERSIH (L)</th>
@@ -380,7 +411,7 @@ function showIdr(value){return Number(value)===0?'-':idr(value);}
 function rateCellHtml(value){
  if(Number(value)===0) return '<span class="rate-money"><span></span><span class="value">-</span></span>';
  const formatted=num(value);
- return '<span class="rate-money"><span class="currency">Rp.</span><span class="value">'+formatted+'</span></span>';
+ return '<span class="rate-money"><span class="value">'+formatted+'</span></span>';
 }
 function setSignatureMode(){
  const signed=document.querySelector('input[name="signatureMode"]:checked')?.value==='signed';
@@ -516,7 +547,7 @@ function exportRecapBackup(){
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');const rawPeriod=document.getElementById('periode')?.value||'';const pp=rawPeriod.split('-');const periodCode=pp.length===2?pp[1]+pp[0]:'Periode';a.href=url;a.download=periodCode+'_insentif_pastipas_rekap.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function downloadExcelUploader(){
- if(typeof XLSX==='undefined'){alert('Komponen Excel belum termuat. Pastikan internet aktif, lalu coba lagi.');return;}
+ if(typeof XLSX==='undefined'){alert('Komponen Excel belum berhasil dimuat. Pastikan perangkat terhubung ke internet dan coba muat ulang aplikasi GitHub Pages. Jika masih gagal, gunakan file JSON untuk pemulihan rekap.');return;}
  const wb=XLSX.utils.book_new();
  const rows1=[['NO','NAMA KARYAWAN'],...getRecapNames('recapBody1').map((n,i)=>[i+1,n])];
  const rows2=[['NO','NAMA KARYAWAN'],...getRecapNames('recapBody2').map((n,i)=>[i+1,n])];
@@ -529,7 +560,7 @@ function downloadExcelUploader(){
 }
 function importRecapExcel(event){
  const file=event.target.files&&event.target.files[0];if(!file)return;
- if(typeof XLSX==='undefined'){alert('Komponen Excel belum termuat. Pastikan internet aktif, lalu coba lagi.');event.target.value='';return;}
+ if(typeof XLSX==='undefined'){alert('Komponen Excel belum berhasil dimuat. Pastikan perangkat terhubung ke internet dan coba muat ulang aplikasi GitHub Pages. Jika masih gagal, gunakan file JSON untuk pemulihan rekap.');event.target.value='';return;}
  const reader=new FileReader();reader.onload=()=>{try{
   const bytes=new Uint8Array(reader.result);const wb=XLSX.read(bytes,{type:'array'});
   function findNames(sheetName,code){
