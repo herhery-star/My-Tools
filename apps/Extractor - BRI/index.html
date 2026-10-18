@@ -128,6 +128,48 @@
             </div>
         </div>
 
+        <section class="bg-white p-4 rounded-xl border border-indigo-200 shadow-sm space-y-3">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <button id="btnToggleResumePanel" type="button" aria-expanded="true" aria-controls="resumePanelContent" title="Minimalkan blok Resume Saldo Rekening" class="w-8 h-8 flex-shrink-0 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-transform">
+                        <svg id="resumePanelChevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"></path></svg>
+                    </button>
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900">RESUME SALDO REKENING</h2>
+                        <p class="text-xs text-slate-500">Proses satu PDF rekening koran, lalu klik “Tambahkan ke Resume”. Ulangi untuk rekening lainnya.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button id="btnAddResume" type="button" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm">+ Tambahkan ke Resume</button>
+                    <button id="btnPdfResume" type="button" disabled class="bg-slate-200 text-slate-400 px-4 py-2 rounded-lg text-xs font-bold cursor-not-allowed">Preview PDF</button>
+                    <button id="btnClearResume" type="button" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-lg text-xs font-bold">Hapus Resume</button>
+                </div>
+            </div>
+            <div id="resumePanelContent" class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-y border-slate-100 py-2">
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                    <input id="resumeSelectAll" type="checkbox" class="w-4 h-4 accent-indigo-700"> ALL — Pilih semua rekening
+                </label>
+                <span id="resumeSelectionCount" class="text-xs text-slate-500">0 rekening tersimpan · 0 dipilih</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                    <thead class="bg-slate-100 text-slate-600 uppercase">
+                        <tr>
+                            <th class="p-2 text-center">Pilih</th><th class="p-2 text-left">Nomor Rekening</th>
+                            <th class="p-2 text-left">Nama Rekening</th><th class="p-2 text-right">Saldo Awal</th>
+                            <th class="p-2 text-right">Total Debet</th><th class="p-2 text-right">Total Kredit</th><th class="p-2 text-right">Saldo Akhir</th>
+                            <th class="p-2 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resumeTableBody">
+                        <tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Belum ada rekening dalam resume. Unggah PDF lalu tambahkan.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            </div>
+        </section>
+
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
             <h2 id="sectionLargeTitle" class="text-2xl md:text-3xl font-black text-slate-900 tracking-wide uppercase">REKENING KORAN</h2>
             <p id="sectionDateRange" class="text-xs font-semibold text-slate-500 mt-1 italic">Periode Tanggal: -</p>
@@ -244,6 +286,20 @@
         </div>
     </div>
 
+
+    <div id="resumePdfPreviewModal" class="hidden fixed inset-0 z-[100] bg-slate-950/70 p-2 md:p-6" role="dialog" aria-modal="true" aria-labelledby="resumePdfPreviewTitle">
+        <div class="mx-auto flex h-full max-w-6xl flex-col overflow-hidden rounded-xl border border-slate-300 bg-slate-100 shadow-2xl">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 bg-slate-200 px-4 py-3">
+                <div><h2 id="resumePdfPreviewTitle" class="text-base font-black text-slate-800">Preview Resume Saldo Rekening</h2><p class="text-xs text-slate-600">Periksa laporan sebelum menyimpan PDF.</p></div>
+                <div class="flex flex-wrap gap-2">
+                    <button id="btnSaveResumePdf" type="button" class="rounded-lg bg-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800">Simpan PDF</button>
+                    <button id="btnCloseResumePdfPreview" type="button" class="rounded-lg border border-slate-400 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Tutup Preview</button>
+                </div>
+            </div>
+            <iframe id="resumePdfPreviewFrame" title="Pratinjau laporan PDF" class="min-h-0 w-full flex-1 bg-white" style="border:0"></iframe>
+        </div>
+    </div>
+
     <script>
         const themes = {
             pangkajene: { name: 'SPBU Pangkajene', bg: 'bg-emerald-700', activeBtn: 'bg-emerald-700 hover:bg-emerald-800', filePrefix: 'spbu_pjene' },
@@ -266,6 +322,8 @@
         let uploadedPdfBlobUrl = null;
         let totalOriginalPages = 1;
         let zipFilesMap = {}; // Untuk menyimpan referensi berkas-berkas dalam ZIP
+        let resumeAccounts = []; // Rekap beberapa rekening yang telah diproses
+        let resumeIdCounter = 1;
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
@@ -505,6 +563,8 @@
                 
                 if(cleanMutationRows.length > 0) {
                     if (detectedOpeningBalance !== null) {
+                        // Isi otomatis agar saldo dari PDF sebelumnya tidak terbawa saat file diganti.
+                        document.getElementById('inputSaldoAwal').value = formatIdCurrency(detectedOpeningBalance);
                         fetchBtn.disabled = false;
                         fetchBtn.className = "bg-slate-600 text-white p-1.5 rounded-md cursor-pointer hover:bg-slate-700 transition-all shadow-sm flex items-center justify-center flex-shrink-0";
                     }
@@ -633,32 +693,9 @@
                     const isRealOpeningBalanceSummary = (cleanString.includes('opening balance') || cleanString.includes('saldo awal')) && 
                                                         (cleanString.includes('total transaksi') || cleanString.includes('total debit') || cleanString.includes('total credit') || cleanString.includes('closing balance') || cleanString.includes('saldo akhir'));
 
-                    if (isRealOpeningBalanceSummary) {
-                        let numericMatches = rawLineString.match(/[\d\.,-]+/g) || [];
-                        let valuesList = numericMatches.filter(n => (n.includes('.') || n.includes(',')) && n.replace(/[^0-9]/g, '').length > 3);
-
-                        if (valuesList.length > 0) {
-                            let rawOpeningBalance = valuesList[0];
-                            detectedOpeningBalance = convertToFloat(rawOpeningBalance);
-                        } else {
-                            for (let lookAhead = 1; lookAhead <= 10; lookAhead++) {
-                                const nextIndex = sortedLinesY.indexOf(String(y)) + lookAhead;
-                                if (nextIndex < 0 || nextIndex >= sortedLinesY.length) break;
-                                const nextY = sortedLinesY[nextIndex];
-                                const nextLine = yCoordinatesMap[nextY]
-                                    .sort((a, b) => a.transform[4] - b.transform[4])
-                                    .map(t => t.str.trim())
-                                    .join(" ")
-                                    .trim();
-                                const matches = nextLine.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g);
-                                if (matches && matches.length > 0) {
-                                    detectedOpeningBalance = convertToFloat(matches[0]);
-                                    break;
-                                }
-                            }
-                        }
-                        return; 
-                    }
+                    // Ringkasan saldo di bagian bawah PDF sengaja tidak dijadikan sumber saldo awal.
+                    // Saldo awal dihitung dari saldo setelah transaksi pertama pada tabel transaksi.
+                    if (isRealOpeningBalanceSummary) return;
                     
                     if (cleanString.includes('halaman') || cleanString.includes('page') || 
                         cleanString.includes('laporan transaksi') || cleanString.includes('statement of') ||
@@ -686,6 +723,7 @@
 
                         let floatDebet = convertToFloat(rawDebet);
                         let floatKredit = convertToFloat(rawKredit);
+                        let floatSaldo = convertToFloat(rawSaldo);
                         let cleanDate = currentLine.split(" ")[0];
 
                         let cleanUraian = currentLine.substring(cleanDate.length).trim();
@@ -710,11 +748,25 @@
                             tanggal: cleanDate,
                             uraian: cleanUraian,
                             debet: floatDebet,
-                            kredit: floatKredit
+                            kredit: floatKredit,
+                            saldo: floatSaldo
                         });
                     }
                 }
             }
+
+            // Rumus saldo sebelum transaksi pertama:
+            // Saldo awal = saldo setelah transaksi pertama - kredit pertama + debet pertama.
+            // Jika transaksi pertama adalah debet, nilai debet ditambahkan kembali.
+            if (parsedItems.length > 0) {
+                const firstTransaction = parsedItems[0];
+                const calculatedOpeningBalance = Number(firstTransaction.saldo) -
+                    Number(firstTransaction.kredit) + Number(firstTransaction.debet);
+                if (Number.isFinite(calculatedOpeningBalance)) {
+                    detectedOpeningBalance = calculatedOpeningBalance;
+                }
+            }
+
             return parsedItems;
         }
 
@@ -1396,7 +1448,235 @@
             // Kembalikan ikon sorting.
             document.getElementById('sortIcon0').innerText = '↕';
             document.getElementById('sortIcon1').innerText = '↕';
+
         }
+
+        // ===== Resume multi-rekening =====
+        function resumeMoney(n) {
+            return 'Rp ' + formatIdCurrency(Number(n) || 0);
+        }
+        function renderResumeTable() {
+            const body = document.getElementById('resumeTableBody');
+            const selected = resumeAccounts.filter(a => a.selected);
+            if (!resumeAccounts.length) {
+                body.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400 italic">Belum ada rekening dalam resume. Unggah PDF lalu tambahkan.</td></tr>';
+            } else {
+                body.innerHTML = resumeAccounts.map(a => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-2 text-center"><input type="checkbox" class="resume-account-check w-4 h-4 accent-indigo-700" data-id="${a.id}" ${a.selected ? 'checked' : ''} aria-label="Pilih rekening ${a.accountNo}"></td>
+                        <td class="p-2"><input class="w-36 border border-slate-200 rounded px-2 py-1 font-mono" value="${escapeResumeText(a.accountNo)}" data-edit-field="accountNo" data-id="${a.id}" aria-label="Nomor rekening"></td>
+                        <td class="p-2"><input class="w-44 border border-slate-200 rounded px-2 py-1 font-semibold" value="${escapeResumeText(a.name)}" data-edit-field="name" data-id="${a.id}" aria-label="Nama rekening"></td>
+                        <td class="p-2 text-right font-mono whitespace-nowrap">${resumeMoney(a.opening)}</td>
+                        <td class="p-2 text-right font-mono text-rose-700 whitespace-nowrap">${resumeMoney(a.debet)}</td>
+                        <td class="p-2 text-right font-mono text-emerald-700 whitespace-nowrap">${resumeMoney(a.kredit)}</td>
+                        <td class="p-2 text-right font-mono font-bold whitespace-nowrap">${resumeMoney(a.ending)}</td>
+                        <td class="p-2 text-center"><button type="button" data-remove-id="${a.id}" class="text-rose-600 hover:text-rose-800 font-bold">Hapus</button></td>
+                    </tr>`).join('');
+            }
+            document.getElementById('resumeSelectionCount').textContent =
+                `${resumeAccounts.length} rekening tersimpan · ${selected.length} dipilih`;
+            document.getElementById('resumeSelectAll').checked = resumeAccounts.length > 0 && selected.length === resumeAccounts.length;
+            const pdfBtn = document.getElementById('btnPdfResume');
+            pdfBtn.disabled = selected.length === 0;
+            pdfBtn.className = selected.length
+                ? 'bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm'
+                : 'bg-slate-200 text-slate-400 px-4 py-2 rounded-lg text-xs font-bold cursor-not-allowed';
+        }
+        function escapeResumeText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function getCurrentAccountNumber() {
+            // Nomor rekening yang dikenali dari nama file; bila tidak ada, pengguna tetap dapat menyunting labelnya.
+            const fileLabel = document.getElementById('fileName').innerText || '';
+            const match = fileLabel.match(/\d{10,16}/);
+            const known = {
+                'lpg':'022301000221305',
+                'labakkang':'022301001155303',
+                'pangkajene':'022301001022568',
+                'tabungan':'022301001023564',
+                'mypertamina':'022301014854506'
+            };
+            return match ? match[0] : (known[currentTheme] || '-');
+        }
+        document.getElementById('btnAddResume').addEventListener('click', function() {
+            if (!cleanMutationRows.length) {
+                alert('Unggah dan proses satu PDF rekening koran terlebih dahulu.');
+                return;
+            }
+            const opening = parseInputToFloat(document.getElementById('inputSaldoAwal').value);
+            // Resume memakai seluruh transaksi hasil ekstraksi, bukan hanya transaksi yang sedang terlihat akibat filter.
+            const debet = cleanMutationRows.reduce((sum, row) => sum + (Number(row.debet) || 0), 0);
+            const kredit = cleanMutationRows.reduce((sum, row) => sum + (Number(row.kredit) || 0), 0);
+            const ending = opening + kredit - debet;
+            const accountNo = getCurrentAccountNumber();
+            const existing = resumeAccounts.find(a => a.accountNo === accountNo && a.name === themes[currentTheme].name);
+            if (existing) {
+                if (!confirm(`Rekening ${accountNo} sudah ada dalam resume. Perbarui dengan data PDF yang sedang diproses?`)) return;
+                Object.assign(existing, { opening, debet, kredit, ending, source: document.getElementById('fileName').innerText, selected: true });
+            } else {
+                resumeAccounts.push({
+                    id: resumeIdCounter++, accountNo,
+                    name: themes[currentTheme].name,
+                    opening, debet, kredit, ending,
+                    source: document.getElementById('fileName').innerText,
+                    selected: true
+                });
+            }
+            renderResumeTable();
+        });
+        document.getElementById('resumeTableBody').addEventListener('change', function(e) {
+            if (e.target.matches('[data-edit-field]')) {
+                const account = resumeAccounts.find(a => a.id === Number(e.target.dataset.id));
+                if (account) account[e.target.dataset.editField] = e.target.value.trim() || '-';
+                renderResumeTable();
+                return;
+            }
+            if (!e.target.matches('.resume-account-check')) return;
+            const account = resumeAccounts.find(a => a.id === Number(e.target.dataset.id));
+            if (account) account.selected = e.target.checked;
+            renderResumeTable();
+        });
+        document.getElementById('resumeTableBody').addEventListener('click', function(e) {
+            const id = e.target.dataset.removeId;
+            if (!id) return;
+            resumeAccounts = resumeAccounts.filter(a => a.id !== Number(id));
+            renderResumeTable();
+        });
+        document.getElementById('resumeSelectAll').addEventListener('change', function() {
+            resumeAccounts.forEach(a => a.selected = this.checked);
+            renderResumeTable();
+        });
+        document.getElementById('btnClearResume').addEventListener('click', function() {
+            if (!resumeAccounts.length) return;
+            if (!confirm('Hapus semua rekening dari resume?')) return;
+            resumeAccounts = [];
+            renderResumeTable();
+        });
+        let resumePdfBlob = null;
+        let resumePdfFileName = '';
+        let resumePdfObjectUrl = null;
+        const resumePreviewModal = document.getElementById('resumePdfPreviewModal');
+        document.getElementById('btnPdfResume').addEventListener('click', function() {
+            const selected = resumeAccounts.filter(a => a.selected);
+            if (!selected.length) { alert('Pilih minimal satu rekening.'); return; }
+            if (!window.jspdf || !window.jspdf.jsPDF) { alert('Pustaka PDF belum tersedia. Periksa koneksi internet lalu coba lagi.'); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const now = new Date();
+            const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const marginX = 14;
+            const accountNames = [...new Set(selected.map(a => String(a.name || '-').trim()).filter(Boolean))];
+            const namesText = accountNames.join(', ');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            const nameLines = doc.splitTextToSize(namesText, pageWidth - marginX * 2);
+            const namesY = 23;
+            const nameLineHeight = 5.2;
+            const dateY = namesY + nameLines.length * nameLineHeight + 2;
+            const headerHeight = Math.max(43, dateY + 7);
+
+            // Header plain biru keabuan dengan shading lembut dan teks lebih mudah dibaca.
+            doc.setFillColor(235, 241, 246);
+            doc.rect(0, 0, pageWidth, headerHeight, 'F');
+            doc.setFillColor(112, 137, 158);
+            doc.rect(0, 0, 3, headerHeight, 'F');
+            doc.setTextColor(43, 62, 79);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(20);
+            doc.text('RESUME SALDO REKENING', marginX, 13);
+            doc.setTextColor(43, 62, 79);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(nameLines, marginX, namesY, { lineHeightFactor: 1.25 });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(75, 96, 115);
+            doc.text(`Tanggal: ${now.toLocaleDateString('id-ID')}`, marginX, dateY);
+            doc.setFontSize(9);
+            doc.setTextColor(90, 108, 124);
+            doc.text(`Dicetak: ${now.toLocaleTimeString('id-ID')}`, pageWidth - marginX, dateY, { align: 'right' });
+            doc.setDrawColor(194, 207, 218);
+            doc.setLineWidth(0.35);
+            doc.line(marginX, headerHeight - 1.5, pageWidth - marginX, headerHeight - 1.5);
+
+            const rows = selected.map(a => [a.accountNo, a.name, resumeMoney(a.opening), resumeMoney(a.debet), resumeMoney(a.kredit), resumeMoney(a.ending)]);
+            const totals = selected.reduce((t,a) => ({ opening:t.opening+a.opening, debet:t.debet+a.debet, kredit:t.kredit+a.kredit, ending:t.ending+a.ending }), {opening:0,debet:0,kredit:0,ending:0});
+            rows.push(['', 'TOTAL RESUME', resumeMoney(totals.opening), resumeMoney(totals.debet), resumeMoney(totals.kredit), resumeMoney(totals.ending)]);
+            doc.autoTable({
+                startY: headerHeight + 5,
+                head: [['Nomor Rekening','Nama Rekening','Saldo Awal','Total Debet','Total Kredit','Saldo Akhir']],
+                body: rows,
+                theme: 'plain',
+                margin: { left: marginX, right: marginX, bottom: 14 },
+                styles: { font: 'helvetica', fontSize: 8, cellPadding: 3.1, textColor: [52, 68, 82], lineColor: [210, 220, 228], lineWidth: 0.2, overflow: 'linebreak', valign: 'middle' },
+                headStyles: { fillColor: [190, 205, 217], textColor: [40, 59, 75], fontStyle: 'bold', halign: 'center', lineColor: [165, 183, 198], lineWidth: 0.3 },
+                alternateRowStyles: { fillColor: [244, 247, 250] },
+                columnStyles: { 0:{cellWidth:36}, 1:{cellWidth:48}, 2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'} },
+                didParseCell: function(data) {
+                    if (data.row.index === rows.length - 1 && data.section === 'body') {
+                        data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.fillColor = [215, 225, 233];
+                        data.cell.styles.textColor = [35, 53, 68];
+                        data.cell.styles.lineWidth = 0.35;
+                    }
+                    if (data.section === 'body' && data.column.index === 3 && data.row.index !== rows.length - 1) data.cell.styles.textColor = [105, 111, 123];
+                    if (data.section === 'body' && data.column.index === 4 && data.row.index !== rows.length - 1) data.cell.styles.textColor = [57, 103, 126];
+                },
+                didDrawPage: function(data) {
+                    // Shading tipis pada garis footer agar tampilan tetap plain dan konsisten.
+                    doc.setFillColor(239, 243, 247);
+                    doc.rect(0, pageHeight - 12, pageWidth, 12, 'F');
+                    doc.setDrawColor(205, 216, 225);
+                    doc.line(marginX, pageHeight - 12, pageWidth - marginX, pageHeight - 12);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7);
+                    doc.setTextColor(91, 108, 122);
+                    doc.text('Dokumen dibuat dari data rekening koran yang diproses di aplikasi.', marginX, pageHeight - 5);
+                    doc.text(`Halaman ${data.pageNumber}`, pageWidth - marginX, pageHeight - 5, { align: 'right' });
+                }
+            });
+            resumePdfBlob = doc.output('blob');
+            resumePdfFileName = `ResumeSaldoRekening_${stamp}.pdf`;
+            if (resumePdfObjectUrl) URL.revokeObjectURL(resumePdfObjectUrl);
+            resumePdfObjectUrl = URL.createObjectURL(resumePdfBlob);
+            document.getElementById('resumePdfPreviewFrame').src = resumePdfObjectUrl;
+            resumePreviewModal.classList.remove('hidden');
+        });
+        document.getElementById('btnSaveResumePdf').addEventListener('click', function() {
+            if (!resumePdfBlob || !resumePdfFileName) { alert('Buat preview PDF terlebih dahulu.'); return; }
+            const url = URL.createObjectURL(resumePdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = resumePdfFileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        });
+        function closeResumePdfPreview() {
+            resumePreviewModal.classList.add('hidden');
+            document.getElementById('resumePdfPreviewFrame').src = 'about:blank';
+            if (resumePdfObjectUrl) { URL.revokeObjectURL(resumePdfObjectUrl); resumePdfObjectUrl = null; }
+        }
+        document.getElementById('btnCloseResumePdfPreview').addEventListener('click', closeResumePdfPreview);
+        resumePreviewModal.addEventListener('click', function(e) { if (e.target === resumePreviewModal) closeResumePdfPreview(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && !resumePreviewModal.classList.contains('hidden')) closeResumePdfPreview(); });
+        renderResumeTable();
+
+        // Minimalkan/perluas blok Resume Saldo Rekening tanpa menghapus data.
+        const btnToggleResumePanel = document.getElementById('btnToggleResumePanel');
+        const resumePanelContent = document.getElementById('resumePanelContent');
+        const resumePanelChevron = document.getElementById('resumePanelChevron');
+        btnToggleResumePanel.addEventListener('click', function() {
+            const isExpanded = btnToggleResumePanel.getAttribute('aria-expanded') === 'true';
+            btnToggleResumePanel.setAttribute('aria-expanded', String(!isExpanded));
+            resumePanelContent.classList.toggle('hidden', isExpanded);
+            resumePanelChevron.style.transform = isExpanded ? 'rotate(-90deg)' : 'rotate(0deg)';
+            btnToggleResumePanel.title = isExpanded ? 'Tampilkan blok Resume Saldo Rekening' : 'Minimalkan blok Resume Saldo Rekening';
+            btnToggleResumePanel.setAttribute('aria-label', btnToggleResumePanel.title);
+        });
 
     </script>
 </body>
