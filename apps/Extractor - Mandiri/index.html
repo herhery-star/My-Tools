@@ -33,7 +33,8 @@
             0% { background-color: rgba(34, 197, 94, 0.4); }
             100% { background-color: transparent; }
         }
-    </style>
+    .resume-edit{border:1px solid #cbd5e1;border-radius:6px;padding:6px;background:#fff;max-width:100%;font-size:12px;color:#1e293b}.resume-edit:focus{outline:2px solid #0284c7;border-color:transparent}
+        </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
@@ -66,7 +67,7 @@
 
         <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
             <div class="flex flex-wrap items-center gap-3">
-                <input type="file" id="pdfInput" accept=".pdf,.zip" class="hidden" />
+                <input type="file" id="pdfInput" accept=".pdf,.zip" multiple class="hidden" />
                 <label for="pdfInput" id="uploadBtnLabel" class="theme-transition bg-sky-700 hover:bg-sky-800 text-white px-5 py-2.5 rounded-lg font-bold text-xs md:text-sm cursor-pointer shadow-sm flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                     Pilih Dokumen PDF / ZIP Mandiri
@@ -111,6 +112,37 @@
                 </div>
             </div>
         </div>
+
+        <section id="resumePanel" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between gap-3 px-4 py-3 bg-slate-100 border-b border-slate-200">
+                <div>
+                    <h2 class="font-black text-base md:text-lg text-slate-800">RESUME REKENING</h2>
+                    <p class="text-xs md:text-sm text-slate-500">Ringkasan setiap rekening dari seluruh dokumen yang diunggah</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnResumePdf" disabled class="bg-slate-200 text-slate-400 font-bold text-xs md:text-sm px-3 py-2 rounded-lg cursor-not-allowed">Cetak Resume PDF</button>
+                    <button id="btnToggleResume" aria-expanded="true" class="border border-slate-300 bg-white hover:bg-slate-50 rounded-lg px-3 py-2 text-sm font-bold text-slate-700">Minimalkan −</button>
+                </div>
+            </div>
+            <div id="resumeContent" class="p-3 md:p-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm md:text-base border-collapse">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr>
+                                <th class="text-left p-3 border-b">Nama Rekening</th>
+                                <th class="text-right p-3 border-b">Saldo Awal</th>
+                                <th class="text-right p-3 border-b">Total Debet</th>
+                                <th class="text-right p-3 border-b">Total Kredit</th>
+                                <th class="text-right p-3 border-b">Saldo Akhir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resumeTableBody">
+                            <tr><td colspan="5" class="p-5 text-center text-slate-400">Unggah satu atau beberapa rekening koran untuk membuat resume.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
             <h2 id="sectionLargeTitle" class="text-2xl md:text-3xl font-black text-slate-900 tracking-wide uppercase">REKENING KORAN</h2>
@@ -236,6 +268,8 @@
             let generatedPdfBlobUrl = null;
             let generatedPdfName = '';
             let originalPdfBlobUrl = null;
+            let loadedAccountFiles = [];
+            let resumeRows = [];
 
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
@@ -398,6 +432,10 @@
                 });
 
                 document.getElementById('pdfInput').addEventListener('change', handleFileChoose);
+
+                // Resume panel controls: explicitly bind both buttons during initialization.
+                document.getElementById('btnToggleResume').addEventListener('click', toggleResumePanel);
+                document.getElementById('btnResumePdf').addEventListener('click', exportResumePdf);
                 
                 document.getElementById('inputSaldoAwal').addEventListener('input', function() {
                     pushToHistoryStack();
@@ -487,6 +525,7 @@
                 document.getElementById('displayTitle').innerText = newTheme.name + " (Mandiri)";
                 updateUIStyles();
                 updateTitleSection();
+                renderResume();
             }
 
             function updateUIStyles() {
@@ -566,79 +605,249 @@
                 });
             }
 
-            function handleFileChoose(e) {
-                const file = e.target.files[0];
-                if (!file) return;
+            function toggleResumePanel() {
+                const content = document.getElementById('resumeContent');
+                const btn = document.getElementById('btnToggleResume');
+                const willHide = !content.classList.contains('hidden');
+                content.classList.toggle('hidden', willHide);
+                btn.innerText = willHide ? 'Tampilkan +' : 'Minimalkan −';
+                btn.setAttribute('aria-expanded', String(!willHide));
+            }
 
-                if (file.name.includes("1520036668073")) {
-                    switchTheme("labakkang");
-                } else if (file.name.includes("1520036667943")) {
-                    switchTheme("pangkajene");
+            function extractAccountMetadata(text, fileName) {
+                const normalized = String(text || '').replace(/\s+/g, ' ').trim();
+                let accountNumber = '';
+                let accountName = '';
+                // Support labels as well as common Mandiri statement summary ordering.
+                const numberPatterns = [
+                    /(?:Account\s*No\.?|Account\s*Number|A\/C\s*(?:No\.?|Number)?|No\.?\s*Rekening|Nomor\s*Rekening|Rekening)\s*[:#-]?\s*([0-9][0-9 -]{5,24})/i,
+                    /Account Statement Summary.{0,180}?([0-9][0-9 -]{8,22})/i
+                ];
+                for (const pattern of numberPatterns) {
+                    const m = normalized.match(pattern);
+                    if (m) { const candidate = m[1].replace(/[ -]/g, ''); if (candidate.length >= 8) { accountNumber = candidate; break; } }
                 }
-
-                if (originalPdfBlobUrl) {
-                    URL.revokeObjectURL(originalPdfBlobUrl);
-                    originalPdfBlobUrl = null;
+                const namePatterns = [
+                    /(?:Account\s*Name|Customer\s*Name|Nama\s*(?:Nasabah|Rekening|Pemilik))\s*[:#-]?\s*([A-Z][A-Z0-9 .,&'-]{2,80}?)(?=\s+(?:Alias|Period|Currency|Branch|Opening|Closing|No\. of|Total Amount|Account No)\b|$)/i,
+                    /Account Statement Summary.{0,240}?Account Name\s+(.{3,80}?)(?=\s+Alias\b)/i
+                ];
+                for (const pattern of namePatterns) {
+                    const m = normalized.match(pattern);
+                    if (m) { accountName = m[1].replace(/\bAlias\b/gi, '').trim().replace(/\s{2,}/g, ' '); break; }
                 }
-                originalPdfBlobUrl = URL.createObjectURL(file);
-                document.getElementById('fileName').innerText = file.name;
-                
-                logError([]);
-                updateProgress(true, "Membaca struktur berkas...", 10);
+                return { accountNumber: accountNumber || 'Tidak terdeteksi', accountName: accountName || 'Tidak terdeteksi', fileName };
+            }
 
-                const lowerName = file.name.toLowerCase();
-                if (lowerName.endsWith('.zip')) {
-                    const reader = new FileReader();
-                    reader.onload = function() {
-                        JSZip.loadAsync(this.result).then(async function(zip) {
-                            let pdfFiles = [];
-                            zip.forEach((relativePath, zipEntry) => {
-                                if (!zipEntry.dir && relativePath.toLowerCase().endsWith('.pdf')) {
-                                    pdfFiles.push(zipEntry);
-                                }
-                            });
+            function normalizeAccountName(value) {
+                let name = String(value || '').replace(/\bAlias\b/gi, '').replace(/\s+/g, ' ').trim();
+                // Remove repeated adjacent words/phrases caused by PDF text extraction.
+                const words = name.split(' ');
+                for (let n = Math.floor(words.length / 2); n >= 1; n--) {
+                    let changed = true;
+                    while (changed && words.length >= n * 2) {
+                        changed = false;
+                        const a = words.slice(-n).join(' ').toLocaleUpperCase('id-ID');
+                        const b = words.slice(-2*n, -n).join(' ').toLocaleUpperCase('id-ID');
+                        if (a === b) { words.splice(-n, n); changed = true; }
+                    }
+                }
+                name = words.join(' ').replace(/\s+/g, ' ').trim();
+                const acct = String(arguments[1] || '').replace(/\D/g, '');
+                if (acct === '1520036667943') return 'ABAD JAYA SEJAHTERA';
+                if (acct === '1520036668073') return 'FAYZUL HAQ MANDIRI';
+                return name;
+            }
 
-                            if (pdfFiles.length === 0) {
-                                updateProgress(false);
-                                logError(["Format ZIP tidak valid: tidak ditemukan berkas berekstensi .pdf di dalamnya."]);
-                                return;
-                            }
+            function renderResume() {
+                const tbody = document.getElementById('resumeTableBody');
+                const btn = document.getElementById('btnResumePdf');
+                if (!resumeRows.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-5 text-center text-slate-400">Unggah satu atau beberapa rekening koran untuk membuat resume.</td></tr>';
+                    btn.disabled = true;
+                    btn.className = 'bg-slate-200 text-slate-400 font-bold text-xs md:text-sm px-3 py-2 rounded-lg cursor-not-allowed';
+                    return;
+                }
+                tbody.innerHTML = resumeRows.map((r,i) => `<tr class="border-b border-slate-100"><td class="p-2"><input aria-label="Nama rekening baris ${i+1}" class="resume-edit w-44 font-semibold" value="${escapeHtml(normalizeAccountName(r.accountName, r.accountNumber))}" onchange="updateResumeField(${i},'accountName',this.value)" /></td><td class="p-2"><input aria-label="Saldo awal baris ${i+1}" class="resume-edit w-32 text-right font-mono" value="${formatRupiah(r.openingBalance)}" onchange="updateResumeField(${i},'openingBalance',this.value)" /></td><td class="p-3 text-right font-mono whitespace-nowrap">${formatRupiah(r.totalDebet)}</td><td class="p-3 text-right font-mono whitespace-nowrap">${formatRupiah(r.totalKredit)}</td><td class="p-3 text-right font-mono font-bold whitespace-nowrap">${formatRupiah(r.saldoAkhir)}</td></tr>`).join('');
+                btn.disabled = false;
+                btn.className = `theme-transition ${themes[currentTheme].activeBtn} text-white font-bold text-xs md:text-sm px-3 py-2 rounded-lg shadow-sm`;
+            }
 
-                            let combinedRows = [];
-                            let globalValidationLogs = [];
-                            let finalOpeningBalance = null;
+            function escapeHtml(value) {
+                return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            }
 
-                            for (let idx = 0; idx < pdfFiles.length; idx++) {
-                                const fileEntry = pdfFiles[idx];
-                                updateProgress(true, `Mengekstrak dan parsing berkas [${idx+1}/${pdfFiles.length}]: ${fileEntry.name}`, 20 + ((idx / pdfFiles.length) * 60));
-                                const blob = await fileEntry.async('blob');
-                                try {
-                                    const res = await processSinglePdfBlob(blob, fileEntry.name);
-                                    if (finalOpeningBalance === null) finalOpeningBalance = res.openingBalance;
-                                    combinedRows = combinedRows.concat(res.rows);
-                                    globalValidationLogs = globalValidationLogs.concat(res.validationLogs);
-                                } catch (err) {
-                                    globalValidationLogs.push(`Gagal memproses ${fileEntry.name}: ${err.message}`);
-                                }
-                            }
+            function buildResumeRows(accountFiles) {
+                const grouped = new Map();
+                for (const item of accountFiles) {
+                    const key = item.accountNumber && item.accountNumber !== 'Tidak terdeteksi'
+                        ? `rekening:${item.accountNumber}`
+                        : `file:${item.fileName}`;
+                    if (!grouped.has(key)) {
+                        grouped.set(key, { ...item, openingBalance: Number(item.openingBalance || 0), totalDebet: 0, totalKredit: 0, saldoAkhir: Number(item.openingBalance || 0) });
+                    }
+                    const acc = grouped.get(key);
+                    acc.totalDebet += Number(item.totalDebet || 0);
+                    acc.totalKredit += Number(item.totalKredit || 0);
+                    acc.saldoAkhir = Number(acc.openingBalance || 0) - acc.totalDebet + acc.totalKredit;
+                    if (acc.accountName === 'Tidak terdeteksi' && item.accountName !== 'Tidak terdeteksi') acc.accountName = item.accountName;
+                }
+                resumeRows = Array.from(grouped.values());
+                renderResume();
+            }
 
-                            finalizeLoadedData(combinedRows, finalOpeningBalance, globalValidationLogs);
-                        }).catch(err => {
-                            updateProgress(false);
-                            logError([`Gagal memproses arsip ZIP: ${err.message}`]);
-                        });
-                    };
-                    reader.readAsArrayBuffer(file);
-                } else if (lowerName.endsWith('.pdf')) {
-                    processSinglePdfBlob(file, file.name).then(res => {
-                        finalizeLoadedData(res.rows, res.openingBalance, res.validationLogs);
-                    }).catch(err => {
-                        updateProgress(false);
-                        logError([`Gagal memproses PDF: ${err.message}`]);
-                    });
+            function updateResumeField(index, field, value) {
+                const row = resumeRows[index]; if (!row) return;
+                if (field === 'openingBalance') {
+                    row.openingBalance = parseRupiahStr(String(value));
+                    row.saldoAkhir = row.openingBalance - Number(row.totalDebet || 0) + Number(row.totalKredit || 0);
                 } else {
+                    row[field] = String(value || '').trim() || 'Tidak terdeteksi';
+                }
+                // Keep the edited identity/balance in the loaded source records so rerender/export uses it.
+                loadedAccountFiles.forEach(item => {
+                    const same = (row.accountNumber !== 'Tidak terdeteksi' && item.accountNumber === row.accountNumber) || item.fileName === row.fileName;
+                    if (same) { item.accountNumber = row.accountNumber; item.accountName = row.accountName; item.openingBalance = row.openingBalance; }
+                });
+                renderResume();
+            }
+
+            function exportResumePdf() {
+                if (!resumeRows.length) return;
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+                const pageW = 210, pageH = 297, margin = 12;
+                // Neutral grey gradient header
+                const gradStart = [55, 65, 81], gradEnd = [156, 163, 175], bands = 120;
+                for (let i = 0; i < bands; i++) {
+                    const t = i / (bands - 1);
+                    const c = gradStart.map((v, k) => Math.round(v + (gradEnd[k] - v) * t));
+                    doc.setFillColor(c[0], c[1], c[2]);
+                    doc.rect(i * pageW / bands, 0, pageW / bands + 0.15, 36, 'F');
+                }
+                doc.setFont('Helvetica', 'bold'); doc.setTextColor(255,255,255); doc.setFontSize(17);
+                doc.text('RESUME REKENING KORAN', margin, 15);
+                doc.setFont('Helvetica','normal'); doc.setFontSize(9); doc.setTextColor(245,245,245);
+                doc.text('BANK MANDIRI  |  SPBU Pangkajene & Labakkang', margin, 23);
+                doc.text(`Tanggal: ${today}`, margin, 30);
+                const sums = {
+                    opening: resumeRows.reduce((s,r)=>s+Number(r.openingBalance||0),0),
+                    debet: resumeRows.reduce((s,r)=>s+Number(r.totalDebet||0),0),
+                    kredit: resumeRows.reduce((s,r)=>s+Number(r.totalKredit||0),0),
+                    ending: resumeRows.reduce((s,r)=>s+Number(r.saldoAkhir||0),0)
+                };
+                const money = v => `Rp ${formatRupiah(v)}`;
+                // Portrait table: all labels and monetary values share fixed columns.
+                const x0 = margin, tableW = pageW - margin * 2;
+                const cols = [72, 29, 29, 29, 27]; // account name + four right-aligned amounts
+                const xs = [x0]; for (let i = 0; i < cols.length; i++) xs.push(xs[i] + cols[i]);
+                let y = 44;
+                const drawTableHeader = () => {
+                    doc.setFillColor(75, 85, 99); doc.roundedRect(x0, y, tableW, 10, 1.5, 1.5, 'F');
+                    doc.setFont('Helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
+                    const heads = ['Nama Rekening','Saldo Awal','Total Debet','Total Kredit','Saldo Akhir'];
+                    heads.forEach((h,i) => {
+                        if (i === 0) doc.text(h, xs[i]+3, y+6.5);
+                        else doc.text(h, xs[i+1]-2, y+6.5, {align:'right'});
+                    });
+                    y += 10;
+                };
+                drawTableHeader();
+                resumeRows.forEach((r, idx) => {
+                    if (y + 9 > pageH - 17) { doc.addPage('a4','portrait'); y = 16; drawTableHeader(); }
+                    doc.setFillColor(idx % 2 ? 255 : 243, idx % 2 ? 255 : 244, idx % 2 ? 255 : 246);
+                    doc.setDrawColor(209,213,219); doc.setLineWidth(0.25);
+                    doc.rect(x0, y, tableW, 9, 'FD');
+                    for (let i=1;i<xs.length-1;i++) doc.line(xs[i],y,xs[i],y+9);
+                    const name = normalizeAccountName(r.accountName, r.accountNumber) || 'Nama rekening tidak terdeteksi';
+                    doc.setFont('Helvetica','normal'); doc.setFontSize(7.3); doc.setTextColor(31,41,55);
+                    doc.text(doc.splitTextToSize(name, cols[0]-5).slice(0,1), xs[0]+2.5, y+5.8);
+                    const vals = [r.openingBalance,r.totalDebet,r.totalKredit,r.saldoAkhir];
+                    vals.forEach((v,j)=>{
+                        const colIndex=j+1;
+                        doc.setFont('Helvetica', j===3?'bold':'normal'); doc.setFontSize(6.8); doc.setTextColor(31,41,55);
+                        doc.text(money(v), xs[colIndex+1]-2, y+5.8, {align:'right', maxWidth:cols[colIndex]-3});
+                    });
+                    y += 9;
+                });
+                if (y + 18 > pageH - 10) { doc.addPage('a4','portrait'); y = 16; }
+                // Total row aligns exactly with the same table columns.
+                doc.setFillColor(209,213,219); doc.setDrawColor(156,163,175); doc.rect(x0,y,tableW,12,'FD');
+                for (let i=1;i<xs.length-1;i++) doc.line(xs[i],y,xs[i],y+12);
+                doc.setFont('Helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(31,41,55);
+                doc.text('TOTAL',xs[0]+3,y+7.5);
+                [sums.opening,sums.debet,sums.kredit,sums.ending].forEach((v,j)=>{
+                    const colIndex=j+1; doc.setFontSize(6.8);
+                    doc.text(money(v),xs[colIndex+1]-2,y+7.5,{align:'right',maxWidth:cols[colIndex]-3});
+                });
+                const blob = doc.output('blob');
+                if (generatedPdfBlobUrl) URL.revokeObjectURL(generatedPdfBlobUrl);
+                generatedPdfBlobUrl = URL.createObjectURL(blob);
+                generatedPdfName = `resume_rekening_koran_mandiri_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.pdf`;
+                document.getElementById('pdfModalFileName').innerText = generatedPdfName;
+                document.getElementById('pdfPreviewFrame').src = generatedPdfBlobUrl;
+                document.getElementById('pdfModal').classList.remove('hidden');
+            }
+
+            async function handleFileChoose(e) {
+                const files = Array.from(e.target.files || []);
+                if (!files.length) return;
+                loadedAccountFiles = [];
+                let allRows = [];
+                let allLogs = [];
+                let openingBalance = null;
+                let displayNames = [];
+                if (originalPdfBlobUrl) { URL.revokeObjectURL(originalPdfBlobUrl); originalPdfBlobUrl = null; }
+                originalPdfBlobUrl = URL.createObjectURL(files[0]);
+
+                try {
+                    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+                        const file = files[fileIndex];
+                        displayNames.push(file.name);
+                        if (file.name.includes("1520036668073")) switchTheme("labakkang");
+                        else if (file.name.includes("1520036667943")) switchTheme("pangkajene");
+                        const lowerName = file.name.toLowerCase();
+                        if (lowerName.endsWith('.zip')) {
+                            updateProgress(true, `Membaca arsip ${fileIndex + 1}/${files.length}: ${file.name}`, 10 + (fileIndex/files.length)*70);
+                            const zip = await JSZip.loadAsync(file);
+                            const pdfFiles = [];
+                            zip.forEach((relativePath, entry) => {
+                                if (!entry.dir && relativePath.toLowerCase().endsWith('.pdf')) pdfFiles.push(entry);
+                            });
+                            if (!pdfFiles.length) { allLogs.push(`Tidak ditemukan PDF di dalam ${file.name}`); continue; }
+                            for (let j = 0; j < pdfFiles.length; j++) {
+                                const entry = pdfFiles[j];
+                                updateProgress(true, `Memproses ${entry.name} (${j+1}/${pdfFiles.length})`, 20 + (j/pdfFiles.length)*60);
+                                try {
+                                    const result = await processSinglePdfBlob(await entry.async('blob'), entry.name);
+                                    if (openingBalance === null) openingBalance = result.openingBalance;
+                                    allRows.push(...result.rows);
+                                    allLogs.push(...result.validationLogs);
+                                    loadedAccountFiles.push({ ...result.account, fileName: entry.name, openingBalance: result.openingBalance,
+                                        totalDebet: result.rows.reduce((a,r)=>a+r.debet,0), totalKredit: result.rows.reduce((a,r)=>a+r.kredit,0), closingBalance: Number(result.rows[result.rows.length-1]?.saldo || 0) });
+                                } catch (err) { allLogs.push(`Gagal memproses ${entry.name}: ${err.message}`); }
+                            }
+                        } else if (lowerName.endsWith('.pdf')) {
+                            updateProgress(true, `Memproses PDF ${fileIndex + 1}/${files.length}: ${file.name}`, 20 + (fileIndex/files.length)*60);
+                            const result = await processSinglePdfBlob(file, file.name);
+                            if (openingBalance === null) openingBalance = result.openingBalance;
+                            allRows.push(...result.rows);
+                            allLogs.push(...result.validationLogs);
+                            loadedAccountFiles.push({ ...result.account, fileName: file.name, openingBalance: result.openingBalance,
+                                totalDebet: result.rows.reduce((a,r)=>a+r.debet,0), totalKredit: result.rows.reduce((a,r)=>a+r.kredit,0), closingBalance: Number(result.rows[result.rows.length-1]?.saldo || 0) });
+                        } else {
+                            allLogs.push(`Tipe berkas ditolak: ${file.name}. Hanya PDF atau ZIP.`);
+                        }
+                    }
+                    document.getElementById('fileName').innerText = displayNames.join(', ');
+                    if (allRows.length) finalizeLoadedData(allRows, openingBalance || 0, allLogs);
+                    else { updateProgress(false); logError(allLogs.length ? allLogs : ['Tidak ada transaksi yang berhasil diekstrak.']); }
+                    buildResumeRows(loadedAccountFiles);
+                } catch (err) {
                     updateProgress(false);
-                    logError(["Tipe berkas ditolak! Hanya menerima ekstensi .pdf atau .zip"]);
+                    logError([`Gagal memproses dokumen: ${err.message}`]);
+                } finally {
+                    e.target.value = '';
                 }
             }
 
@@ -836,10 +1045,13 @@
                                 return reject(new Error(`Gagal mengekstrak baris terstruktur. Koordinat data tidak cocok dengan standard template Mandiri.`));
                             }
 
+                            const allText = extractedRawItems.map(i => i.text).join(' ');
+                            const account = extractAccountMetadata(allText, srcFileName);
                             resolve({
                                 rows: finalParsedRows,
                                 openingBalance: openingBalanceValue,
-                                validationLogs: validationLogs
+                                validationLogs: validationLogs,
+                                account
                             });
 
                         }).catch(reject);
@@ -1272,14 +1484,14 @@
                     body: bodyData,
                     theme: 'striped',
                     headStyles: { fillColor: [3, 105, 161], fontSize: 9, fontStyle: 'bold' },
-                    bodyStyles: { fontSize: 8, textColor: [51, 65, 85] },
+                    bodyStyles: { fontSize: 7, textColor: [51, 65, 85] },
                     columnStyles: {
                         0: { cellWidth: 10, halign: 'center' },
                         1: { cellWidth: 25 },
                         2: { cellWidth: 75 },
-                        3: { cellWidth: 26, halign: 'right' },
-                        4: { cellWidth: 26, halign: 'right' },
-                        5: { cellWidth: 28, halign: 'right' }
+                        3: { cellWidth: 26, halign: 'right', fontSize: 7, overflow: 'ellipsize' },
+                        4: { cellWidth: 26, halign: 'right', fontSize: 7, overflow: 'ellipsize' },
+                        5: { cellWidth: 28, halign: 'right', fontSize: 7, overflow: 'ellipsize' }
                     },
                     styles: { overflow: 'linebreak', cellPadding: 2.5 }
                 });
