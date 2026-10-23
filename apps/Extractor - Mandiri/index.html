@@ -34,6 +34,20 @@
             100% { background-color: transparent; }
         }
     .resume-edit{border:1px solid #cbd5e1;border-radius:6px;padding:6px;background:#fff;max-width:100%;font-size:12px;color:#1e293b}.resume-edit:focus{outline:2px solid #0284c7;border-color:transparent}
+    #mobileTransactionCards{display:none}
+    .mobile-transaction-card{background:#fff;border:1px solid #dbe3ee;border-radius:14px;padding:13px;box-shadow:0 2px 7px rgba(15,23,42,.05);}
+    .mobile-transaction-card .mobile-description{white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;line-height:1.45;min-height:2.5rem;}
+    .mobile-money-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+    .mobile-money-cell{border-radius:10px;padding:9px 10px;background:#f8fafc;border:1px solid #e2e8f0;min-width:0}
+    .mobile-money-value{font-size:13px;font-weight:750;overflow-wrap:anywhere;line-height:1.35;font-variant-numeric:tabular-nums}
+    @media(max-width:767px){
+      .desktop-transaction-table{display:none!important}
+      #mobileTransactionCards{display:block}
+      .mobile-transaction-card{padding:12px}
+      .mobile-money-grid{gap:7px}
+      .mobile-money-cell{padding:8px}
+      .mobile-money-value{font-size:12px}
+    }
         </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
@@ -82,53 +96,39 @@
                 <button id="btnPdf" disabled class="bg-slate-200 text-slate-400 font-bold text-xs md:text-sm px-4 py-2.5 rounded-lg cursor-not-allowed flex items-center gap-2 transition-all shadow-sm">
                     Cetak PDF Plain
                 </button>
+                <button id="btnResetData" type="button" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs md:text-sm px-4 py-2.5 rounded-lg flex items-center gap-2 transition-all shadow-sm" title="Hapus semua data dan hasil edit yang tersimpan di browser">
+                    Reset Data
+                </button>
             </div>
         </div>
 
+        <section id="accountOverviewPanel" class="bg-slate-100 rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                <div>
+                    <h2 class="font-black text-sm md:text-base text-slate-800">DAFTAR FILE &amp; RESUME REKENING</h2>
+                    <p class="text-xs text-slate-500">Sembunyikan atau tampilkan daftar file dan ringkasan rekening.</p>
+                </div>
+                <button type="button" id="btnToggleAccountOverview" aria-expanded="true" class="border border-slate-300 bg-white hover:bg-slate-50 rounded-lg px-3 py-2 text-sm font-bold text-slate-700">Sembunyikan −</button>
+            </div>
+            <div id="accountOverviewContent" class="space-y-4 px-0 pb-4">
         <section id="sourceFilesPanel" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-100 border-b border-slate-200">
                 <div><h2 class="font-black text-sm md:text-base text-slate-800">DAFTAR FILE REKENING KORAN</h2><p class="text-xs text-slate-500">Pilih file secara terpisah untuk Resume dan tampilan Rekening Koran.</p></div>
                 <div class="flex flex-wrap gap-2">
-                    <button type="button" onclick="selectAllSourceFiles('resume',true)" class="px-3 py-1.5 rounded-md bg-slate-700 text-white text-xs font-bold">Pilih Semua Resume</button>
-                    <button type="button" onclick="selectAllSourceFiles('resume',false)" class="px-3 py-1.5 rounded-md border text-xs font-bold">Kosongkan Resume</button>
-                    <button type="button" onclick="selectAllSourceFiles('statement',true)" class="px-3 py-1.5 rounded-md bg-sky-700 text-white text-xs font-bold">Pilih Semua Rekening Koran</button>
-                    <button type="button" onclick="selectAllSourceFiles('statement',false)" class="px-3 py-1.5 rounded-md border text-xs font-bold">Kosongkan Rekening Koran</button>
+                    <button type="button" data-source-action="all-resume" class="px-3 py-1.5 rounded-md bg-slate-700 text-white text-xs font-bold">Pilih Semua Resume</button>
+                    <button type="button" data-source-action="none-resume" class="px-3 py-1.5 rounded-md border text-xs font-bold">Kosongkan Resume</button>
+                    <button type="button" data-source-action="all-statement" class="px-3 py-1.5 rounded-md bg-sky-700 text-white text-xs font-bold">Pilih Semua Rekening Koran</button>
+                    <button type="button" data-source-action="none-statement" class="px-3 py-1.5 rounded-md border text-xs font-bold">Kosongkan Rekening Koran</button>
                 </div>
             </div>
             <div class="p-3">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs text-slate-500"><span id="sourceFileCount">Belum ada file yang diproses.</span><input id="sourceFileSearch" type="search" placeholder="Cari nama file / rekening..." class="border border-slate-300 rounded-lg px-3 py-2 text-xs w-full sm:w-72" /></div>
-                <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-50 text-slate-600"><tr><th class="p-2 text-left">Nama File / Rekening</th><th class="p-2 text-left">Nomor Rekening</th><th class="p-2 text-center">Resume</th><th class="p-2 text-center">Rekening Koran</th><th class="p-2 text-center">Transaksi</th><th class="p-2 text-center">Aksi</th></tr></thead><tbody id="sourceFilesTableBody"><tr><td colspan="6" class="p-4 text-center text-slate-400">File yang diproses akan tampil di sini.</td></tr></tbody></table></div>
+                <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-50 text-slate-600"><tr><th class="p-2 text-left">Nama File / Rekening</th><th class="p-2 text-center">Resume</th><th class="p-2 text-center">Rekening Koran</th><th class="p-2 text-center">Transaksi</th><th class="p-2 text-center">Aksi</th></tr></thead><tbody id="sourceFilesTableBody"><tr><td colspan="5" class="p-4 text-center text-slate-400">File yang diproses akan tampil di sini.</td></tr></tbody></table></div>
                 <p class="text-[11px] text-slate-400 mt-2">Daftar dan hasil ekstraksi disimpan di browser ini. File PDF asli tidak disimpan; unggah ulang jika perlu membuka dokumen aslinya.</p>
             </div>
         </section>
 
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div class="space-y-1">
-                <label for="filterUraian" class="block text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-wider">Satukan Data yang serupa</label>
-                <div class="relative">
-                    <input type="text" id="filterUraian" placeholder="Ketik kata kunci untuk mengelompokkan (misal: Pertamax, BI-FAST, Cash)..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white font-medium" />
-                    <button id="clearFilterBtn" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold">Clear</button>
-                </div>
-            </div>
 
-            <!-- FILTER TANGGAL -->
-            <div class="space-y-1">
-                <label class="block text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-wider">Filter Berdasarkan Tanggal</label>
-                <div class="flex items-center gap-2">
-                    <input type="date" id="filterStartDate" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-600 text-slate-700 w-full" />
-                    <span class="text-xs font-bold text-slate-400">s/d</span>
-                    <input type="date" id="filterEndDate" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-600 text-slate-700 w-full" />
-                    <button id="clearDateBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold text-[10px] px-2 py-1.5 rounded-lg transition-all" title="Reset Filter Tanggal">Reset</button>
-                </div>
-            </div>
-
-            <div class="flex md:justify-end items-center gap-4 pt-2 md:pt-0">
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="toggleColumnTanggal" checked class="w-4 h-4 text-sky-600 border-slate-300 rounded focus:ring-sky-500 cursor-pointer" />
-                    <label for="toggleColumnTanggal" class="text-[10px] md:text-xs font-bold text-slate-600 uppercase tracking-wide cursor-pointer select-none">Tampilkan Kolom Tanggal</label>
-                </div>
-            </div>
-        </div>
 
         <section id="resumePanel" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="flex items-center justify-between gap-3 px-4 py-3 bg-slate-100 border-b border-slate-200">
@@ -161,6 +161,38 @@
             </div>
         </section>
 
+            </div>
+        </section>
+
+        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div class="space-y-1">
+                <label for="filterUraian" class="block text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-wider">Satukan Data yang serupa</label>
+                <div class="relative">
+                    <input type="text" id="filterUraian" placeholder="Ketik kata kunci untuk mengelompokkan (misal: Pertamax, BI-FAST, Cash)..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white font-medium" />
+                    <button id="clearFilterBtn" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold">Clear</button>
+                </div>
+            </div>
+
+            <!-- FILTER TANGGAL -->
+            <div class="space-y-1">
+                <label class="block text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-wider">Filter Berdasarkan Tanggal</label>
+                <div class="flex items-center gap-2">
+                    <input type="date" id="filterStartDate" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-600 text-slate-700 w-full" />
+                    <span class="text-xs font-bold text-slate-400">s/d</span>
+                    <input type="date" id="filterEndDate" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-600 text-slate-700 w-full" />
+                    <button id="clearDateBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold text-[10px] px-2 py-1.5 rounded-lg transition-all" title="Reset Filter Tanggal">Reset</button>
+                </div>
+                <p class="text-[10px] text-slate-400">Untuk mengedit atau menggabungkan per hari, pilih tanggal yang sama pada kedua kotak. Penggabungan lintas tanggal akan ditolak.</p>
+            </div>
+
+            <div class="flex md:justify-end items-center gap-4 pt-2 md:pt-0">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="toggleColumnTanggal" checked class="w-4 h-4 text-sky-600 border-slate-300 rounded focus:ring-sky-500 cursor-pointer" />
+                    <label for="toggleColumnTanggal" class="text-[10px] md:text-xs font-bold text-slate-600 uppercase tracking-wide cursor-pointer select-none">Tampilkan Kolom Tanggal</label>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
             <h2 id="sectionLargeTitle" class="text-2xl md:text-3xl font-black text-slate-900 tracking-wide uppercase">REKENING KORAN</h2>
             <p id="sectionDateRange" class="text-xs font-semibold text-slate-500 mt-1 italic">Periode Tanggal: -</p>
@@ -170,21 +202,21 @@
             <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                 <div class="text-[9px] md:text-[10px] text-slate-400 uppercase font-black tracking-widest">Saldo Awal (Opening Balance)</div>
                 <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs font-bold text-slate-400">Rp</span>
+                    <span class="text-xs font-bold text-slate-400">Rp.</span>
                     <input type="text" id="inputSaldoAwal" value="0,00" class="w-full text-xs md:text-sm font-black text-slate-900 focus:outline-none focus:border-b-2 focus:border-sky-600 font-mono bg-transparent" />
                 </div>
             </div>
             <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm bg-rose-50/20">
                 <div class="text-[9px] md:text-[10px] text-rose-600 uppercase font-black tracking-widest">Total Debet (-)</div>
-                <div class="text-xs md:text-sm font-black text-rose-700 mt-1 font-mono">Rp <span id="summaryDebet">0,00</span></div>
+                <div class="text-xs md:text-sm font-black text-rose-700 mt-1 font-mono">Rp. <span id="summaryDebet">0,00</span></div>
             </div>
             <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm bg-emerald-50/20">
                 <div class="text-[9px] md:text-[10px] text-emerald-600 uppercase font-black tracking-widest">Total Kredit (+)</div>
-                <div class="text-xs md:text-sm font-black text-emerald-700 mt-1 font-mono">Rp <span id="summaryKredit">0,00</span></div>
+                <div class="text-xs md:text-sm font-black text-emerald-700 mt-1 font-mono">Rp. <span id="summaryKredit">0,00</span></div>
             </div>
             <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm bg-blue-50/20">
                 <div class="text-[9px] md:text-[10px] text-blue-600 uppercase font-black tracking-widest">Saldo Akhir</div>
-                <div class="text-xs md:text-sm font-black text-blue-700 mt-1 font-mono">Rp <span id="summaryAkhir">0,00</span></div>
+                <div class="text-xs md:text-sm font-black text-blue-700 mt-1 font-mono">Rp. <span id="summaryAkhir">0,00</span></div>
             </div>
         </div>
 
@@ -204,7 +236,8 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
+            <div id="mobileTransactionCards" class="p-3 space-y-3" aria-label="Daftar transaksi tampilan ponsel"></div>
+            <div class="desktop-transaction-table overflow-x-auto">
                 <table class="w-full data-table border-collapse text-left">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-300 text-slate-600 select-none">
@@ -451,9 +484,31 @@
 
                 document.getElementById('pdfInput').addEventListener('change', handleFileChoose);
                 document.getElementById('sourceFileSearch').addEventListener('input', renderSourceFiles);
+                document.getElementById('sourceFilesPanel').addEventListener('change', function(e) {
+                    const input = e.target.closest('[data-source-file-id]');
+                    if (!input) return;
+                    toggleSourceFile(input.dataset.sourceFileId, input.dataset.sourceMode, input.checked);
+                });
+                document.getElementById('sourceFilesPanel').addEventListener('click', function(e) {
+                    const action = e.target.closest('[data-source-action]');
+                    if (action) {
+                        const value = action.dataset.sourceAction;
+                        selectAllSourceFiles(value.endsWith('resume') ? 'resume' : 'statement', value.startsWith('all-'));
+                        return;
+                    }
+                    const remove = e.target.closest('[data-remove-source-file]');
+                    if (remove) removeSourceFile(remove.dataset.removeSourceFile);
+                });
 
                 // Resume panel controls: explicitly bind both buttons during initialization.
                 document.getElementById('btnToggleResume').addEventListener('click', toggleResumePanel);
+                document.getElementById('btnToggleAccountOverview').addEventListener('click', () => {
+                    const content = document.getElementById('accountOverviewContent');
+                    const btn = document.getElementById('btnToggleAccountOverview');
+                    const isHidden = content.classList.toggle('hidden');
+                    btn.textContent = isHidden ? 'Tampilkan +' : 'Sembunyikan −';
+                    btn.setAttribute('aria-expanded', String(!isHidden));
+                });
                 document.getElementById('btnResumePdf').addEventListener('click', exportResumePdf);
                 
                 document.getElementById('inputSaldoAwal').addEventListener('input', function() {
@@ -519,6 +574,7 @@
                 document.getElementById('btnGlobalRedo').addEventListener('click', executeGlobalRedo);
                 document.getElementById('btnExcel').addEventListener('click', exportToExcel);
                 document.getElementById('btnPdf').addEventListener('click', exportToPdf);
+                document.getElementById('btnResetData').addEventListener('click', resetAllData);
                 
                 document.getElementById('closePdfModalTopBtn').addEventListener('click', closePdfModal);
                 document.getElementById('closePdfModalBottomBtn').addEventListener('click', closePdfModal);
@@ -566,17 +622,44 @@
                 }
             }
 
+            function parseStatementDate(value) {
+                const raw = String(value || '').trim();
+                const months = { jan:0, january:0, januari:0, feb:1, february:1, februari:1, mar:2, march:2, maret:2, apr:3, april:3, may:4, mei:4, jun:5, june:5, juni:5, jul:6, july:6, juli:6, aug:7, august:7, agustus:7, sep:8, sept:8, september:8, oktober:9, oct:9, october:9, nov:10, november:10, november:10, desember:11, dec:11, december:11 };
+                let m = raw.match(/^(\d{1,2})[\s/-]+([A-Za-z]+)[\s/-]+(\d{4})$/);
+                if (m && months[m[2].toLowerCase()] !== undefined) return new Date(Number(m[3]), months[m[2].toLowerCase()], Number(m[1]));
+                m = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+                if (m) { let year = Number(m[3]); if (year < 100) year += 2000; return new Date(year, Number(m[2])-1, Number(m[1])); }
+                return null;
+            }
+
+            function formatIndonesianDate(value, includeMonthYear = true) {
+                const d = value instanceof Date ? value : parseStatementDate(value);
+                if (!d || Number.isNaN(d.getTime())) return String(value || '').trim();
+                const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                return includeMonthYear ? `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}` : `${d.getDate()}`;
+            }
+
             function updateTitleSection() {
                 const documentTitle = themes[currentTheme].name;
                 document.getElementById('sectionLargeTitle').innerText = `REKENING KORAN - ${documentTitle.toUpperCase()}`;
-                
                 if (WorkingData.length > 0) {
                     const sortedOriginal = [...WorkingData].sort((a, b) => a.indexOrder - b.indexOrder);
-                    const tAwal = sortedOriginal[0].tanggal;
-                    const tAkhir = sortedOriginal[sortedOriginal.length - 1].tanggal;
-                    document.getElementById('sectionDateRange').innerText = (tAwal === tAkhir) ? `Tanggal: ${tAwal}` : `Periode Tanggal: ${tAwal} s.d. ${tAkhir}`;
+                    const first = sortedOriginal[0].tanggal;
+                    const last = sortedOriginal[sortedOriginal.length - 1].tanggal;
+                    const d1 = parseStatementDate(first), d2 = parseStatementDate(last);
+                    let display = '-';
+                    if (d1 && d2 && (d1.getFullYear() !== d2.getFullYear() || d1.getMonth() !== d2.getMonth())) {
+                        display = 'Rekening Koran Anda tidak berada pada bulan yang sama';
+                    } else if (first === last || (d1 && d2 && d1.getTime() === d2.getTime())) {
+                        display = formatIndonesianDate(d1 || first);
+                    } else if (d1 && d2) {
+                        display = `${d1.getDate()} s/d ${d2.getDate()} ${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][d2.getMonth()]} ${d2.getFullYear()}`;
+                    } else {
+                        display = `${first} s/d ${last}`;
+                    }
+                    document.getElementById('sectionDateRange').innerText = display;
                 } else {
-                    document.getElementById('sectionDateRange').innerText = `Periode Tanggal: -`;
+                    document.getElementById('sectionDateRange').innerText = '-';
                 }
             }
 
@@ -808,10 +891,46 @@
                 document.getElementById('pdfModal').classList.remove('hidden');
             }
 
+            function resetAllData() {
+                const count = loadedAccountFiles.length;
+                if (!confirm(`Reset seluruh data rekening koran?\\n\\nTindakan ini akan menghapus ${count} file dan seluruh transaksi/uraian hasil edit yang tersimpan di browser. Tindakan tidak dapat dibatalkan.`)) return;
+
+                loadedAccountFiles = [];
+                RawData = [];
+                WorkingData = [];
+                FilteredData = [];
+                RedoHistoryStack = [];
+                if (typeof UndoHistoryStack !== 'undefined') UndoHistoryStack = [];
+
+                try { localStorage.removeItem(SOURCE_STORAGE_KEY); } catch (err) { console.warn(err); }
+
+                ['filterUraian','filterStartDate','filterEndDate','sourceFileSearch'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+                document.getElementById('pdfInput').value = '';
+                document.getElementById('fileName').innerText = 'Belum ada file yang diproses';
+                document.getElementById('sourceFileCount').innerText = 'Belum ada file yang diproses.';
+                document.getElementById('sourceFilesTableBody').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">File yang diproses akan tampil di sini.</td></tr>';
+                document.getElementById('resumeTableBody').innerHTML = '<tr><td colspan="5" class="p-5 text-center text-slate-400">Unggah satu atau beberapa rekening koran untuk membuat resume.</td></tr>';
+                document.getElementById('inputSaldoAwal').value = formatRupiah(0);
+                document.getElementById('summaryDebet').innerText = formatRupiah(0);
+                document.getElementById('summaryKredit').innerText = formatRupiah(0);
+                document.getElementById('summaryAkhir').innerText = formatRupiah(0);
+                document.getElementById('mutationTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-slate-400 italic">Unggah dokumen rekening koran untuk memulai.</td></tr>';
+                document.getElementById('mutationTableFoot').classList.add('hidden');
+                document.getElementById('btnExcel').disabled = true;
+                document.getElementById('btnPdf').disabled = true;
+                document.getElementById('btnResumePdf').disabled = true;
+                document.getElementById('sectionDateRange').innerText = 'Periode Tanggal: -';
+                document.getElementById('clearFilterBtn')?.classList.add('hidden');
+                alert('Reset data selesai. Semua file, transaksi, dan hasil edit yang tersimpan di browser telah dikosongkan.');
+            }
+
             const SOURCE_STORAGE_KEY = 'mandiri_statement_source_files_v1';
             function persistSourceFiles() {
                 try { localStorage.setItem(SOURCE_STORAGE_KEY, JSON.stringify(loadedAccountFiles)); }
-                catch (err) { console.warn('Data terlalu besar untuk disimpan di browser:', err); }
+                catch (err) { console.warn('Data terlalu besar untuk disimpan di browser:', err); alert('Data berhasil diproses, tetapi tidak dapat disimpan di browser karena kapasitas penyimpanan penuh. Ekspor data Anda atau hapus sebagian file.'); }
             }
             function restoreSourceFiles() {
                 try {
@@ -830,8 +949,8 @@
                 const q = (document.getElementById('sourceFileSearch')?.value || '').toLowerCase().trim();
                 const visible = loadedAccountFiles.filter(f => `${f.fileName} ${f.accountName} ${f.accountNumber}`.toLowerCase().includes(q));
                 document.getElementById('sourceFileCount').innerText = `${loadedAccountFiles.length} file | ${loadedAccountFiles.reduce((n,f)=>n+(f.rows?.length||0),0)} transaksi tersimpan`;
-                if (!visible.length) { tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">${loadedAccountFiles.length ? 'Tidak ada file yang cocok dengan pencarian.' : 'File yang diproses akan tampil di sini.'}</td></tr>`; return; }
-                tbody.innerHTML = visible.map(f => `<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="p-2 min-w-56"><div class="font-bold text-slate-700 break-all">${escapeHtml(f.fileName)}</div><div class="text-[10px] text-slate-400">${escapeHtml(normalizeAccountName(f.accountName, f.accountNumber))}</div></td><td class="p-2 font-mono">${escapeHtml(f.accountNumber || 'Tidak terdeteksi')}</td><td class="p-2 text-center"><input aria-label="Sertakan ${escapeHtml(f.fileName)} dalam Resume" type="checkbox" ${f.includeResume !== false ? 'checked':''} onchange="toggleSourceFile('${f.id}','resume',this.checked)" class="w-4 h-4 cursor-pointer accent-slate-700"></td><td class="p-2 text-center"><input aria-label="Tampilkan ${escapeHtml(f.fileName)} di Rekening Koran" type="checkbox" ${f.includeStatement !== false ? 'checked':''} onchange="toggleSourceFile('${f.id}','statement',this.checked)" class="w-4 h-4 cursor-pointer accent-sky-700"></td><td class="p-2 text-center font-mono">${f.rows?.length || 0}</td><td class="p-2 text-center"><button type="button" onclick="removeSourceFile('${f.id}')" class="text-rose-600 hover:text-rose-800 font-bold px-2 py-1">Hapus</button></td></tr>`).join('');
+                if (!visible.length) { tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">${loadedAccountFiles.length ? 'Tidak ada file yang cocok dengan pencarian.' : 'File yang diproses akan tampil di sini.'}</td></tr>`; return; }
+                tbody.innerHTML = visible.map(f => `<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="p-2 min-w-56"><div class="font-bold text-slate-700 break-all">${escapeHtml(f.fileName)}</div><div class="text-[10px] text-slate-400">${escapeHtml(normalizeAccountName(f.accountName, f.accountNumber))}</div></td><td class="p-2 text-center"><input aria-label="Sertakan ${escapeHtml(f.fileName)} dalam Resume" type="checkbox" ${f.includeResume !== false ? 'checked':''} data-source-file-id="${escapeHtml(f.id)}" data-source-mode="resume" class="w-4 h-4 cursor-pointer accent-slate-700"></td><td class="p-2 text-center"><input aria-label="Tampilkan ${escapeHtml(f.fileName)} di Rekening Koran" type="checkbox" ${f.includeStatement !== false ? 'checked':''} data-source-file-id="${escapeHtml(f.id)}" data-source-mode="statement" class="w-4 h-4 cursor-pointer accent-sky-700"></td><td class="p-2 text-center font-mono">${f.rows?.length || 0}</td><td class="p-2 text-center"><button type="button" data-remove-source-file="${escapeHtml(f.id)}" class="text-rose-600 hover:text-rose-800 font-bold px-2 py-1">Hapus</button></td></tr>`).join('');
             }
             function toggleSourceFile(id, mode, checked) {
                 const f = loadedAccountFiles.find(x => x.id === id); if (!f) return;
@@ -916,7 +1035,7 @@
                             addedCount++;
                         }
                     }
-                    document.getElementById('fileName').innerText = displayNames.join(', ');
+                    document.getElementById('fileName').innerText = addedCount ? `${addedCount} file PDF berhasil ditambahkan` : (displayNames.join(', ') || 'Tidak ada file baru yang ditambahkan');
                     persistSourceFiles(); renderSourceFiles();
                     buildResumeRows(loadedAccountFiles.filter(f=>f.includeResume!==false));
                     rebuildStatementFromSources(true);
@@ -1350,6 +1469,18 @@
                 let targets = FilteredData.filter(r => r.checked).sort((a,b) => a.indexOrder - b.indexOrder);
                 if (targets.length <= 1) return;
 
+                // Penggabungan dibatasi pada tanggal transaksi yang sama agar data antarhari tetap terpisah.
+                const dateKey = row => {
+                    if (row.tanggalTimestamp === null || Number.isNaN(Number(row.tanggalTimestamp))) return '';
+                    const d = new Date(Number(row.tanggalTimestamp));
+                    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                };
+                const selectedDates = [...new Set(targets.map(dateKey))];
+                if (selectedDates.length !== 1 || selectedDates[0] === '') {
+                    alert('Penggabungan hanya dapat dilakukan untuk transaksi pada tanggal yang sama. Gunakan Filter Berdasarkan Tanggal, lalu pilih transaksi pada hari tersebut.');
+                    return;
+                }
+
                 pushToHistoryStack(); 
                 let masterTrx = targets[0];
                 let baseWorkingTrx = WorkingData.find(r => r.transactionId === masterTrx.transactionId);
@@ -1396,6 +1527,7 @@
 
                 if (FilteredData.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400 italic">Data tidak ditemukan. Silakan sesuaikan kata kunci atau rentang tanggal filter Anda.</td></tr>`;
+                    document.getElementById('mobileTransactionCards').innerHTML = '<div class="text-center text-sm text-slate-400 italic p-6">Tidak ada transaksi yang cocok dengan filter.</div>';
                     tfoot.classList.add('hidden');
                     return;
                 }
@@ -1468,6 +1600,7 @@
 
                 tbody.innerHTML = "";
                 tbody.appendChild(fragment);
+                renderMobileTransactionCards();
 
                 let totalDebet = 0;
                 let totalKredit = 0;
@@ -1495,6 +1628,39 @@
                     </tr>
                 `;
                 document.getElementById('btnFooterShowOriginal').addEventListener('click', showOriginalPdfModal);
+            }
+
+            function renderMobileTransactionCards() {
+                const container = document.getElementById('mobileTransactionCards');
+                if (!container) return;
+                if (!FilteredData.length) {
+                    container.innerHTML = '<div class="text-center text-sm text-slate-400 italic p-6">Unggah rekening koran untuk melihat transaksi.</div>';
+                    return;
+                }
+                container.innerHTML = FilteredData.map((row, index) => {
+                    const dateHtml = showTanggalColumn ? `<div class="text-sm font-bold text-slate-700">${escapeHtml(row.tanggal || '-')}</div>` : '';
+                    const description = escapeHtml(row.uraian || 'Tanpa keterangan');
+                    const reference = row.reference ? `REF: ${escapeHtml(row.reference)}` : '';
+                    const page = row.pageNumber ? ` · Hal. ${escapeHtml(row.pageNumber)}` : '';
+                    return `<article class="mobile-transaction-card">
+                        <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-2 mb-3">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 mb-1"><span class="inline-flex items-center justify-center min-w-7 h-7 px-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold">${index+1}</span>${dateHtml}</div>
+                                <div class="text-[10px] text-slate-400 font-mono break-words">${reference}${page}</div>
+                            </div>
+                            <label class="flex items-center gap-1.5 text-xs text-slate-500 shrink-0"><input type="checkbox" class="rounded row-checkbox-mobile" data-transaction-id="${escapeHtml(row.transactionId)}" ${row.checked ? 'checked' : ''} aria-label="Pilih transaksi ${index+1}"><span>Pilih</span></label>
+                        </div>
+                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Keterangan</div>
+                        <div class="mobile-description text-sm font-medium text-slate-800 outline-none focus:bg-amber-50 focus:ring-1 focus:ring-amber-300 rounded p-1" contenteditable="true" data-transaction-id="${escapeHtml(row.transactionId)}">${description}</div>
+                        <div class="mobile-money-grid">
+                            <div class="mobile-money-cell"><div class="text-[10px] uppercase tracking-wider text-rose-600 font-bold mb-1">Debet (-)</div><div class="mobile-money-value text-rose-700">${formatRupiah(row.debet > 0 ? row.debet : 0)}</div></div>
+                            <div class="mobile-money-cell"><div class="text-[10px] uppercase tracking-wider text-emerald-600 font-bold mb-1">Kredit (+)</div><div class="mobile-money-value text-emerald-700">${formatRupiah(row.kredit > 0 ? row.kredit : 0)}</div></div>
+                            <div class="mobile-money-cell col-span-2 bg-sky-50 border-sky-100"><div class="text-[10px] uppercase tracking-wider text-sky-700 font-bold mb-1">Mutasi Saldo / Saldo Berjalan</div><div class="mobile-money-value text-slate-900">${formatRupiah(row.saldo)}</div></div>
+                        </div>
+                    </article>`;
+                }).join('');
+                container.querySelectorAll('.row-checkbox-mobile').forEach(chk => chk.addEventListener('change', e => toggleRowCheck(e.target.dataset.transactionId, e.target.checked)));
+                container.querySelectorAll('.mobile-description').forEach(el => el.addEventListener('blur', e => updateLiveUraian(e.target.dataset.transactionId, e.target.innerText.trim())));
             }
 
             function exportToExcel() {
@@ -1533,48 +1699,192 @@
             function exportToPdf() {
                 if (WorkingData.length === 0) return;
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
-                
-                doc.setFont("Helvetica", "bold");
-                doc.setFontSize(14);
-                doc.text(`REKENING KORAN BANK MANDIRI - ${themes[currentTheme].name.toUpperCase()}`, 14, 15);
-                
-                doc.setFont("Helvetica", "normal");
-                doc.setFontSize(9);
-                doc.text(`Periode Ringkasan: ${document.getElementById('sectionDateRange').innerText}`, 14, 21);
-                doc.text(`Saldo Awal Terbuku: Rp ${document.getElementById('inputSaldoAwal').value}`, 14, 26);
+                // PDF berkolom: tanggal menjadi header transaksi; keterangan, debet, kredit,
+                // dan saldo/mutasi berada dalam kolom sejajar.
+                const pageWidth = 180;
+                const pageHeight = 210;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidth, pageHeight], compress: true });
+                const pageW = doc.internal.pageSize.getWidth();
+                const pageH = doc.internal.pageSize.getHeight();
+                const margin = 7;
+                const contentW = pageW - margin * 2;
+                // Kolom transaksi: nomor urut, tanggal, uraian, debet, kredit, saldo/mutasi.
+                const colWidths = [contentW * 0.055, contentW * 0.14, contentW * 0.315, contentW * 0.165, contentW * 0.165, contentW * 0.16];
+                const colX = [margin];
+                for (let i = 1; i < colWidths.length; i++) colX.push(colX[i - 1] + colWidths[i - 1]);
+                const orderedRows = [...WorkingData].sort((a,b) => a.indexOrder - b.indexOrder);
+                // Baris mata uang 'IDR' bukan transaksi; sembunyikan dari output PDF.
+                const pdfRows = orderedRows.filter(row => !/^\s*IDR\s*$/i.test(String(row.uraian || '').trim()));
+                const money = value => formatRupiah(Number(value || 0)); // Nominal transaksi pada kolom Debet/Kredit/Saldo tanpa awalan Rp.
+                const totalDebet = pdfRows.reduce((sum, row) => sum + Number(row.debet || 0), 0);
+                const totalKredit = pdfRows.reduce((sum, row) => sum + Number(row.kredit || 0), 0);
+                const saldoAwalValue = parseRupiahStr(document.getElementById('inputSaldoAwal').value || '0');
+                const saldoAkhir = saldoAwalValue - totalDebet + totalKredit;
+                const selectedSource = loadedAccountFiles.find(f => orderedRows.some(r => r.sourceFileId === f.id)) || loadedAccountFiles.find(f => f.includeStatement !== false);
+                const accountNumber = String(selectedSource?.accountNumber || '').trim();
+                const accountName = normalizeAccountName(selectedSource?.accountName || '', accountNumber) || '';
+                const hasAccountNumber = !!accountNumber && accountNumber !== 'Tidak terdeteksi';
+                let y = 0;
 
-                let bodyData = WorkingData.sort((a,b) => a.indexOrder - b.indexOrder).map((row, i) => [
-                    i + 1, 
-                    row.tanggal, 
-                    `${row.uraian}\n[REF: ${row.reference}]`, 
-                    formatRupiah(row.debet), 
-                    formatRupiah(row.kredit), 
-                    formatRupiah(row.saldo)
-                ]);
+                const drawColumnHead = () => {
+                    doc.setFillColor(241, 245, 249);
+                    doc.rect(margin, y - 3.5, contentW, 7, 'F');
+                    doc.setFont('Helvetica', 'bold');
+                    doc.setFontSize(7.2);
+                    doc.setTextColor(51, 65, 85);
+                    doc.text('NO.', colX[0] + colWidths[0] / 2, y, { align: 'center' });
+                    doc.text('TANGGAL', colX[1] + colWidths[1] / 2, y, { align: 'center' });
+                    doc.text('URAIAN TRANSAKSI', colX[2] + 1, y);
+                    doc.text('DEBET', colX[3] + colWidths[3] / 2, y, { align: 'center' });
+                    doc.text('KREDIT', colX[4] + colWidths[4] / 2, y, { align: 'center' });
+                    doc.text('SALDO/MUTASI', colX[5] + colWidths[5] / 2, y, { align: 'center' });
+                    y += 5.5;
+                };
 
-                doc.autoTable({
-                    startY: 32,
-                    head: [["No", "Tanggal", "Uraian Transaksi / Detail Referensi", "Debet (-)", "Kredit (+)", "Saldo Berjalan"]],
-                    body: bodyData,
-                    theme: 'striped',
-                    headStyles: { fillColor: [3, 105, 161], fontSize: 9, fontStyle: 'bold' },
-                    bodyStyles: { fontSize: 7, textColor: [51, 65, 85] },
-                    columnStyles: {
-                        0: { cellWidth: 10, halign: 'center' },
-                        1: { cellWidth: 25 },
-                        2: { cellWidth: 75 },
-                        3: { cellWidth: 26, halign: 'right', fontSize: 7, overflow: 'ellipsize' },
-                        4: { cellWidth: 26, halign: 'right', fontSize: 7, overflow: 'ellipsize' },
-                        5: { cellWidth: 28, halign: 'right', fontSize: 7, overflow: 'ellipsize' }
-                    },
-                    styles: { overflow: 'linebreak', cellPadding: 2.5 }
+                const drawHeader = () => {
+                    doc.setFillColor(30, 64, 95);
+                    doc.rect(0, 0, pageW, 36, 'F');
+                    doc.setFont('Helvetica', 'bold');
+                    doc.setFontSize(14);
+                    doc.setTextColor(255, 255, 255);
+                    doc.text('MUTASI REKENING KORAN (Bank Mandiri)', margin, 10);
+                    doc.setFont('Helvetica', 'normal');
+                    doc.setFontSize(9.5);
+                    let accountNameY = 17;
+                    // Jangan tampilkan baris nomor rekening jika nilainya tidak terdeteksi.
+                    if (hasAccountNumber) {
+                        doc.text(`Nomor Rekening: ${accountNumber}`, margin, 17);
+                        accountNameY = 24;
+                    }
+                    // Nama rekening tampil tanpa label 'Nama Rekening:' dan dinormalisasi
+                    // agar nomor/nama yang terduplikasi dari ekstraksi PDF tidak berulang.
+                    if (accountName) {
+                        const nameLines = doc.splitTextToSize(accountName, contentW);
+                        doc.text(nameLines.slice(0, 1), margin, accountNameY);
+                    }
+                    let period = String(document.getElementById('sectionDateRange')?.innerText || '').trim();
+                    if (period) {
+                        // Header PDF menggunakan tanggal Indonesia dan tanpa label 'Tanggal'.
+                        const monthNames = {
+                            Jan: 'Januari', January: 'Januari', Feb: 'Februari', February: 'Februari',
+                            Mar: 'Maret', March: 'Maret', Apr: 'April', April: 'April',
+                            May: 'Mei', Jun: 'Juni', June: 'Juni', Jul: 'Juli', July: 'Juli',
+                            Aug: 'Agustus', August: 'Agustus', Sep: 'September', Sept: 'September', September: 'September',
+                            Oct: 'Oktober', October: 'Oktober', Nov: 'November', November: 'November',
+                            Dec: 'Desember', December: 'Desember'
+                        };
+                        period = period.replace(/\b(January|Jan|February|Feb|March|Mar|April|Apr|May|June|Jun|July|Jul|August|Aug|September|Sept|Sep|October|Oct|November|Nov|December|Dec)\b/g, m => monthNames[m] || m);
+                        period = period.replace(/^Tanggal:\s*/i, '').replace(/^Periode Tanggal:\s*/i, '');
+                        period = period.replace(/\s+s\.d\.\s*/gi, ' s/d ');
+                        doc.setFont('Helvetica', 'bold');
+                        doc.setFontSize(9);
+                        doc.setTextColor(255, 255, 255);
+                        doc.text(period, margin, 31);
+                    }
+                    // Panel RESUME: empat kotak sejajar dalam satu baris.
+                    y = 42;
+                    const summaryTop = y - 2;
+                    doc.setFont('Helvetica', 'bold');
+                    doc.setFontSize(8.2);
+                    doc.setTextColor(30, 64, 95);
+                    doc.text('RESUME', margin, summaryTop + 4.5);
+                    const gapX = 1.5;
+                    const cardW = (contentW - gapX * 3) / 4;
+                    const cardH = 10;
+                    const cardsTop = summaryTop + 6.5;
+                    const resumeItems = [
+                        { label: 'Saldo Awal', value: money(saldoAwalValue), color: [51, 65, 85] },
+                        { label: 'Total Debet', value: money(totalDebet), color: [220, 38, 38] },
+                        { label: 'Total Kredit', value: money(totalKredit), color: [22, 163, 74] },
+                        { label: 'Saldo Akhir', value: money(saldoAkhir), color: [30, 64, 95] }
+                    ];
+                    resumeItems.forEach((item, index) => {
+                        const cardX = margin + index * (cardW + gapX);
+                        const cardY = cardsTop;
+                        doc.setFillColor(248, 250, 252);
+                        doc.setDrawColor(203, 213, 225);
+                        doc.setLineWidth(0.25);
+                        doc.roundedRect(cardX, cardY, cardW, cardH, 1.2, 1.2, 'FD');
+                        doc.setFont('Helvetica', 'normal');
+                        doc.setFontSize(5.8);
+                        doc.setTextColor(71, 85, 105);
+                        doc.text(item.label, cardX + 2, cardY + 3.2);
+                        doc.setFont('Helvetica', 'bold');
+                        doc.setFontSize(6.5);
+                        doc.setTextColor(...item.color);
+                        doc.text(item.value, cardX + 2, cardY + 7.5, { maxWidth: cardW - 4 });
+                    });
+                    y = cardsTop + cardH + 3;
+                    doc.setDrawColor(203, 213, 225);
+                    doc.setLineWidth(0.25);
+                    doc.line(margin, y, pageW - margin, y);
+                    y += 5;
+                    drawColumnHead();
+                };
+
+                const formatDateShort = raw => {
+                    const value = String(raw || '').trim();
+                    // Terima format dd Mon yyyy, dd Month yyyy, atau tanggal numerik yang sudah ada.
+                    const months = { jan: '01', january: '01', feb: '02', february: '02', mar: '03', march: '03',
+                        apr: '04', april: '04', may: '05', jun: '06', june: '06', jul: '07', july: '07',
+                        aug: '08', august: '08', sep: '09', sept: '09', september: '09', oct: '10', october: '10',
+                        nov: '11', november: '11', dec: '12', december: '12',
+                        januari: '01', februari: '02', maret: '03', mei: '05', juni: '06', juli: '07',
+                        agustus: '08', oktober: '10', desember: '12' };
+                    let m = value.match(/^(\d{1,2})[\s/-]+([A-Za-z]+)[\s/-]+(\d{2,4})/);
+                    if (m && months[m[2].toLowerCase()]) return `${m[1].padStart(2, '0')}/${months[m[2].toLowerCase()]}/${m[3].slice(-2)}`;
+                    m = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+                    if (m) return `${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[3].slice(-2)}`;
+                    const parsed = new Date(value);
+                    if (!Number.isNaN(parsed.getTime())) return `${String(parsed.getDate()).padStart(2, '0')}/${String(parsed.getMonth()+1).padStart(2, '0')}/${String(parsed.getFullYear()).slice(-2)}`;
+                    return value || '-';
+                };
+                drawHeader();
+                pdfRows.forEach((row, rowIndex) => {
+                    const desc = String(row.uraian || 'Tanpa keterangan');
+                    const shortDate = formatDateShort(row.tanggal);
+                    doc.setFont('Helvetica', 'normal');
+                    doc.setFontSize(7.3);
+                    const descLines = doc.splitTextToSize(desc, colWidths[2] - 2);
+                    const maxLines = Math.max(1, descLines.length);
+                    const rowHeight = maxLines * 3.6 + 6;
+                    if (y + rowHeight > pageH - 7) {
+                        doc.addPage([pageWidth, pageHeight], 'p');
+                        y = 0;
+                        drawHeader();
+                    }
+                    doc.setFont('Helvetica', 'normal');
+                    doc.setFontSize(7.0);
+                    doc.setTextColor(51, 65, 85);
+                    doc.text(String(rowIndex + 1), colX[0] + colWidths[0] / 2, y, { align: 'center' });
+                    doc.text(shortDate, colX[1] + colWidths[1] / 2, y, { align: 'center' });
+                    doc.text(descLines, colX[2] + 1, y, { lineHeightFactor: 1.1 });
+                    const valueY = y;
+                    const values = [money(row.debet), money(row.kredit), money(row.saldo)];
+                    values.forEach((value, j) => {
+                        const index = j + 3;
+                        doc.setFont('Helvetica', j === 2 ? 'bold' : 'normal');
+                        doc.setFontSize(7.0);
+                        // Debet merah, kredit hijau, saldo tetap berwarna gelap.
+                        if (j === 0) doc.setTextColor(220, 38, 38);
+                        else if (j === 1) doc.setTextColor(22, 163, 74);
+                        else doc.setTextColor(51, 65, 85);
+                        const wrapped = doc.splitTextToSize(value, colWidths[index] - 2);
+                        doc.text(wrapped, colX[index] + colWidths[index] - 1.5, valueY, { align: 'right', lineHeightFactor: 1.05 });
+                    });
+                    y += maxLines * 3.6 + 3;
+                    doc.setDrawColor(226, 232, 240);
+                    doc.setLineWidth(0.2);
+                    doc.line(margin, y, pageW - margin, y);
+                    y += 3;
                 });
 
-                const pdfBlob = doc.output('blob');
-                generatedPdfBlobUrl = URL.createObjectURL(pdfBlob);
-                generatedPdfName = `${themes[currentTheme].filePrefix}_mutasi_${Date.now()}.pdf`;
+                // Ringkasan keuangan sudah ditampilkan di bagian atas tabel.
 
+                const pdfBlob = doc.output('blob');
+                if (generatedPdfBlobUrl) URL.revokeObjectURL(generatedPdfBlobUrl);
+                generatedPdfBlobUrl = URL.createObjectURL(pdfBlob);
+                generatedPdfName = `${themes[currentTheme].filePrefix}_mutasi_rekening_koran_${new Date().toISOString().replace(/[-:T.Z]/g,'').slice(0,14)}.pdf`;
                 document.getElementById('pdfModalFileName').innerText = generatedPdfName;
                 document.getElementById('pdfPreviewFrame').src = generatedPdfBlobUrl;
                 document.getElementById('pdfModal').classList.remove('hidden');
