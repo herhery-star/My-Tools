@@ -85,6 +85,23 @@
             </div>
         </div>
 
+        <section id="sourceFilesPanel" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-100 border-b border-slate-200">
+                <div><h2 class="font-black text-sm md:text-base text-slate-800">DAFTAR FILE REKENING KORAN</h2><p class="text-xs text-slate-500">Pilih file secara terpisah untuk Resume dan tampilan Rekening Koran.</p></div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="selectAllSourceFiles('resume',true)" class="px-3 py-1.5 rounded-md bg-slate-700 text-white text-xs font-bold">Pilih Semua Resume</button>
+                    <button type="button" onclick="selectAllSourceFiles('resume',false)" class="px-3 py-1.5 rounded-md border text-xs font-bold">Kosongkan Resume</button>
+                    <button type="button" onclick="selectAllSourceFiles('statement',true)" class="px-3 py-1.5 rounded-md bg-sky-700 text-white text-xs font-bold">Pilih Semua Rekening Koran</button>
+                    <button type="button" onclick="selectAllSourceFiles('statement',false)" class="px-3 py-1.5 rounded-md border text-xs font-bold">Kosongkan Rekening Koran</button>
+                </div>
+            </div>
+            <div class="p-3">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs text-slate-500"><span id="sourceFileCount">Belum ada file yang diproses.</span><input id="sourceFileSearch" type="search" placeholder="Cari nama file / rekening..." class="border border-slate-300 rounded-lg px-3 py-2 text-xs w-full sm:w-72" /></div>
+                <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-50 text-slate-600"><tr><th class="p-2 text-left">Nama File / Rekening</th><th class="p-2 text-left">Nomor Rekening</th><th class="p-2 text-center">Resume</th><th class="p-2 text-center">Rekening Koran</th><th class="p-2 text-center">Transaksi</th><th class="p-2 text-center">Aksi</th></tr></thead><tbody id="sourceFilesTableBody"><tr><td colspan="6" class="p-4 text-center text-slate-400">File yang diproses akan tampil di sini.</td></tr></tbody></table></div>
+                <p class="text-[11px] text-slate-400 mt-2">Daftar dan hasil ekstraksi disimpan di browser ini. File PDF asli tidak disimpan; unggah ulang jika perlu membuka dokumen aslinya.</p>
+            </div>
+        </section>
+
         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div class="space-y-1">
                 <label for="filterUraian" class="block text-[10px] md:text-xs font-black text-slate-500 uppercase tracking-wider">Satukan Data yang serupa</label>
@@ -277,6 +294,7 @@
                 setupEventListeners();
                 updateUIStyles();
                 updateUndoRedoUI();
+                restoreSourceFiles();
             }
 
             function pushToHistoryStack() {
@@ -432,6 +450,7 @@
                 });
 
                 document.getElementById('pdfInput').addEventListener('change', handleFileChoose);
+                document.getElementById('sourceFileSearch').addEventListener('input', renderSourceFiles);
 
                 // Resume panel controls: explicitly bind both buttons during initialization.
                 document.getElementById('btnToggleResume').addEventListener('click', toggleResumePanel);
@@ -789,66 +808,122 @@
                 document.getElementById('pdfModal').classList.remove('hidden');
             }
 
+            const SOURCE_STORAGE_KEY = 'mandiri_statement_source_files_v1';
+            function persistSourceFiles() {
+                try { localStorage.setItem(SOURCE_STORAGE_KEY, JSON.stringify(loadedAccountFiles)); }
+                catch (err) { console.warn('Data terlalu besar untuk disimpan di browser:', err); }
+            }
+            function restoreSourceFiles() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(SOURCE_STORAGE_KEY) || '[]');
+                    if (Array.isArray(saved) && saved.length) {
+                        loadedAccountFiles = saved.map((f,i) => ({...f, id:f.id || `restored_${Date.now()}_${i}`, includeResume:f.includeResume !== false, includeStatement:f.includeStatement !== false, rows:Array.isArray(f.rows)?f.rows:[]}));
+                        renderSourceFiles();
+                        buildResumeRows(loadedAccountFiles.filter(f => f.includeResume));
+                        rebuildStatementFromSources(true);
+                        document.getElementById('fileName').innerText = `${loadedAccountFiles.length} file tersimpan di browser`;
+                    }
+                } catch (err) { console.warn('Gagal memulihkan data file:', err); }
+            }
+            function renderSourceFiles() {
+                const tbody = document.getElementById('sourceFilesTableBody');
+                const q = (document.getElementById('sourceFileSearch')?.value || '').toLowerCase().trim();
+                const visible = loadedAccountFiles.filter(f => `${f.fileName} ${f.accountName} ${f.accountNumber}`.toLowerCase().includes(q));
+                document.getElementById('sourceFileCount').innerText = `${loadedAccountFiles.length} file | ${loadedAccountFiles.reduce((n,f)=>n+(f.rows?.length||0),0)} transaksi tersimpan`;
+                if (!visible.length) { tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">${loadedAccountFiles.length ? 'Tidak ada file yang cocok dengan pencarian.' : 'File yang diproses akan tampil di sini.'}</td></tr>`; return; }
+                tbody.innerHTML = visible.map(f => `<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="p-2 min-w-56"><div class="font-bold text-slate-700 break-all">${escapeHtml(f.fileName)}</div><div class="text-[10px] text-slate-400">${escapeHtml(normalizeAccountName(f.accountName, f.accountNumber))}</div></td><td class="p-2 font-mono">${escapeHtml(f.accountNumber || 'Tidak terdeteksi')}</td><td class="p-2 text-center"><input aria-label="Sertakan ${escapeHtml(f.fileName)} dalam Resume" type="checkbox" ${f.includeResume !== false ? 'checked':''} onchange="toggleSourceFile('${f.id}','resume',this.checked)" class="w-4 h-4 cursor-pointer accent-slate-700"></td><td class="p-2 text-center"><input aria-label="Tampilkan ${escapeHtml(f.fileName)} di Rekening Koran" type="checkbox" ${f.includeStatement !== false ? 'checked':''} onchange="toggleSourceFile('${f.id}','statement',this.checked)" class="w-4 h-4 cursor-pointer accent-sky-700"></td><td class="p-2 text-center font-mono">${f.rows?.length || 0}</td><td class="p-2 text-center"><button type="button" onclick="removeSourceFile('${f.id}')" class="text-rose-600 hover:text-rose-800 font-bold px-2 py-1">Hapus</button></td></tr>`).join('');
+            }
+            function toggleSourceFile(id, mode, checked) {
+                const f = loadedAccountFiles.find(x => x.id === id); if (!f) return;
+                if (mode === 'resume') f.includeResume = checked; else f.includeStatement = checked;
+                persistSourceFiles(); renderSourceFiles();
+                buildResumeRows(loadedAccountFiles.filter(x => x.includeResume !== false));
+                rebuildStatementFromSources(true);
+            }
+            function selectAllSourceFiles(mode, checked) {
+                loadedAccountFiles.forEach(f => { if (mode === 'resume') f.includeResume = checked; else f.includeStatement = checked; });
+                persistSourceFiles(); renderSourceFiles();
+                buildResumeRows(loadedAccountFiles.filter(x => x.includeResume !== false));
+                rebuildStatementFromSources(true);
+            }
+            function removeSourceFile(id) {
+                const f = loadedAccountFiles.find(x => x.id === id); if (!f) return;
+                if (!confirm(`Hapus file “${f.fileName}” beserta transaksi hasil ekstraksinya?`)) return;
+                loadedAccountFiles = loadedAccountFiles.filter(x => x.id !== id);
+                persistSourceFiles(); renderSourceFiles();
+                buildResumeRows(loadedAccountFiles.filter(x => x.includeResume !== false));
+                rebuildStatementFromSources(true);
+            }
+            function rebuildStatementFromSources(refresh) {
+                const chosen = loadedAccountFiles.filter(f => f.includeStatement !== false);
+                const rows = chosen.flatMap(f => (f.rows || []).map(r => ({...r, sourceFileId:f.id, sourceFileName:f.fileName})));
+                if (!rows.length) {
+                    RawData=[]; WorkingData=[]; FilteredData=[];
+                    document.getElementById('inputSaldoAwal').value = formatRupiah(0);
+                    document.getElementById('summaryDebet').innerText = formatRupiah(0);
+                    document.getElementById('summaryKredit').innerText = formatRupiah(0);
+                    document.getElementById('summaryAkhir').innerText = formatRupiah(0);
+                    document.getElementById('mutationTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-slate-400 italic">Pilih setidaknya satu file pada kolom Rekening Koran.</td></tr>';
+                    document.getElementById('mutationTableFoot').classList.add('hidden');
+                    document.getElementById('btnExcel').disabled = true; document.getElementById('btnPdf').disabled = true;
+                    return;
+                }
+                if (refresh) {
+                    const opening = Number(chosen[0]?.openingBalance || 0);
+                    const logs = [];
+                    finalizeLoadedData(rows, opening, logs);
+                }
+            }
+
             async function handleFileChoose(e) {
                 const files = Array.from(e.target.files || []);
                 if (!files.length) return;
-                loadedAccountFiles = [];
-                let allRows = [];
-                let allLogs = [];
-                let openingBalance = null;
                 let displayNames = [];
+                let addedCount = 0;
                 if (originalPdfBlobUrl) { URL.revokeObjectURL(originalPdfBlobUrl); originalPdfBlobUrl = null; }
-                originalPdfBlobUrl = URL.createObjectURL(files[0]);
-
+                const firstPdf = files.find(f => f.name.toLowerCase().endsWith('.pdf'));
+                if (firstPdf) originalPdfBlobUrl = URL.createObjectURL(firstPdf);
                 try {
                     for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
-                        const file = files[fileIndex];
-                        displayNames.push(file.name);
-                        if (file.name.includes("1520036668073")) switchTheme("labakkang");
-                        else if (file.name.includes("1520036667943")) switchTheme("pangkajene");
+                        const file = files[fileIndex]; displayNames.push(file.name);
+                        if (file.name.includes('1520036668073')) switchTheme('labakkang');
+                        else if (file.name.includes('1520036667943')) switchTheme('pangkajene');
                         const lowerName = file.name.toLowerCase();
+                        const items = [];
                         if (lowerName.endsWith('.zip')) {
-                            updateProgress(true, `Membaca arsip ${fileIndex + 1}/${files.length}: ${file.name}`, 10 + (fileIndex/files.length)*70);
+                            updateProgress(true, `Membaca arsip ${fileIndex+1}/${files.length}: ${file.name}`, 10+(fileIndex/files.length)*70);
                             const zip = await JSZip.loadAsync(file);
-                            const pdfFiles = [];
-                            zip.forEach((relativePath, entry) => {
-                                if (!entry.dir && relativePath.toLowerCase().endsWith('.pdf')) pdfFiles.push(entry);
-                            });
-                            if (!pdfFiles.length) { allLogs.push(`Tidak ditemukan PDF di dalam ${file.name}`); continue; }
-                            for (let j = 0; j < pdfFiles.length; j++) {
-                                const entry = pdfFiles[j];
-                                updateProgress(true, `Memproses ${entry.name} (${j+1}/${pdfFiles.length})`, 20 + (j/pdfFiles.length)*60);
-                                try {
-                                    const result = await processSinglePdfBlob(await entry.async('blob'), entry.name);
-                                    if (openingBalance === null) openingBalance = result.openingBalance;
-                                    allRows.push(...result.rows);
-                                    allLogs.push(...result.validationLogs);
-                                    loadedAccountFiles.push({ ...result.account, fileName: entry.name, openingBalance: result.openingBalance,
-                                        totalDebet: result.rows.reduce((a,r)=>a+r.debet,0), totalKredit: result.rows.reduce((a,r)=>a+r.kredit,0), closingBalance: Number(result.rows[result.rows.length-1]?.saldo || 0) });
-                                } catch (err) { allLogs.push(`Gagal memproses ${entry.name}: ${err.message}`); }
+                            const pdfFiles=[]; zip.forEach((path,entry)=>{if(!entry.dir&&path.toLowerCase().endsWith('.pdf')) pdfFiles.push(entry);});
+                            if (!pdfFiles.length) { logError([`Tidak ditemukan PDF di dalam ${file.name}`]); continue; }
+                            for (let j=0;j<pdfFiles.length;j++) {
+                                const entry=pdfFiles[j];
+                                updateProgress(true, `Memproses ${entry.name} (${j+1}/${pdfFiles.length})`, 20+(j/pdfFiles.length)*60);
+                                try { items.push({name:entry.name,result:await processSinglePdfBlob(await entry.async('blob'),entry.name)}); }
+                                catch(err) { console.error(err); }
                             }
                         } else if (lowerName.endsWith('.pdf')) {
-                            updateProgress(true, `Memproses PDF ${fileIndex + 1}/${files.length}: ${file.name}`, 20 + (fileIndex/files.length)*60);
-                            const result = await processSinglePdfBlob(file, file.name);
-                            if (openingBalance === null) openingBalance = result.openingBalance;
-                            allRows.push(...result.rows);
-                            allLogs.push(...result.validationLogs);
-                            loadedAccountFiles.push({ ...result.account, fileName: file.name, openingBalance: result.openingBalance,
-                                totalDebet: result.rows.reduce((a,r)=>a+r.debet,0), totalKredit: result.rows.reduce((a,r)=>a+r.kredit,0), closingBalance: Number(result.rows[result.rows.length-1]?.saldo || 0) });
-                        } else {
-                            allLogs.push(`Tipe berkas ditolak: ${file.name}. Hanya PDF atau ZIP.`);
+                            updateProgress(true, `Memproses PDF ${fileIndex+1}/${files.length}: ${file.name}`, 20+(fileIndex/files.length)*60);
+                            try { items.push({name:file.name,result:await processSinglePdfBlob(file,file.name)}); }
+                            catch(err) { logError([`Gagal memproses ${file.name}: ${err.message}`]); }
+                        } else { logError([`Tipe berkas ditolak: ${file.name}. Hanya PDF atau ZIP.`]); continue; }
+                        for (const entry of items) {
+                            const result=entry.result;
+                            const duplicate=loadedAccountFiles.some(f=>f.fileName===entry.name && f.accountNumber===result.account.accountNumber);
+                            if (duplicate) { if (!confirm(`File “${entry.name}” tampaknya sudah pernah diunggah. Tambahkan lagi?`)) continue; }
+                            const id=`src_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+                            const rows=(result.rows||[]).map((r,i)=>({...r,sourceFileId:id,sourceFileName:entry.name,transactionId:r.transactionId||`${id}_trx_${i}`}));
+                            loadedAccountFiles.push({...result.account,id,fileName:entry.name,openingBalance:Number(result.openingBalance||0),totalDebet:rows.reduce((a,r)=>a+Number(r.debet||0),0),totalKredit:rows.reduce((a,r)=>a+Number(r.kredit||0),0),closingBalance:Number(rows[rows.length-1]?.saldo||0),rows,includeResume:true,includeStatement:true});
+                            addedCount++;
                         }
                     }
                     document.getElementById('fileName').innerText = displayNames.join(', ');
-                    if (allRows.length) finalizeLoadedData(allRows, openingBalance || 0, allLogs);
-                    else { updateProgress(false); logError(allLogs.length ? allLogs : ['Tidak ada transaksi yang berhasil diekstrak.']); }
-                    buildResumeRows(loadedAccountFiles);
+                    persistSourceFiles(); renderSourceFiles();
+                    buildResumeRows(loadedAccountFiles.filter(f=>f.includeResume!==false));
+                    rebuildStatementFromSources(true);
+                    if (!addedCount && !loadedAccountFiles.length) logError(['Tidak ada transaksi yang berhasil diekstrak.']);
                 } catch (err) {
-                    updateProgress(false);
-                    logError([`Gagal memproses dokumen: ${err.message}`]);
-                } finally {
-                    e.target.value = '';
-                }
+                    updateProgress(false); logError([`Gagal memproses dokumen: ${err.message}`]);
+                } finally { updateProgress(false); e.target.value=''; }
             }
 
             /* ==========================================================================
