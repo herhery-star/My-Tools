@@ -65,7 +65,18 @@ input[type=number]{text-align:right}
 
 .spbu-head{
   padding:7px 10px;font-weight:800;color:#fff;font-size:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
 }
+.spbu-head-name{font-weight:900;letter-spacing:.1px}
+.bank-choice{display:flex;align-items:center;justify-content:flex-end;gap:7px;font-size:14px;font-weight:800;}
+.bank-choice label{white-space:nowrap}
+.bank-choice select{width:auto;min-width:165px;padding:5px 8px;border:2px solid rgba(255,255,255,.8);border-radius:5px;background:#fff;color:#172033;font-weight:900;font-size:14px;}
+.date-display-row{display:flex;align-items:center;justify-content:flex-start;gap:14px;padding:5px 8px;border-bottom:1px solid var(--border);width:100%;box-sizing:border-box;min-height:42px}
+.date-display{display:inline-block;flex:0 0 auto;font-weight:800;font-size:18px;color:#172033;min-width:max-content;padding:5px 0;white-space:nowrap;line-height:1.3}
+.date-picker-button{flex:0 0 28px;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:5px;background:transparent;padding:0;cursor:pointer;color:#475569}
+.date-picker-button:hover{background:#eef2f7;color:#1d4ed8}
+#formDate{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+@media(max-width:600px){.bank-choice{width:100%;justify-content:flex-start;font-size:12px}.bank-choice select{font-size:12px;min-width:130px}.date-display-row{gap:14px;padding:5px 8px}.date-display{font-size:16px;letter-spacing:0;flex-shrink:0}.date-picker-button{width:28px;height:28px;flex:0 0 28px}}
 .green .spbu-head{background:var(--green)}
 .blue .spbu-head{background:var(--blue)}
 .section-title{
@@ -321,7 +332,7 @@ button.action{
   <div class="card">
     <div class="title">ESTIMASI PEMBELIAN BBM</div>
     <div class="form-head">
-      <label>Tanggal Form</label><input id="formDate" type="date" onchange="refreshAll()">
+      <div class="date-display-row"><span id="formDateDisplay" class="date-display"></span><button type="button" class="date-picker-button" onclick="openDatePicker()" title="Ubah tanggal" aria-label="Ubah tanggal"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 9.5h17"/></svg></button><input id="formDate" type="date" onchange="refreshAll()"></div>
     </div>
   </div>
 
@@ -539,6 +550,7 @@ function normalizeFormState(raw){
         if(src[k]!==undefined) dst[k]=Number(src[k])||0;
       });
       if(typeof src.extraLabel==="string") dst.extraLabel=src.extraLabel;
+      if(src.bank==="BRI" || src.bank==="MANDIRI" || src.bank==="BANK MANDIRI") dst.bank=(src.bank==="BANK MANDIRI"?"MANDIRI":src.bank);
       if(Array.isArray(src.qty)){
         for(let oi=0;oi<3;oi++){
           if(src.qty[oi] && typeof src.qty[oi]==="object") dst.qty[oi]={...src.qty[oi]};
@@ -575,7 +587,7 @@ SPBUS.forEach(s=>{
 function makeBlank(){
  const x={date:new Date().toISOString().slice(0,10),selectedOptions:{},spbus:{}};
  SPBUS.forEach(s=>{
-   x.spbus[s.id]={saldo:0,shift1:0,shift2:0,setoran:0,extraLabel:"Komponen tambahan",extras:0,qty:[{},{},{}]};
+   x.spbus[s.id]={saldo:0,shift1:0,shift2:0,setoran:0,extraLabel:"Komponen tambahan",extras:0,bank:"BRI",qty:[{},{},{}]};
    x.selectedOptions[s.id]="";
  });
  return x;
@@ -741,6 +753,7 @@ function renderMasterCodes(spbuKey,button){
 
 function init(){
   document.getElementById("formDate").value=data.date;
+  updateDateDisplay();
   const sel=document.getElementById("priceProduct");
   sel.innerHTML=PRODUCTS.map(p=>`<option>${p}</option>`).join("");
   renderForm();
@@ -750,8 +763,26 @@ function init(){
   renderReport();
   loadMasterFromGas();
 }
+function formatTanggalIndonesia(value){
+ if(!value) return "—";
+ const parts=String(value).split("-").map(Number);
+ if(parts.length!==3 || !parts[0] || !parts[1] || !parts[2]) return value;
+ const date=new Date(parts[0],parts[1]-1,parts[2]);
+ const weekdays=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+ const months=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+ return `${weekdays[date.getDay()]}, ${parts[2]} ${months[parts[1]-1]} ${parts[0]}`;
+}
+function updateDateDisplay(){
+ const display=document.getElementById("formDateDisplay");
+ if(display) display.textContent=formatTanggalIndonesia(data.date);
+}
+function openDatePicker(){
+ const el=document.getElementById("formDate");
+ if(el.showPicker) el.showPicker(); else {el.style.position="static";el.style.opacity="1";el.style.width="auto";el.style.height="auto";el.click();}
+}
 function refreshAll(){
  data.date=document.getElementById("formDate").value;
+ updateDateDisplay();
  save();renderForm();renderReport();
 }
 function num(v){
@@ -786,7 +817,15 @@ function renderForm(){
  root.innerHTML=SPBUS.map(s=>{
    const x=data.spbus[s.id], c=calc(x);
    return `<div class="card ${s.color}">
-    <div class="spbu-head">${s.name}</div>
+    <div class="spbu-head">
+      <span class="spbu-head-name">${s.name}</span>
+      <div class="bank-choice"><label for="bank-${s.id}">Bertransaksi di Bank :</label>
+        <select id="bank-${s.id}" onchange="setBankChoice('${s.id}',this.value)">
+          <option value="BRI" ${(x.bank||"BRI")==="BRI"?"selected":""}>BRI</option>
+          <option value="MANDIRI" ${((x.bank||"BRI")==="MANDIRI"||(x.bank||"")==="BANK MANDIRI")?"selected":""}>MANDIRI</option>
+        </select>
+      </div>
+    </div>
     <table class="money-table">
       <tbody>
        <tr><td>SALDO AWAL</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.saldo?fmt(x.saldo):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','saldo',this.value)"></td></tr>
@@ -845,6 +884,10 @@ function renderForm(){
  }).join("");
 }
 function escapeHtml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function setBankChoice(id,value){
+ if(data.spbus[id]) data.spbus[id].bank=value;
+ save();
+}
 function setExtraLabel(id,v){data.spbus[id].extraLabel=String(v||"").trim()||"Komponen tambahan";save();renderForm();renderReport()}
 function setMoney(id,key,v){data.spbus[id][key]=num(v);save();renderForm();renderReport()}
 function setQty(id,oi,p,v){data.spbus[id].qty[oi][p]=num(v);save();renderForm();renderReport()}
@@ -859,7 +902,7 @@ function renderReport(){
    let opts=[0,1,2].map(oi=>({oi,...optionCalc(x,oi,s.id)})).filter(o=>o.rows.length>0);
    opts.forEach(o=>grand+=o.total);
    html+=`<div class="report-spbu ${s.color}">
-    <h2>${s.name}</h2>
+    <h2 style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>${s.name}</span><span style="font-size:1em;font-weight:800">Bertransaksi di Bank : ${escapeHtml((x.bank||"BRI")==="BANK MANDIRI"?"MANDIRI":(x.bank||"BRI"))}</span></h2>
     <div class="report-grid">
      <div class="report-money">
       <table>
@@ -986,7 +1029,7 @@ function changeScale(delta){
 function resetForm(){
  if(!confirm("Kosongkan seluruh input form?"))return;
  data=makeBlank();data.date=new Date().toISOString().slice(0,10);
- document.getElementById("formDate").value=data.date;
+ document.getElementById("formDate").value=data.date;updateDateDisplay();
  save();renderForm();renderReport();
 }
 init();
