@@ -664,15 +664,19 @@ function setDraftStatus(message,isError=false){
   if(el){el.textContent=message;el.style.color=isError?"#b42318":"#15803d";}
 }
 function saveDraftForDate(date,state){
-  if(!date) return false;
+  if(!date) { setDraftStatus("Gagal menyimpan: tanggal belum dipilih.",true); return false; }
   try {
     const drafts=readAllDrafts();
     drafts[date]=JSON.parse(JSON.stringify(state));
-    localStorage.setItem(DRAFT_STORAGE_KEY,JSON.stringify(drafts));
+    const serialized=JSON.stringify(drafts);
+    localStorage.setItem(DRAFT_STORAGE_KEY,serialized);
+    // Verifikasi tulis-baca supaya kegagalan penyimpanan tidak dilaporkan sukses.
+    const verify=localStorage.getItem(DRAFT_STORAGE_KEY);
+    if(verify!==serialized) throw new Error("Verifikasi penyimpanan gagal");
     setDraftStatus("Draft lokal tersimpan otomatis ✓ | Tanggal: "+date);
     return true;
   } catch(err) {
-    setDraftStatus("Gagal menyimpan draft lokal: "+err.message,true);
+    setDraftStatus("GAGAL menyimpan draft browser: "+err.message+". Pastikan HTML dibuka di browser biasa, bukan pratinjau.",true);
     return false;
   }
 }
@@ -837,7 +841,14 @@ function openDatePicker(){
  if(el.showPicker) el.showPicker(); else {el.style.position="static";el.style.opacity="1";el.style.width="auto";el.style.height="auto";el.click();}
 }
 function refreshAll(){
- data.date=document.getElementById("formDate").value;
+ const chosenDate=document.getElementById("formDate").value || localDateISO();
+ if(chosenDate!==data.date){
+   // Simpan tanggal lama dahulu, kemudian muat draft tanggal tujuan.
+   save();
+   data=loadDraftForDate(chosenDate);
+ }
+ data.date=chosenDate;
+ document.getElementById("formDate").value=chosenDate;
  updateDateDisplay();
  save();renderForm();renderReport();
 }
@@ -884,11 +895,11 @@ function renderForm(){
     </div>
     <table class="money-table">
       <tbody>
-       <tr><td>SALDO AWAL</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.saldo?fmt(x.saldo):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','saldo',this.value)"></td></tr>
-       <tr class="extra-row"><td colspan="2"><div class="extra-fields"><input class="extra-label" type="text" value="${escapeHtml(x.extraLabel||"Komponen tambahan")}" placeholder="Keterangan komponen tambahan" onchange="setExtraLabel('${s.id}',this.value)"><input class="money-input" type="text" inputmode="numeric" value="${x.extras?fmt(x.extras):""}" placeholder="0 / -0" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','extras',this.value)"></div></td></tr>
-       <tr><td>SHIFT-1</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.shift1?fmt(x.shift1):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','shift1',this.value)"></td></tr>
-       <tr><td>SHIFT-2</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.shift2?fmt(x.shift2):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','shift2',this.value)"></td></tr>
-       <tr><td>SETORAN AWAL</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.setoran?fmt(x.setoran):""}" oninput="formatNominalInput(this)" onchange="setMoney('${s.id}','setoran',this.value)"></td></tr>
+       <tr><td>SALDO AWAL</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.saldo?fmt(x.saldo):""}" oninput="formatNominalInput(this);setMoneyDraft('${s.id}','saldo',this.value)" onchange="setMoney('${s.id}','saldo',this.value)"></td></tr>
+       <tr class="extra-row"><td colspan="2"><div class="extra-fields"><input class="extra-label" type="text" value="${escapeHtml(x.extraLabel||"Komponen tambahan")}" placeholder="Keterangan komponen tambahan" oninput="setExtraLabelDraft('${s.id}',this.value)" onchange="setExtraLabel('${s.id}',this.value)"><input class="money-input" type="text" inputmode="numeric" value="${x.extras?fmt(x.extras):""}" placeholder="0 / -0" oninput="formatNominalInput(this);setMoneyDraft('${s.id}','extras',this.value)" onchange="setMoney('${s.id}','extras',this.value)"></div></td></tr>
+       <tr><td>SHIFT-1</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.shift1?fmt(x.shift1):""}" oninput="formatNominalInput(this);setMoneyDraft('${s.id}','shift1',this.value)" onchange="setMoney('${s.id}','shift1',this.value)"></td></tr>
+       <tr><td>SHIFT-2</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.shift2?fmt(x.shift2):""}" oninput="formatNominalInput(this);setMoneyDraft('${s.id}','shift2',this.value)" onchange="setMoney('${s.id}','shift2',this.value)"></td></tr>
+       <tr><td>SETORAN AWAL</td><td><input class="money-input" type="text" inputmode="numeric" value="${x.setoran?fmt(x.setoran):""}" oninput="formatNominalInput(this);setMoneyDraft('${s.id}','setoran',this.value)" onchange="setMoney('${s.id}','setoran',this.value)"></td></tr>
        <tr class="calc"><td>JUMLAH</td><td>${fmt(c.jumlah)}</td></tr>
        <tr class="calc"><td>TOT SALDO REKENING</td><td>${fmt(c.totalSaldo)}</td></tr>
       </tbody>
@@ -942,6 +953,16 @@ function renderForm(){
 function escapeHtml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
 function setBankChoice(id,value){
  if(data.spbus[id]) data.spbus[id].bank=value;
+ save();
+}
+// Simpan setiap ketikan, bukan hanya ketika kolom kehilangan fokus.
+// Fungsi Draft tidak me-render ulang form agar kursor tidak meloncat saat mengetik.
+function setMoneyDraft(id,key,v){
+ if(data.spbus[id]) data.spbus[id][key]=num(v);
+ save();
+}
+function setExtraLabelDraft(id,v){
+ if(data.spbus[id]) data.spbus[id].extraLabel=String(v??"");
  save();
 }
 function setExtraLabel(id,v){data.spbus[id].extraLabel=String(v||"").trim()||"Komponen tambahan";save();renderForm();renderReport()}
