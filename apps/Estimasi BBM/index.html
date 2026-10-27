@@ -316,8 +316,9 @@ button.action{
 
 <div class="card" style="padding:7px 10px;font-size:11px;color:var(--muted);">
   <strong style="color:var(--text)">Penyimpanan:</strong>
-  Google Sheets melalui Google Apps Script. Data form tidak disimpan permanen di perangkat.
-  <div id="gasStatus" style="margin-top:5px;font-weight:700">Status: belum dikonfigurasi.</div>
+  Draft form otomatis disimpan di browser perangkat ini dan dipertahankan sampai tombol RESET digunakan. Penyimpanan permanen tetap melalui Google Sheets.
+  <div id="draftStatus" style="margin-top:5px;font-weight:700;color:#15803d">Draft lokal: menyiapkan...</div>
+  <div id="gasStatus" style="margin-top:5px;font-weight:700">Status Google Sheets: belum diperiksa.</div>
   <div class="actions" style="padding:6px 0 0">
     <button class="action secondary" onclick="openSpreadsheet()">BUKA GOOGLE SHEETS</button>
   </div>
@@ -584,8 +585,12 @@ SPBUS.forEach(s=>{
   }
 });
 
+function localDateISO(){
+ const d=new Date();
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
 function makeBlank(){
- const x={date:new Date().toISOString().slice(0,10),selectedOptions:{},spbus:{}};
+ const x={date:localDateISO(),selectedOptions:{},spbus:{}};
  SPBUS.forEach(s=>{
    x.spbus[s.id]={saldo:0,shift1:0,shift2:0,setoran:0,extraLabel:"Komponen tambahan",extras:0,bank:"BRI",qty:[{},{},{}]};
    x.selectedOptions[s.id]="";
@@ -637,7 +642,56 @@ function effectivePrice(spbuId,product,date){
     .sort((a,b)=>parseDate(b.date)-parseDate(a.date));
   return list.length?Number(list[0].price):0;
 }
-function save(){ /* Perubahan hanya berada di memori sampai tombol simpan ditekan. */ }
+/* =========================================================
+   DRAFT OTOMATIS DI BROWSER
+   Draft dipisahkan berdasarkan tanggal. Data tetap ada setelah
+   aplikasi ditutup/dibuka kembali pada browser dan perangkat sama.
+   ========================================================= */
+const DRAFT_STORAGE_KEY = "estimasi_pembelian_bbm_draft_v1";
+
+function readAllDrafts(){
+  try {
+    const raw=localStorage.getItem(DRAFT_STORAGE_KEY);
+    const parsed=raw?JSON.parse(raw):{};
+    return parsed && typeof parsed==="object" ? parsed : {};
+  } catch(err) {
+    setDraftStatus("Draft lokal tidak dapat dibaca: "+err.message,true);
+    return {};
+  }
+}
+function setDraftStatus(message,isError=false){
+  const el=document.getElementById("draftStatus");
+  if(el){el.textContent=message;el.style.color=isError?"#b42318":"#15803d";}
+}
+function saveDraftForDate(date,state){
+  if(!date) return false;
+  try {
+    const drafts=readAllDrafts();
+    drafts[date]=JSON.parse(JSON.stringify(state));
+    localStorage.setItem(DRAFT_STORAGE_KEY,JSON.stringify(drafts));
+    setDraftStatus("Draft lokal tersimpan otomatis ✓ | Tanggal: "+date);
+    return true;
+  } catch(err) {
+    setDraftStatus("Gagal menyimpan draft lokal: "+err.message,true);
+    return false;
+  }
+}
+function loadDraftForDate(date){
+  const drafts=readAllDrafts();
+  if(drafts[date]) {
+    const restored=normalizeFormState(drafts[date]);
+    restored.date=date;
+    setDraftStatus("Draft lokal dipulihkan ✓ | Tanggal: "+date);
+    return restored;
+  }
+  const blank=makeBlank();
+  blank.date=date || blank.date;
+  setDraftStatus("Belum ada draft untuk tanggal "+blank.date+". Input baru akan tersimpan otomatis.");
+  return blank;
+}
+function save(){
+  saveDraftForDate(data.date, data);
+}
 function showTab(id,btn){
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -752,6 +806,8 @@ function renderMasterCodes(spbuKey,button){
 }
 
 function init(){
+  const initialDate=data.date || localDateISO();
+  data=loadDraftForDate(initialDate);
   document.getElementById("formDate").value=data.date;
   updateDateDisplay();
   const sel=document.getElementById("priceProduct");
@@ -1027,10 +1083,22 @@ function changeScale(delta){
 }
 
 function resetForm(){
- if(!confirm("Kosongkan seluruh input form?"))return;
- data=makeBlank();data.date=new Date().toISOString().slice(0,10);
- document.getElementById("formDate").value=data.date;updateDateDisplay();
- save();renderForm();renderReport();
+ if(!confirm("RESET akan menghapus draft lokal untuk tanggal "+data.date+" dan mengosongkan input tanggal tersebut. Draft tanggal lain tidak terpengaruh. Lanjutkan?"))return;
+ const resetDate=data.date;
+ try {
+   const drafts=readAllDrafts();
+   delete drafts[resetDate];
+   localStorage.setItem(DRAFT_STORAGE_KEY,JSON.stringify(drafts));
+ } catch(err) {
+   setDraftStatus("Peringatan: draft tidak berhasil dihapus dari browser: "+err.message,true);
+ }
+ data=makeBlank();
+ data.date=resetDate || localDateISO();
+ document.getElementById("formDate").value=data.date;
+ updateDateDisplay();
+ save();
+ setDraftStatus("Draft tanggal "+data.date+" telah di-RESET. Input baru akan tersimpan otomatis.");
+ renderForm();renderReport();
 }
 init();
 applyScale();
