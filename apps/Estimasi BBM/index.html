@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -295,6 +297,83 @@ button.action{
 .master-code-copy.copied{font-size:11px;font-weight:800}
 @media(max-width:760px){.master-code-table{min-width:680px}}
 
+
+/* VISUAL REFINEMENT — warna produk, shading lembut, dan hierarki form */
+:root{
+  --pertalite-bg:#eaf7ed; --pertalite-edge:#2e8b57;
+  --biosolar-bg:#fff5df; --biosolar-edge:#c58a16;
+  --pertamax-bg:#eaf2ff; --pertamax-edge:#3974d8;
+  --turbo-bg:#f3eaff; --turbo-edge:#8953c6;
+  --dexlite-bg:#e9f4f5; --dexlite-edge:#39858b;
+  --shadow-card:0 3px 10px rgba(15,23,42,.055);
+}
+body{background:linear-gradient(180deg,#edf2f7 0%,#f7f9fc 230px);}
+.card{box-shadow:var(--shadow-card);border-color:#c7d2df;}
+.tabs{box-shadow:0 2px 7px rgba(15,23,42,.045);}
+.tab{transition:background .15s ease,transform .15s ease;}
+.tab:hover{background:#dce5ef;}
+.tab.active{background:linear-gradient(135deg,#1e293b,#334155);box-shadow:0 2px 5px rgba(15,23,42,.18);}
+.title{background:linear-gradient(90deg,#f8fafc,#edf3f8,#f8fafc);color:#172b4d;letter-spacing:.35px;}
+#form>.card:first-child .title{background:linear-gradient(100deg,#eaf1f9,#f9fbfd,#eaf1f9);font-size:17px;}
+.form-head{background:#f8fafc;}
+.form-head label{background:linear-gradient(90deg,#edf2f7,#f8fafc);color:#334155;}
+.form-head input,.form-head .date-display-row{background:#fff;}
+input,select{transition:border-color .15s ease,box-shadow .15s ease;}
+input:focus,select:focus{outline:none;border-color:#5288d8;box-shadow:0 0 0 3px rgba(59,130,246,.13);}
+.spbu-head{box-shadow:inset 0 -1px rgba(255,255,255,.2);}
+.green .spbu-head{background:linear-gradient(110deg,#166534,#269653);}
+.blue .spbu-head{background:linear-gradient(110deg,#1d4ed8,#3b82f6);}
+.section-title{background:linear-gradient(90deg,#e9eef5,#f8fafc);color:#26364b;border-left:4px solid #94a3b8;}
+.money-table td{background:#fff;}
+.money-table tbody tr:nth-child(even):not(.calc):not(.extra-row) td{background:#f8fafc;}
+.money-table .extra-row td{background:#f1f5f9;}
+.money-table .calc td{background:linear-gradient(90deg,#edf2f7,#f8fafc);font-weight:800;}
+.money-table .calc:last-child td{background:#e8eef6;color:#1e3a5f;}
+.money-table input{background:rgba(255,255,255,.92);}
+.purchase-table{border-collapse:separate;border-spacing:0;}
+.purchase-table th{background:linear-gradient(180deg,#e9eff6,#f4f7fb);color:#334155;border-color:#c5d0dd;}
+.purchase-table th:first-child{background:#e2e8f0;}
+.purchase-table td{transition:filter .12s ease;}
+.purchase-table tbody tr:nth-child(1) td{background:var(--pertalite-bg);}
+.purchase-table tbody tr:nth-child(2) td{background:var(--biosolar-bg);}
+.purchase-table tbody tr:nth-child(3) td{background:var(--pertamax-bg);}
+.purchase-table tbody tr:nth-child(4) td{background:var(--turbo-bg);}
+.purchase-table tbody tr:nth-child(5) td{background:var(--dexlite-bg);}
+.purchase-table tbody tr:nth-child(1) td:first-child{border-left:5px solid var(--pertalite-edge);color:#205c37;}
+.purchase-table tbody tr:nth-child(2) td:first-child{border-left:5px solid var(--biosolar-edge);color:#79520b;}
+.purchase-table tbody tr:nth-child(3) td:first-child{border-left:5px solid var(--pertamax-edge);color:#214f9b;}
+.purchase-table tbody tr:nth-child(4) td:first-child{border-left:5px solid var(--turbo-edge);color:#633c91;}
+.purchase-table tbody tr:nth-child(5) td:first-child{border-left:5px solid var(--dexlite-edge);color:#245f63;}
+.purchase-table tbody tr:nth-child(-n+5):hover td{filter:saturate(1.08) brightness(.985);}
+.purchase-table .qty-select{border-color:rgba(100,116,139,.55);background:rgba(255,255,255,.92);font-weight:700;}
+.purchase-table .inline-editor{gap:5px;}
+.purchase-table .result-line{color:#334155;font-size:11px;}
+.purchase-table .total-row td{background:linear-gradient(90deg,#dce7f3,#edf3f9);color:#183b63;border-top:2px solid #a9bbd0;}
+.purchase-table .balance-row td{background:#f8fafc;border-top:1px solid #cbd5e1;}
+.purchase-table .balance-positive{background:#e8f7ed!important;color:#166534;}
+.purchase-table .balance-negative{background:#fff0f0!important;color:#b42318;}
+.option-setter{box-shadow:inset 0 1px rgba(255,255,255,.8),0 2px 5px rgba(15,23,42,.035);}
+.option-setter-label{letter-spacing:.35px;}
+.option-setter-btn{box-shadow:0 1px 2px rgba(15,23,42,.04);transition:background .15s ease,transform .15s ease;}
+.option-setter-btn:hover{transform:translateY(-1px);}
+.actions{align-items:center;flex-wrap:wrap;}
+button.action{box-shadow:0 1px 2px rgba(15,23,42,.08);transition:filter .15s ease,transform .15s ease;}
+button.action:hover{filter:brightness(.97);transform:translateY(-1px);}
+button.action:disabled{opacity:.6;cursor:wait;transform:none;}
+.sync-status{border-left:4px solid #94a3b8;background:linear-gradient(90deg,#f1f5f9,#fafcff);border-radius:0 0 7px 7px;}
+.sync-field input,.sync-field select{background:#fff;border-color:#c4cfdb;}
+.price-table th{background:linear-gradient(180deg,#e9eff6,#f4f7fb);}
+.price-table tbody tr:nth-child(even) td{background:#f8fafc;}
+.report-spbu{box-shadow:0 2px 6px rgba(15,23,42,.04);}
+.report-money tr:nth-child(even) td,.report-options tbody tr:nth-child(even) td{background:#f8fafc;}
+.report-options th{background:linear-gradient(180deg,#e9eff6,#f4f7fb);}
+@media(max-width:600px){
+  .purchase-table th,.purchase-table td{padding:4px 3px;}
+  .purchase-table .result-line{font-size:10px;}
+  .title{font-size:15px;}
+  .actions button.action{flex:1 1 auto;}
+}
+
 .empty{color:var(--muted);text-align:center;padding:15px}
 @media(max-width:760px){
   body{font-size:12px}
@@ -308,6 +387,13 @@ button.action{
   .extra-fields{grid-template-columns:minmax(0,1fr) 130px}
 }
 
+
+.sync-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:10px}
+.sync-field label{display:block;font-weight:700;margin-bottom:5px}
+.sync-field input,.sync-field select{width:100%;min-height:36px}
+.sync-actions{display:flex;flex-wrap:wrap;gap:7px;padding:0 10px 10px}
+.sync-status{padding:8px 10px;background:#f8fafc;border-top:1px solid var(--border);font-size:12px;white-space:pre-wrap}
+@media(max-width:600px){.sync-grid{grid-template-columns:1fr}.sync-actions button{flex:1 1 100%}}
 </style>
 
 </head>
@@ -327,6 +413,7 @@ button.action{
   <button class="tab active" onclick="showTab('form',this)">Form Estimasi</button>
   <button class="tab" onclick="showTab('report',this)">Laporan</button>
   <button class="tab" onclick="showTab('prices',this)">Master Harga</button>
+  <button class="tab" onclick="showTab('sync',this)">Tarik Data &amp; Backup</button>
 </div>
 
 <section id="form" class="panel active">
@@ -402,11 +489,46 @@ button.action{
     <div id="masterCodeRows"></div>
   </div>
 </section>
+<section id="sync" class="panel">
+  <div class="card">
+    <div class="title">DATA LAMA &amp; PEMULIHAN</div>
+    <div class="subtitle">Operasional harian menggunakan IndexedDB. Backup JSON dilakukan manual. Google Sheets hanya dibaca untuk pemulihan dan tidak diubah oleh fitur tarik/pemulihan.</div>
+    <div class="sync-grid">
+      <div class="sync-field"><label for="historyDate">Tanggal data</label><input type="date" id="historyDate"></div>
+      <div class="sync-field"><label for="localDates">Tanggal tersimpan di perangkat</label><select id="localDates" onchange="if(this.value)document.getElementById('historyDate').value=this.value"><option value="">Memuat...</option></select></div>
+    </div>
+    <div class="sync-actions">
+      <button class="action primary" onclick="openHistoricalDate()">BUKA DATA LOKAL</button>
+      <button class="action secondary" onclick="refreshLocalDateList()">PERBARUI DAFTAR TANGGAL</button>
+    </div>
+    <hr style="border:0;border-top:1px solid #e5e7eb;margin:18px 0">
+    <div class="title" style="font-size:17px">BACKUP MANUAL — JSON</div>
+    <div class="subtitle">Simpan file JSON di luar browser, misalnya folder Download atau Google Drive. File ini dapat digunakan jika data lokal hilang.</div>
+    <div class="sync-actions">
+      <button class="action primary" onclick="downloadJsonBackup()">SIMPAN BACKUP JSON</button>
+    </div>
+    <div id="backupInfo" class="sync-status" style="margin-top:8px">Belum ada informasi backup JSON pada browser ini.</div>
+    <div class="sync-grid" style="margin-top:12px">
+      <div class="sync-field"><label for="jsonFile">Pilih file backup JSON</label><input id="jsonFile" type="file" accept=".json,application/json"></div>
+    </div>
+    <div class="sync-actions">
+      <button class="action secondary" onclick="restoreJsonBackup()">PULIHKAN DARI JSON</button>
+    </div>
+    <hr style="border:0;border-top:1px solid #e5e7eb;margin:18px 0">
+    <div class="title" style="font-size:17px">PEMULIHAN DARI GOOGLE SHEETS</div>
+    <div class="subtitle">Fungsi ini hanya mengambil data dari Google Sheets dan menyimpannya ke IndexedDB. Tidak mengirim, mengedit, atau menghapus data di Google Sheets. Jika IndexedDB kosong, pilih tarik semua tanggal yang tersedia.</div>
+    <div class="sync-actions">
+      <button class="action secondary" onclick="pullDateFromSheets()">TARIK TANGGAL TERPILIH</button>
+      <button class="action secondary" onclick="syncMissingFromSheets()">PAKSA TARIK ULANG SEMUA TANGGAL · V2</button>
+    </div>
+    <div id="syncStatus" class="sync-status">VERSI PEMULIHAN V2 aktif — IndexedDB sedang disiapkan…</div>
+  </div>
+</section>
 </div>
 
 <script>
 /* KONFIGURASI: tempel URL Web App GAS yang berakhiran /exec setelah deploy. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwBlBpNsuMptLyGHIxnXQTMK9R7LKRTl4hLJAvEUW0I8bDZSAzlpmI0RI_kbSeLhT0q-Q/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxMBZhisddw64J9kUa6urJHjeUAM80a3g244NvIbI_CZSf67EJiMhT3IFbLeENTDmpAww/exec";
 const GAS_RT = { spreadsheetUrl: "", busy: false };
 
 function gasConfigured(){
@@ -695,6 +817,8 @@ function loadDraftForDate(date){
 }
 function save(){
   saveDraftForDate(data.date, data);
+  idbPutRecord(data).then(()=>setSyncStatus("Tersimpan otomatis di IndexedDB ✓ | "+data.date))
+    .catch(err=>setSyncStatus("Peringatan: IndexedDB gagal menyimpan: "+err.message,true));
 }
 function showTab(id,btn){
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
@@ -809,9 +933,129 @@ function renderMasterCodes(spbuKey,button){
     </div>`;
 }
 
-function init(){
+
+const IDB_NAME="estimasi_pembelian_bbm_db",IDB_VERSION=1,IDB_STORE="records";
+let idbReady=null;
+function setSyncStatus(message,isError=false){const el=document.getElementById("syncStatus");if(el){el.textContent=message;el.style.color=isError?"#b42318":"#166534";}}
+const BACKUP_META_KEY="estimasi_pembelian_bbm_backup_meta_v1";
+function updateBackupInfo(meta=null){
+ const el=document.getElementById("backupInfo");if(!el)return;
+ try{if(meta)localStorage.setItem(BACKUP_META_KEY,JSON.stringify(meta));else meta=JSON.parse(localStorage.getItem(BACKUP_META_KEY)||"null");}catch(e){}
+ if(!meta){el.textContent="Belum ada informasi backup JSON pada browser ini.";return;}
+ const when=meta.exportedAt?new Date(meta.exportedAt).toLocaleString("id-ID"):"waktu tidak diketahui";
+ el.textContent=`Backup terakhir disiapkan: ${when} | ${Number(meta.dateCount||0)} tanggal dicadangkan. Simpan file JSON tersebut di luar browser.`;
+}
+function openIDB(){
+ if(idbReady)return idbReady;
+ idbReady=new Promise((resolve,reject)=>{
+  if(!("indexedDB" in window)){reject(new Error("Browser tidak mendukung IndexedDB"));return;}
+  const req=indexedDB.open(IDB_NAME,IDB_VERSION);
+  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(IDB_STORE))req.result.createObjectStore(IDB_STORE,{keyPath:"date"});};
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error("Gagal membuka IndexedDB"));
+ });return idbReady;
+}
+async function idbPutRecord(state){
+ const normalized=normalizeFormState(state);normalized.date=String(state.date||localDateISO());const db=await openIDB();
+ return new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).put({date:normalized.date,data:normalized,updatedAt:new Date().toISOString()});tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error("Transaksi dibatalkan"));});
+}
+async function idbGetRecord(date){
+ const db=await openIDB();return new Promise((resolve,reject)=>{const req=db.transaction(IDB_STORE,"readonly").objectStore(IDB_STORE).get(date);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);});
+}
+async function idbGetAllRecords(){
+ const db=await openIDB();return new Promise((resolve,reject)=>{const req=db.transaction(IDB_STORE,"readonly").objectStore(IDB_STORE).getAll();req.onsuccess=()=>resolve((req.result||[]).sort((a,b)=>a.date.localeCompare(b.date)));req.onerror=()=>reject(req.error);});
+}
+async function idbMergeRecords(records){
+ let count=0;for(const r of records||[]){const raw=r.data||r.state||r,date=String(r.date||raw.date||"");if(!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;const state=normalizeFormState(raw);state.date=date;await idbPutRecord(state);count++;}return count;
+}
+async function refreshLocalDateList(){
+ try{const records=await idbGetAllRecords(),sel=document.getElementById("localDates");sel.innerHTML=records.length?records.slice().reverse().map(r=>`<option value="${escapeHtml(r.date)}">${escapeHtml(r.date)}</option>`).join(""):'<option value="">Belum ada data</option>';if(records.length)document.getElementById("historyDate").value=records[records.length-1].date;setSyncStatus(`IndexedDB siap ✓ | ${records.length} tanggal tersimpan di perangkat ini.`);}catch(err){setSyncStatus("Gagal membaca IndexedDB: "+err.message,true);}
+}
+async function openHistoricalDate(){
+ const date=document.getElementById("historyDate").value;if(!date){alert("Pilih tanggal terlebih dahulu.");return;}
+ try{let record=await idbGetRecord(date);if(!record){const old=readAllDrafts()[date];if(old){record={date,data:normalizeFormState(old)};await idbPutRecord(record.data);}}
+ if(!record){alert("Data tanggal "+date+" belum ada di perangkat. Gunakan TARIK TANGGAL DARI SHEETS.");return;}
+ data=normalizeFormState(record.data);data.date=date;document.getElementById("formDate").value=date;updateDateDisplay();renderForm();renderReport();showTab("form",document.querySelectorAll(".tab")[0]);setSyncStatus("Data tanggal "+date+" berhasil dibuka dari IndexedDB.");
+ }catch(err){setSyncStatus("Gagal membuka data: "+err.message,true);}
+}
+async function pullDateFromSheets(){
+ const date=document.getElementById("historyDate").value;if(!date){alert("Pilih tanggal yang ingin ditarik.");return;}if(!confirm("Tarik data tanggal "+date+" dari Google Sheets? Data lokal tanggal ini akan diperbarui jika data ditemukan."))return;
+ setSyncStatus("Mengambil data tanggal "+date+" dari Google Sheets…");
+ try{const out=await gasRequest("loadDate",null,{date});const state=out.data||out.record||out.formData;if(!state)throw new Error("GAS tidak mengembalikan data. Tambahkan action loadDate pada Google Apps Script.");state.date=date;await idbPutRecord(state);data=normalizeFormState(state);data.date=date;document.getElementById("formDate").value=date;updateDateDisplay();renderForm();renderReport();await refreshLocalDateList();showTab("form",document.querySelectorAll(".tab")[0]);setSyncStatus("Tarik data berhasil ✓ | Tanggal: "+date);
+ }catch(err){setSyncStatus("Gagal menarik data: "+err.message,true);alert("Tarik data gagal.\\n"+err.message);}
+}
+async function syncMissingFromSheets(){
+ // Google Sheets adalah sumber utama: tarik ulang SEMUA tanggal dan timpa
+ // record lokal untuk tanggal tersebut, bukan hanya tanggal yang belum ada.
+ setSyncStatus("Meminta daftar tanggal dari Google Sheets…");
+ try{
+  const out=await gasRequest("listDates");
+  if(!Array.isArray(out.dates))throw new Error("GAS belum menyediakan daftar tanggal (action listDates).");
+  const dates=[...new Set(out.dates.map(d=>String(d||"").trim()).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)))].sort();
+  if(!dates.length)throw new Error("Google Sheets tidak mengembalikan tanggal arsip yang valid.");
+  setSyncStatus(`Memulihkan ${dates.length} tanggal dari Google Sheets. Data lokal untuk tanggal tersebut akan ditimpa…`);
+  let imported=0,failed=[];
+  for(const date of dates){
+   try{
+    const item=await gasRequest("loadDate",null,{date});
+    const state=item.data||item.record||item.formData;
+    if(!state)throw new Error(item.error||"Respons tidak berisi data.");
+    state.date=date;
+    await idbPutRecord(state); // IndexedDB put() menimpa record dengan key tanggal yang sama
+    imported++;
+   }catch(e){failed.push(date+": "+e.message);}
+  }
+  await refreshLocalDateList();
+  const local=await idbGetAllRecords();
+  setSyncStatus(`PEMULIHAN V2 SELESAI: ${imported}/${dates.length} tanggal ditarik ulang dari Google Sheets. Tanggal sumber: ${dates.join(", ")}. Total tanggal lokal: ${local.length}.`+(failed.length?"\nGAGAL:\n"+failed.join("\n"):""),failed.length>0);
+ }catch(err){setSyncStatus("Pemulihan arsip gagal: "+err.message,true);alert("Pemulihan arsip gagal.\n"+err.message);}
+}
+async function downloadJsonBackup(){
+ try{
+  const records=await idbGetAllRecords(),drafts=readAllDrafts(),byDate=new Map(records.map(r=>[r.date,{date:r.date,data:r.data,updatedAt:r.updatedAt||null}]));
+  Object.entries(drafts).forEach(([date,state])=>{if(!byDate.has(date)&&/^\d{4}-\d{2}-\d{2}$/.test(date))byDate.set(date,{date,data:normalizeFormState(state),updatedAt:null});});
+  const payload={app:"Estimasi Pembelian BBM",schemaVersion:1,exportedAt:new Date().toISOString(),records:[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date)),pricesBySpbu};
+  if(!payload.records.length)throw new Error("Belum ada data untuk dicadangkan.");
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a"),now=new Date(),pad=n=>String(n).padStart(2,"0");
+  const stamp=`${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  a.href=url;a.download=`Estimasi_Pembelian_BBM_BACKUP_JSON_${stamp}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  const meta={exportedAt:payload.exportedAt,dateCount:payload.records.length};updateBackupInfo(meta);
+  setSyncStatus(`Backup JSON disiapkan ✓ | ${payload.records.length} tanggal dimasukkan. Pastikan file hasil unduhan tersimpan di folder pilihan Anda.`);
+ }catch(err){setSyncStatus("Gagal membuat JSON: "+err.message,true);alert("Backup JSON gagal.\n"+err.message);}
+}
+async function restoreJsonBackup(){
+ const file=document.getElementById("jsonFile").files[0];
+ if(!file){alert("Pilih file JSON lokal terlebih dahulu.");return;}
+ try{
+  const parsed=JSON.parse(await file.text());
+  if(parsed.app && parsed.app!=="Estimasi Pembelian BBM")throw new Error("File ini bukan backup aplikasi Estimasi Pembelian BBM.");
+  const records=Array.isArray(parsed)?parsed:(parsed.records||parsed.data||[]);
+  if(!Array.isArray(records)||!records.length)throw new Error("Format JSON tidak berisi records yang dikenali.");
+  const valid=records.filter(r=>{const raw=r.data||r.state||r;return /^\d{4}-\d{2}-\d{2}$/.test(String(r.date||raw.date||""));});
+  if(!valid.length)throw new Error("Tidak ditemukan catatan dengan format tanggal yang valid.");
+  const local=await idbGetAllRecords(),localDates=new Set(local.map(r=>r.date));
+  const incomingDates=valid.map(r=>String(r.date||(r.data||r.state||r).date)),overlaps=[...new Set(incomingDates.filter(d=>localDates.has(d)))];
+  let replaceOverlaps=false;
+  if(overlaps.length){
+   replaceOverlaps=confirm(`Ditemukan ${overlaps.length} tanggal yang sudah ada di IndexedDB.\n\nOK = data JSON menggantikan data lokal pada tanggal yang sama.\nCancel = lewati tanggal yang sudah ada dan hanya pulihkan tanggal yang belum ada.\n\nGoogle Sheets tidak akan diubah.`);
+  }else if(!confirm(`Pulihkan ${valid.length} tanggal dari file JSON ke IndexedDB? Google Sheets tidak akan diubah.`))return;
+  const toRestore=valid.filter(r=>replaceOverlaps||!localDates.has(String(r.date||((r.data||r.state||r).date))));
+  if(!toRestore.length){setSyncStatus("Tidak ada tanggal baru yang dipulihkan; semua tanggal dari JSON sudah ada di IndexedDB.");return;}
+  const count=await idbMergeRecords(toRestore);
+  if(parsed.pricesBySpbu&&typeof parsed.pricesBySpbu==="object"){
+   SPBUS.forEach(sp=>{if(Array.isArray(parsed.pricesBySpbu[sp.id]))pricesBySpbu[sp.id]=parsed.pricesBySpbu[sp.id];});
+   renderPrices();renderForm();renderReport();
+   // Sengaja tidak memanggil savePricesToSheets(): pemulihan JSON hanya mengubah data lokal.
+  }
+  await refreshLocalDateList();
+  setSyncStatus(`Recovery JSON berhasil ✓ | ${count} tanggal dipulihkan. Google Sheets tidak diubah.`);
+  alert(`Recovery selesai.\nTanggal dipulihkan: ${count}\nGoogle Sheets tidak diubah.`);
+ }catch(err){setSyncStatus("Recovery JSON gagal: "+err.message,true);alert("Recovery JSON gagal.\n"+err.message);}
+}
+
+async function init(){
   const initialDate=data.date || localDateISO();
-  data=loadDraftForDate(initialDate);
+  try{const local=await idbGetRecord(initialDate);const drafts=readAllDrafts();data=local?normalizeFormState(local.data):(drafts[initialDate]?loadDraftForDate(initialDate):makeBlank());data.date=initialDate;if(!local&&!drafts[initialDate])setSyncStatus("Belum ada catatan lokal untuk hari ini. Data akan tersimpan ke IndexedDB saat Anda mulai menyimpan input.");}
+  catch(err){data=loadDraftForDate(initialDate);setSyncStatus("IndexedDB tidak tersedia: "+err.message,true);}
   document.getElementById("formDate").value=data.date;
   updateDateDisplay();
   const sel=document.getElementById("priceProduct");
@@ -822,6 +1066,8 @@ function init(){
   renderMasterCodes("pangkajene");
   renderReport();
   loadMasterFromGas();
+  await refreshLocalDateList();
+  updateBackupInfo();
 }
 function formatTanggalIndonesia(value){
  if(!value) return "—";
@@ -840,12 +1086,21 @@ function openDatePicker(){
  const el=document.getElementById("formDate");
  if(el.showPicker) el.showPicker(); else {el.style.position="static";el.style.opacity="1";el.style.width="auto";el.style.height="auto";el.click();}
 }
-function refreshAll(){
+async function refreshAll(){
  const chosenDate=document.getElementById("formDate").value || localDateISO();
  if(chosenDate!==data.date){
-   // Simpan tanggal lama dahulu, kemudian muat draft tanggal tujuan.
+   // Simpan data tanggal sebelumnya, lalu prioritaskan record IndexedDB
+   // untuk tanggal tujuan. Draft localStorage hanya menjadi fallback.
+   const previousDate=data.date;
    save();
-   data=loadDraftForDate(chosenDate);
+   let record=null;
+   try { record=await idbGetRecord(chosenDate); }
+   catch(err) { console.warn("Tidak dapat membaca IndexedDB untuk tanggal tujuan:",err); }
+   if(record && record.data){
+     data=normalizeFormState(record.data);
+   } else {
+     data=loadDraftForDate(chosenDate);
+   }
  }
  data.date=chosenDate;
  document.getElementById("formDate").value=chosenDate;
@@ -1103,7 +1358,7 @@ function changeScale(delta){
  applyScale();
 }
 
-function resetForm(){
+async function resetForm(){
  if(!confirm("RESET akan menghapus draft lokal untuk tanggal "+data.date+" dan mengosongkan input tanggal tersebut. Draft tanggal lain tidak terpengaruh. Lanjutkan?"))return;
  const resetDate=data.date;
  try {
@@ -1113,6 +1368,7 @@ function resetForm(){
  } catch(err) {
    setDraftStatus("Peringatan: draft tidak berhasil dihapus dari browser: "+err.message,true);
  }
+ try{const db=await openIDB();await new Promise((resolve,reject)=>{const tx=db.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).delete(resetDate);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}catch(e){}
  data=makeBlank();
  data.date=resetDate || localDateISO();
  document.getElementById("formDate").value=data.date;
