@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -817,7 +818,25 @@
                 if (!resumeRows.length) return;
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+                // Tanggal laporan mengikuti tanggal transaksi, bukan tanggal saat PDF dibuat.
+                const transactionDates = WorkingData
+                    .map(row => parseStatementDate(row.tanggal))
+                    .filter(date => date && !Number.isNaN(date.getTime()))
+                    .sort((a, b) => a.getTime() - b.getTime());
+                const formatReportDate = date => formatIndonesianDate(date, true);
+                let reportDate = '-';
+                if (transactionDates.length) {
+                    const firstDate = transactionDates[0];
+                    const lastDate = transactionDates[transactionDates.length - 1];
+                    if (firstDate.getTime() === lastDate.getTime()) {
+                        reportDate = formatReportDate(firstDate);
+                    } else if (firstDate.getMonth() === lastDate.getMonth() &&
+                               firstDate.getFullYear() === lastDate.getFullYear()) {
+                        reportDate = `${firstDate.getDate()} s/d ${formatIndonesianDate(lastDate, true)}`;
+                    } else {
+                        reportDate = `${formatReportDate(firstDate)} s/d ${formatReportDate(lastDate)}`;
+                    }
+                }
                 const pageW = 210, pageH = 297, margin = 12;
                 // Neutral grey gradient header
                 const gradStart = [55, 65, 81], gradEnd = [156, 163, 175], bands = 120;
@@ -831,7 +850,7 @@
                 doc.text('RESUME REKENING KORAN', margin, 15);
                 doc.setFont('Helvetica','normal'); doc.setFontSize(9); doc.setTextColor(245,245,245);
                 doc.text('BANK MANDIRI  |  SPBU Pangkajene & Labakkang', margin, 23);
-                doc.text(`Tanggal: ${today}`, margin, 30);
+                doc.text(`Tanggal: ${reportDate}`, margin, 30);
                 const sums = {
                     opening: resumeRows.reduce((s,r)=>s+Number(r.openingBalance||0),0),
                     debet: resumeRows.reduce((s,r)=>s+Number(r.totalDebet||0),0),
