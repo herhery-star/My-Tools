@@ -113,10 +113,24 @@ header button{background:#fff;color:#172554;border:0}.header-status{font-size:12
   </div>
   <div class="notice">Tips: gunakan zoom untuk menghapus detail kecil. Tekan Undo jika area yang terhapus mengenai teks atau informasi penting.</div>
   <div class="panel" style="margin-top:20px">
-   <div class="section-title">Ekspor</div>
-   <label>Kualitas gambar</label>
-   <select id="quality" class="select"><option value="1">Standar — lebih kecil</option><option value="1.5" selected>Baik — seimbang</option><option value="2">Tinggi — file lebih besar</option></select>
-   <p>Ekspor akan membuat PDF baru berbasis gambar. Teks tidak lagi dapat dipilih atau dicari.</p>
+   <div class="section-title">Kualitas Ekspor PDF</div>
+   <label>Resolusi / ukuran piksel</label>
+   <select id="quality" class="select">
+    <option value="1" selected>Maksimal — resolusi sumber</option>
+    <option value="0.85">Tinggi — 85% piksel</option>
+    <option value="0.70">Seimbang — 70% piksel</option>
+    <option value="0.50">Kompres — 50% piksel</option>
+    <option value="0.35">Ukuran kecil — 35% piksel</option>
+   </select>
+   <label>Format kompresi</label>
+   <select id="exportFormat" class="select">
+    <option value="png">PNG — tanpa kehilangan detail</option>
+    <option value="jpeg" selected>JPEG — ukuran lebih kecil</option>
+   </select>
+   <label id="jpegQualityLabel">Kualitas JPEG <span id="jpegQualityValue">85%</span></label>
+   <input id="jpegQuality" type="range" min="40" max="100" step="5" value="85" style="width:100%">
+   <p id="exportHint">Maksimal mempertahankan jumlah piksel hasil pemrosesan. JPEG dapat memperkecil ukuran file; kualitas lebih tinggi menjaga detail lebih baik.</p>
+   <p>Ekspor membuat PDF baru berbasis gambar. Teks tidak lagi dapat dipilih atau dicari.</p>
   </div>
  </aside>
 </div>
@@ -253,7 +267,49 @@ $('zoomOut').onclick=()=>{let p=zoomCenter();setZoomAt(zoom/1.2,p.x,p.y)};
 $('fitBtn').onclick=()=>{zoom=fitZoom();if(pages[current]){applyCanvasTransform();centerDocument();$('zoomLabel').textContent=Math.round(zoom*100)+'%'}};
 $('clearPage').onclick=()=>{if(!pages.length)return;if(!confirm('Hapus seluruh isi halaman ini dan menggantinya dengan putih?'))return;snapshot();ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);pages[current].current=ctx.getImageData(0,0,canvas.width,canvas.height);saveCurrent();updateHistory();renderThumbs()};
 $('resetPage').onclick=()=>{if(!pages.length)return;if(!confirm('Kembalikan halaman ini ke kondisi awal?'))return;let p=pages[current];p.undo=[];p.redo=[];p.current=p.original; p.edited=false;drawPage();toast('Halaman dikembalikan.')};
-$('exportBtn').onclick=async()=>{if(!pages.length)return;let btn=$('exportBtn');btn.disabled=true;btn.textContent='Membuat PDF…';try{const {PDFDocument}=PDFLib;let out=await PDFDocument.create();let quality=+$('quality').value;for(let p of pages){let c=document.createElement('canvas');c.width=Math.round(p.canvas.width*quality);c.height=Math.round(p.canvas.height*quality);let x=c.getContext('2d');let tmp=document.createElement('canvas');tmp.width=p.canvas.width;tmp.height=p.canvas.height;tmp.getContext('2d').putImageData(p.current,0,0);x.drawImage(tmp,0,0,c.width,c.height);let png=await out.embedPng(c.toDataURL('image/png'));let page=out.addPage([png.width,png.height]);page.drawImage(png,{x:0,y:0,width:png.width,height:png.height})}let bytes=await out.save();let blob=new Blob([bytes],{type:'application/pdf'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='PDF_ERASER_HASIL_BERSIH_'+new Date().toISOString().slice(0,10).replaceAll('-','')+'.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);toast('PDF hasil edit berhasil dibuat.')}catch(e){console.error(e);toast('Ekspor gagal: '+e.message)}finally{btn.disabled=false;btn.textContent='Ekspor PDF'}};
+$('jpegQuality').oninput=e=>$('jpegQualityValue').textContent=e.target.value+'%';
+$('exportFormat').onchange=()=>{
+ const isJpeg=$('exportFormat').value==='jpeg';
+ $('jpegQuality').disabled=!isJpeg;
+ $('jpegQualityLabel').style.opacity=isJpeg?'1':'.45';
+ $('exportHint').textContent=isJpeg
+  ?'JPEG mengurangi ukuran file. Kualitas tinggi menjaga detail tulisan dan garis lebih baik.'
+  :'PNG mempertahankan piksel tanpa artefak kompresi JPEG, tetapi ukuran PDF biasanya lebih besar.';
+};
+$('exportBtn').onclick=async()=>{
+ if(!pages.length)return;
+ let btn=$('exportBtn');btn.disabled=true;btn.textContent='Membuat PDF…';
+ try{
+  const {PDFDocument}=PDFLib;
+  let out=await PDFDocument.create();
+  const scale=+$('quality').value;
+  const format=$('exportFormat').value;
+  const jpegQuality=+$('jpegQuality').value/100;
+  for(let p of pages){
+   let c=document.createElement('canvas');
+   c.width=Math.max(1,Math.round(p.canvas.width*scale));
+   c.height=Math.max(1,Math.round(p.canvas.height*scale));
+   let x=c.getContext('2d');
+   // JPEG tidak mendukung transparansi: ratakan ke latar putih terlebih dahulu.
+   if(format==='jpeg'){x.fillStyle='#ffffff';x.fillRect(0,0,c.width,c.height);}
+   let tmp=document.createElement('canvas');
+   tmp.width=p.canvas.width;tmp.height=p.canvas.height;
+   tmp.getContext('2d').putImageData(p.current,0,0);
+   x.drawImage(tmp,0,0,c.width,c.height);
+   let dataUrl=format==='png'?c.toDataURL('image/png'):c.toDataURL('image/jpeg',jpegQuality);
+   let embedded=format==='png'?await out.embedPng(dataUrl):await out.embedJpg(dataUrl);
+   let page=out.addPage([embedded.width,embedded.height]);
+   page.drawImage(embedded,{x:0,y:0,width:embedded.width,height:embedded.height});
+  }
+  let bytes=await out.save();
+  let blob=new Blob([bytes],{type:'application/pdf'});
+  let a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='PDF_ERASER_HASIL_'+format.toUpperCase()+'_'+new Date().toISOString().slice(0,10).replaceAll('-','')+'.pdf';
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  toast('PDF berhasil dibuat. Resolusi: '+Math.round(scale*100)+'%'+(format==='jpeg'?' • JPEG '+Math.round(jpegQuality*100)+'%':' • PNG lossless'));
+ }catch(e){console.error(e);toast('Ekspor gagal: '+e.message)}
+ finally{btn.disabled=false;btn.textContent='Ekspor PDF'}
+};
 window.addEventListener('resize',()=>{if(pages.length&&zoom===fitZoom())drawPage()});
 </script>
 </body>
