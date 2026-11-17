@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#172554">
-<title>PDF ERASER — Document Cleaner</title>
+<title>PDF ERASER — Free Pan & Background Cleaner</title>
 <style>
 :root{--navy:#172554;--blue:#2563eb;--bg:#f3f5f9;--line:#dce2eb;--muted:#64748b;--ink:#172033}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif}
@@ -27,11 +27,12 @@ header button{background:#fff;color:#172554;border:0}.header-status{font-size:12
 .page-thumb span{display:block;font-size:11px;color:var(--muted);margin-top:5px}
 .workspace{min-width:0;display:flex;flex-direction:column}
 .toolbar{height:auto;min-height:54px;padding:9px 14px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.tool{display:flex;align-items:center;gap:6px}.tool button.active{background:#dbeafe;border-color:#60a5fa;color:#1d4ed8}
+.tool{display:flex;align-items:center;gap:6px}.tool button.active{background:#dbeafe;border-color:#60a5fa;color:#1d4ed8}.tool button{touch-action:manipulation}
 .sep{height:26px;border-left:1px solid var(--line);margin:0 3px}
 .toolbar label{font-size:12px;color:var(--muted)}input[type=range]{width:90px;accent-color:var(--blue)}input[type=color]{width:30px;height:28px;border:0;background:none;padding:0;cursor:pointer}
-.stage{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:26px;background:#e9edf4;position:relative}
-.canvas-wrap{position:relative;background:white;box-shadow:0 5px 24px #17255420;line-height:0;touch-action:none;max-width:none}
+.stage{flex:1;min-height:0;overflow:hidden;display:block;padding:0;background:#e9edf4;position:relative;overscroll-behavior:none;touch-action:none}
+#bottomPanSpace{display:none}
+.canvas-wrap{position:absolute;left:0;top:0;background:white;box-shadow:0 5px 24px #17255420;line-height:0;touch-action:none;max-width:none;width:max-content;margin:0;transform-origin:0 0;will-change:transform}
 #mainCanvas{display:block;max-width:none;touch-action:none;cursor:crosshair}
 .empty{margin:auto;text-align:center;color:var(--muted);max-width:430px;padding:30px}.empty .big{font-size:48px;margin-bottom:12px}.empty h2{color:#263247;margin:0 0 7px}
 .bottom{height:42px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 15px;font-size:12px;color:var(--muted)}
@@ -40,8 +41,8 @@ header button{background:#fff;color:#172554;border:0}.header-status{font-size:12
 .full{width:100%}.select{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px;background:#fff}
 .notice{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:9px;padding:10px;font-size:11px}
 #toast{position:fixed;bottom:58px;left:50%;transform:translateX(-50%);background:#172554;color:white;padding:10px 16px;border-radius:9px;display:none;z-index:10;box-shadow:0 4px 20px #0002}
-@media(max-width:900px){.layout{grid-template-columns:160px minmax(0,1fr)}.rightbar{display:none}.sidebar{padding:10px}.stage{padding:14px}}
-@media(max-width:600px){header{height:auto;min-height:58px;padding:10px 12px;align-items:flex-start}.brand small{display:none}.header-status{display:none}.layout{height:calc(100dvh - 58px);min-height:0;grid-template-columns:1fr}.sidebar{display:none}.toolbar{padding:8px;gap:5px}.toolbar button{padding:8px}.stage{padding:10px}.bottom{height:38px}}
+@media(max-width:900px){.layout{grid-template-columns:160px minmax(0,1fr)}.rightbar{display:none}.sidebar{padding:10px}.stage{padding:0}}
+@media(max-width:600px){.tool{gap:4px}.tool button{font-size:12px;padding:9px 7px}.toolbar #zoomIn,.toolbar #zoomOut{min-width:36px;min-height:36px}.canvas-wrap{margin:0}header{height:auto;min-height:58px;padding:10px 12px;align-items:flex-start}.brand small{display:none}.header-status{display:none}.layout{height:calc(100dvh - 58px);min-height:0;grid-template-columns:1fr}.sidebar{display:none}.toolbar{padding:8px;gap:5px}.toolbar button{padding:8px}.stage{padding:0}.bottom{height:38px}}
 </style>
 </head>
 <body>
@@ -68,7 +69,8 @@ header button{background:#fff;color:#172554;border:0}.header-status{font-size:12
  <main class="workspace">
   <div class="toolbar">
    <div class="tool">
-    <button id="brushTool" class="active" title="Kuas penghapus">✎ Kuas</button>
+    <button id="handTool" class="active" title="Geser dokumen tanpa menghapus">✋ Tangan</button>
+    <button id="brushTool" title="Kuas penghapus">✎ Kuas</button>
     <button id="rectTool" title="Seleksi persegi">▭ Area</button>
    </div>
    <span class="sep"></span>
@@ -76,8 +78,17 @@ header button{background:#fff;color:#172554;border:0}.header-status{font-size:12
    <button id="redoBtn" disabled title="Redo">↷</button>
    <span class="sep"></span>
    <button id="zoomOut">−</button><span id="zoomLabel" style="font-size:12px;min-width:38px;text-align:center">100%</span><button id="zoomIn">＋</button>
-   <button id="fitBtn">Sesuaikan</button>
+   <button id="fitBtn">Fit</button>
+   <button id="cleanToggle">✧ Clean BG</button>
   </div>
+  <section id="cleanPanel" style="display:none;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;gap:12px;align-items:center;flex-wrap:wrap">
+   <strong>Background Cleaner</strong>
+   <label>Strength <b id="strengthValue">35%</b> <input id="cleanStrength" type="range" min="0" max="100" value="35"></label>
+   <label>Threshold <b id="thresholdValue">45%</b> <input id="cleanThreshold" type="range" min="0" max="100" value="45"></label>
+   <label style="display:flex;align-items:center;gap:5px"><input id="preserveDetails" type="checkbox" checked> Preserve Fine Details</label>
+   <button id="cleanPreview">Preview</button><button id="cleanApply" class="primary">Terapkan</button><button id="cleanCancel">Tutup</button>
+   <small style="color:var(--muted);width:100%">Preview tidak mengubah dokumen. Tinta berwarna dan goresan gelap diupayakan tetap terjaga.</small>
+  </section>
   <section class="stage" id="stage">
    <div class="empty" id="emptyState"><div class="big">🧽</div><h2>Bersihkan dokumen PDF</h2><p>Buka file PDF atau gambar. Gunakan kuas untuk menghapus noda, atau seleksi area untuk membersihkan bagian tertentu.</p><label class="filebtn" for="fileInput">Pilih dokumen</label></div>
    <div class="canvas-wrap" id="canvasWrap" style="display:none"><canvas id="mainCanvas"></canvas></div>
@@ -115,37 +126,131 @@ header button{background:#fff;color:#172554;border:0}.header-status{font-size:12
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 const $=id=>document.getElementById(id);
-let pages=[],current=0,tool='brush',zoom=1,painting=false,last=null,rectStart=null,previewRect=null;
+let pages=[],current=0,tool='hand',zoom=1,panX=0,panY=0,painting=false,last=null,rectStart=null,previewRect=null,cleanPreviewImage=null;
 const canvas=$('mainCanvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 function toast(s){$('toast').textContent=s;$('toast').style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>$('toast').style.display='none',2600)}
 function snapshot(){if(!pages[current])return;const p=pages[current];p.undo.push(ctx.getImageData(0,0,canvas.width,canvas.height));if(p.undo.length>25)p.undo.shift();p.redo=[];updateHistory()}
 function updateHistory(){let p=pages[current];$('undoBtn').disabled=!p||!p.undo.length;$('redoBtn').disabled=!p||!p.redo.length}
 function saveCurrent(){if(pages[current])pages[current].edited=true}
-function drawPage(){let p=pages[current];if(!p)return;canvas.width=p.canvas.width;canvas.height=p.canvas.height;ctx.putImageData(p.current,0,0);canvas.style.width=(canvas.width*zoom)+'px';canvas.style.height=(canvas.height*zoom)+'px';$('canvasWrap').style.display='block';$('emptyState').style.display='none';$('pageInfo').textContent=`Halaman ${current+1} dari ${pages.length}`;$('zoomLabel').textContent=Math.round(zoom*100)+'%';updateHistory();renderThumbs()}
+function applyCanvasTransform(){const w=canvas.width*zoom,h=canvas.height*zoom;canvas.style.width=w+'px';canvas.style.height=h+'px';$('canvasWrap').style.transform=`translate(${panX}px,${panY}px)`;}
+function centerDocument(){if(!pages[current])return;const s=$('stage');panX=Math.max(12,(s.clientWidth-canvas.width*zoom)/2);panY=Math.max(12,(s.clientHeight-canvas.height*zoom)/2);applyCanvasTransform();}
+function drawPage(){let p=pages[current];if(!p)return;canvas.width=p.canvas.width;canvas.height=p.canvas.height;ctx.putImageData(p.current,0,0);$('canvasWrap').style.display='block';$('emptyState').style.display='none';$('pageInfo').textContent=`Halaman ${current+1} dari ${pages.length}`;$('zoomLabel').textContent=Math.round(zoom*100)+'%';centerDocument();updateHistory();renderThumbs()}
+function resetStageTopBuffer(){centerDocument()}
 function renderThumbs(){let box=$('pageList');box.innerHTML='';pages.forEach((p,i)=>{let b=document.createElement('button');b.className='page-thumb'+(i===current?' active':'');let c=document.createElement('canvas');let t=c.getContext('2d');let scale=Math.min(180/p.canvas.width,110/p.canvas.height);c.width=p.canvas.width*scale;c.height=p.canvas.height*scale;t.putImageData(p.current,0,0); // use scaled intermediate
 let tmp=document.createElement('canvas');tmp.width=p.canvas.width;tmp.height=p.canvas.height;tmp.getContext('2d').putImageData(p.current,0,0);t.clearRect(0,0,c.width,c.height);t.drawImage(tmp,0,0,c.width,c.height);
-b.append(c);let s=document.createElement('span');s.textContent='Halaman '+(i+1)+(p.edited?' • diedit':'');b.append(s);b.onclick=()=>{current=i;zoom=fitZoom();drawPage()};box.append(b)})}
+b.append(c);let s=document.createElement('span');s.textContent='Halaman '+(i+1)+(p.edited?' • diedit':'');b.append(s);b.onclick=()=>{current=i;zoom=fitZoom();drawPage();resetStageTopBuffer()};box.append(b)})}
 function fitZoom(){let p=pages[current];if(!p)return 1;let stage=$('stage');return Math.min((stage.clientWidth-36)/p.canvas.width,(stage.clientHeight-36)/p.canvas.height,1)}
 async function openFile(file){if(!file)return;pages=[];current=0;$('fileStatus').textContent='Memuat '+file.name+'…';$('pageList').innerHTML='';try{
  if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf')){let bytes=await file.arrayBuffer();let pdf=await pdfjsLib.getDocument({data:bytes}).promise;for(let n=1;n<=pdf.numPages;n++){let page=await pdf.getPage(n);let vp=page.getViewport({scale:1.7});let c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;let image=c.getContext('2d').getImageData(0,0,c.width,c.height);pages.push({canvas:c,current:image,original:image,undo:[],redo:[],edited:false})}}
  else if(file.type.startsWith('image/')){let url=URL.createObjectURL(file);let img=new Image();await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});let c=document.createElement('canvas');let max=2600,scale=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);let image=c.getContext('2d').getImageData(0,0,c.width,c.height);pages.push({canvas:c,current:image,original:image,undo:[],redo:[],edited:false})}
  else throw Error('Format file tidak didukung.');
- if(!pages.length)throw Error('Dokumen tidak memiliki halaman.');zoom=fitZoom();drawPage();$('exportBtn').disabled=false;$('fileStatus').textContent=file.name;toast(`${pages.length} halaman berhasil dibuka.`);
+ if(!pages.length)throw Error('Dokumen tidak memiliki halaman.');zoom=fitZoom();drawPage();resetStageTopBuffer();$('exportBtn').disabled=false;$('fileStatus').textContent=file.name;toast(`${pages.length} halaman berhasil dibuka.`);
  }catch(e){console.error(e);toast('Gagal membuka file: '+e.message);$('fileStatus').textContent='Gagal memuat dokumen';}}
 $('fileInput').addEventListener('change',e=>openFile(e.target.files[0]));
-function setTool(t){tool=t;$('brushTool').classList.toggle('active',t==='brush');$('rectTool').classList.toggle('active',t==='rect');canvas.style.cursor=t==='brush'?'crosshair':'cell'}
-$('brushTool').onclick=()=>setTool('brush');$('rectTool').onclick=()=>setTool('rect');
+function setTool(t){
+ tool=t;
+ $('handTool').classList.toggle('active',t==='hand');
+ $('brushTool').classList.toggle('active',t==='brush');
+ $('rectTool').classList.toggle('active',t==='rect');
+ canvas.style.cursor=t==='hand'?'grab':(t==='brush'?'crosshair':'cell');
+ toast(t==='hand'?'Mode Tangan: geser dan zoom tanpa menghapus.':(t==='brush'?'Mode Kuas aktif.':'Mode Area aktif.'));
+}
+$('handTool').onclick=()=>setTool('hand');
+$('brushTool').onclick=()=>setTool('brush');
+$('rectTool').onclick=()=>setTool('rect');
 function pos(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}
 function color(){let m=$('eraseMode').value;return m==='white'?'#ffffff':m==='black'?'#000000':$('eraseColor').value}
 function eraseLine(a,b){ctx.save();ctx.strokeStyle=color();ctx.lineWidth=+$('brushSize').value;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore()}
-canvas.addEventListener('pointerdown',e=>{if(!pages.length)return;canvas.setPointerCapture(e.pointerId);let p=pos(e);if(tool==='brush'){snapshot();painting=true;last=p;eraseLine(p,p)}else{rectStart=p;previewRect=p}});
-canvas.addEventListener('pointermove',e=>{if(!pages.length)return;let p=pos(e);if(painting&&tool==='brush'){eraseLine(last,p);last=p}else if(rectStart){previewRect=p;drawPage();ctx.save();ctx.strokeStyle='#2563eb';ctx.lineWidth=2/zoom;ctx.setLineDash([6/zoom,4/zoom]);ctx.strokeRect(rectStart.x,rectStart.y,p.x-rectStart.x,p.y-rectStart.y);ctx.restore()}});
-function endPointer(e){if(painting){painting=false;saveCurrent();pages[current].current=ctx.getImageData(0,0,canvas.width,canvas.height);updateHistory();renderThumbs()}if(rectStart&&previewRect){let x=Math.min(rectStart.x,previewRect.x),y=Math.min(rectStart.y,previewRect.y),w=Math.abs(previewRect.x-rectStart.x),h=Math.abs(previewRect.y-rectStart.y);if(w>2&&h>2){ctx.putImageData(pages[current].current,0,0);snapshot();ctx.fillStyle=color();ctx.fillRect(x,y,w,h);saveCurrent();pages[current].current=ctx.getImageData(0,0,canvas.width,canvas.height);updateHistory();renderThumbs()}rectStart=null;previewRect=null}}
+
+const stage=$('stage'),activePointers=new Map();
+let panState=null,pinchState=null,editStartImage=null;
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function mid(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}
+function setZoomAt(next,cx,cy){
+ if(!pages.length)return;
+ const old=zoom;next=Math.max(.2,Math.min(4,next));if(Math.abs(next-old)<.001)return;
+ const sr=stage.getBoundingClientRect();
+ const localX=cx-sr.left-panX,localY=cy-sr.top-panY;
+ const ratio=next/old;
+ panX=cx-sr.left-localX*ratio;panY=cy-sr.top-localY*ratio;
+ zoom=next;applyCanvasTransform();
+ $('zoomLabel').textContent=Math.round(zoom*100)+'%';
+}
+function startPinch(){
+ const a=[...activePointers.values()].slice(0,2);if(a.length<2)return;
+ if(editStartImage){ctx.putImageData(editStartImage,0,0);pages[current].current=editStartImage;editStartImage=null}
+ painting=false;rectStart=null;previewRect=null;panState=null;
+ pinchState={d:Math.max(1,dist(a[0],a[1])),z:zoom,x:panX,y:panY,mid:mid(a[0],a[1])};
+}
+canvas.addEventListener('pointerdown',e=>{
+ if(!pages.length)return;
+ canvas.setPointerCapture(e.pointerId);activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(activePointers.size>=2){startPinch();return}
+ if(tool==='hand'){panState={x:e.clientX,y:e.clientY,left:panX,top:panY};canvas.style.cursor='grabbing'}
+ else if(e.pointerType==='touch'){
+  snapshot();editStartImage=ctx.getImageData(0,0,canvas.width,canvas.height);
+  if(tool==='brush'){painting=true;last=pos(e)}else{rectStart=pos(e);previewRect=rectStart}
+ }else if(tool==='brush'){snapshot();painting=true;last=pos(e);eraseLine(last,last)}
+ else{rectStart=pos(e);previewRect=rectStart}
+});
+canvas.addEventListener('pointermove',e=>{
+ if(!pages.length)return;
+ if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(activePointers.size>=2){
+  const a=[...activePointers.values()].slice(0,2);if(!pinchState)startPinch();
+  if(pinchState){const d=Math.max(1,dist(a[0],a[1])),m=mid(a[0],a[1]);const sr=stage.getBoundingClientRect();const next=Math.max(.2,Math.min(4,pinchState.z*d/pinchState.d));const ratio=next/pinchState.z;const baseX=pinchState.mid.x-sr.left-pinchState.x,baseY=pinchState.mid.y-sr.top-pinchState.y;zoom=next;panX=m.x-sr.left-baseX*ratio;panY=m.y-sr.top-baseY*ratio;applyCanvasTransform();$('zoomLabel').textContent=Math.round(zoom*100)+'%'}
+  return;
+ }
+ if(panState&&tool==='hand'){panX=panState.left+(e.clientX-panState.x);panY=panState.top+(e.clientY-panState.y);applyCanvasTransform();return}
+ if(painting&&tool==='brush'){let q=pos(e);eraseLine(last,q);last=q}
+ else if(rectStart&&tool==='rect'){previewRect=pos(e);drawPage();ctx.save();ctx.strokeStyle='#2563eb';ctx.lineWidth=2/zoom;ctx.setLineDash([6/zoom,4/zoom]);ctx.strokeRect(rectStart.x,rectStart.y,previewRect.x-rectStart.x,previewRect.y-rectStart.y);ctx.restore()}
+});
+function endPointer(e){
+ activePointers.delete(e.pointerId);if(activePointers.size<2)pinchState=null;
+ if(activePointers.size===0){
+  if(painting){painting=false;saveCurrent();pages[current].current=ctx.getImageData(0,0,canvas.width,canvas.height);editStartImage=null;updateHistory();renderThumbs()}
+  if(rectStart&&previewRect&&tool==='rect'){
+   let x=Math.min(rectStart.x,previewRect.x),y=Math.min(rectStart.y,previewRect.y),w=Math.abs(previewRect.x-rectStart.x),h=Math.abs(previewRect.y-rectStart.y);
+   if(w>2&&h>2){if(!editStartImage)snapshot();ctx.fillStyle=color();ctx.fillRect(x,y,w,h);saveCurrent();pages[current].current=ctx.getImageData(0,0,canvas.width,canvas.height);updateHistory();renderThumbs()}
+   editStartImage=null;rectStart=null;previewRect=null;
+  }
+  panState=null;if(tool==='hand')canvas.style.cursor='grab';
+ }
+}
 canvas.addEventListener('pointerup',endPointer);canvas.addEventListener('pointercancel',endPointer);
+function cleanedImage(source){
+ const out=new ImageData(new Uint8ClampedArray(source.data),source.width,source.height);
+ const strength=+$('cleanStrength').value/100,threshold=+$('cleanThreshold').value/100,preserve=$('preserveDetails').checked;
+ const d=out.data;
+ // Conservative luminance-based paper cleanup. Saturated ink (stamps) is protected.
+ const cutoff=245-threshold*105;
+ for(let i=0;i<d.length;i+=4){
+  const r=d[i],g=d[i+1],b=d[i+2],hi=Math.max(r,g,b),lo=Math.min(r,g,b),sat=hi-lo;
+  const lum=.299*r+.587*g+.114*b;
+  let paper=Math.max(0,Math.min(1,(lum-cutoff)/Math.max(1,255-cutoff)));
+  // Colored ink/stamps are preserved; darker text and signatures receive little cleanup.
+  if(sat>24) paper*=Math.max(0,1-(sat-24)/70);
+  if(preserve){const detail=Math.max(0,Math.min(1,(lum-145)/65));paper*=detail;}
+  const a=paper*strength;
+  d[i]=r+(255-r)*a;d[i+1]=g+(255-g)*a;d[i+2]=b+(255-b)*a;
+ }
+ return out;
+}
+function showCleanPreview(){if(!pages.length)return;cleanPreviewImage=cleanedImage(pages[current].current);ctx.putImageData(cleanPreviewImage,0,0);toast('Preview pembersihan ditampilkan. Belum diterapkan.');}
+function restoreCleanPreview(){cleanPreviewImage=null;if(pages[current])ctx.putImageData(pages[current].current,0,0);}
+$('cleanToggle').onclick=()=>{let panel=$('cleanPanel');panel.style.display=panel.style.display==='none'?'flex':'none';restoreCleanPreview()};
+$('cleanStrength').oninput=e=>$('strengthValue').textContent=e.target.value+'%';
+$('cleanThreshold').oninput=e=>$('thresholdValue').textContent=e.target.value+'%';
+$('cleanPreview').onclick=showCleanPreview;
+$('cleanCancel').onclick=()=>{restoreCleanPreview();$('cleanPanel').style.display='none'};
+$('cleanApply').onclick=()=>{if(!pages.length)return;let result=cleanedImage(pages[current].current);snapshot();ctx.putImageData(result,0,0);pages[current].current=result;pages[current].edited=true;restoreCleanPreview();updateHistory();renderThumbs();$('cleanPanel').style.display='none';toast('Background Cleaner diterapkan. Gunakan Undo untuk membatalkan.')};
 $('brushSize').oninput=e=>$('sizeLabel').textContent=e.target.value+' px';
 $('undoBtn').onclick=()=>{let p=pages[current];if(!p||!p.undo.length)return;p.redo.push(ctx.getImageData(0,0,canvas.width,canvas.height));let im=p.undo.pop();ctx.putImageData(im,0,0);p.current=im;p.edited=true;updateHistory();renderThumbs()};
 $('redoBtn').onclick=()=>{let p=pages[current];if(!p||!p.redo.length)return;p.undo.push(ctx.getImageData(0,0,canvas.width,canvas.height));let im=p.redo.pop();ctx.putImageData(im,0,0);p.current=im;p.edited=true;updateHistory();renderThumbs()};
-$('zoomIn').onclick=()=>{zoom=Math.min(zoom*1.2,4);drawPage()};$('zoomOut').onclick=()=>{zoom=Math.max(zoom/1.2,.2);drawPage()};$('fitBtn').onclick=()=>{zoom=fitZoom();drawPage()};
+function zoomCenter(){let r=stage.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
+$('zoomIn').onclick=()=>{let p=zoomCenter();setZoomAt(zoom*1.2,p.x,p.y)};
+$('zoomOut').onclick=()=>{let p=zoomCenter();setZoomAt(zoom/1.2,p.x,p.y)};
+$('fitBtn').onclick=()=>{zoom=fitZoom();if(pages[current]){applyCanvasTransform();centerDocument();$('zoomLabel').textContent=Math.round(zoom*100)+'%'}};
 $('clearPage').onclick=()=>{if(!pages.length)return;if(!confirm('Hapus seluruh isi halaman ini dan menggantinya dengan putih?'))return;snapshot();ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);pages[current].current=ctx.getImageData(0,0,canvas.width,canvas.height);saveCurrent();updateHistory();renderThumbs()};
 $('resetPage').onclick=()=>{if(!pages.length)return;if(!confirm('Kembalikan halaman ini ke kondisi awal?'))return;let p=pages[current];p.undo=[];p.redo=[];p.current=p.original; p.edited=false;drawPage();toast('Halaman dikembalikan.')};
 $('exportBtn').onclick=async()=>{if(!pages.length)return;let btn=$('exportBtn');btn.disabled=true;btn.textContent='Membuat PDF…';try{const {PDFDocument}=PDFLib;let out=await PDFDocument.create();let quality=+$('quality').value;for(let p of pages){let c=document.createElement('canvas');c.width=Math.round(p.canvas.width*quality);c.height=Math.round(p.canvas.height*quality);let x=c.getContext('2d');let tmp=document.createElement('canvas');tmp.width=p.canvas.width;tmp.height=p.canvas.height;tmp.getContext('2d').putImageData(p.current,0,0);x.drawImage(tmp,0,0,c.width,c.height);let png=await out.embedPng(c.toDataURL('image/png'));let page=out.addPage([png.width,png.height]);page.drawImage(png,{x:0,y:0,width:png.width,height:png.height})}let bytes=await out.save();let blob=new Blob([bytes],{type:'application/pdf'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='PDF_ERASER_HASIL_BERSIH_'+new Date().toISOString().slice(0,10).replaceAll('-','')+'.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);toast('PDF hasil edit berhasil dibuat.')}catch(e){console.error(e);toast('Ekspor gagal: '+e.message)}finally{btn.disabled=false;btn.textContent='Ekspor PDF'}};
